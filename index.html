@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0c1410">
+<title>Boyne Cup 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --a:#b8332f; --a-lt:#e05650; --a-dk:#8a221f;
+  --b:#1f6f4a; --b-lt:#34a06c; --b-dk:#144d33;
+  --gold:#d8a94a; --gold-dk:#a67f2e;
+  --bg:#0c1410; --bg2:#121d18; --bg3:#18291f;
+  --card:#131f19; --card2:#1a2a22;
+  --line:#22362b; --line2:#2e4738;
+  --tx:#e9f0ea; --tx2:#8fa596; --tx3:#5f7568;
+  --ok:#3fae72; --warn:#d8a94a;
+  --hd:'Barlow Condensed',system-ui,sans-serif;
+  --bd:'Inter',system-ui,-apple-system,sans-serif;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--bd);background:var(--bg);color:var(--tx);min-height:100vh;
+  padding-bottom:calc(64px + var(--safe-b));overscroll-behavior-y:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:16px}
+a{color:var(--gold)}
+
+/* ══ HERO ══ */
+.hero{background:linear-gradient(165deg,#16241c 0%,var(--bg) 78%);
+  padding:1.4rem 1rem .9rem;text-align:center;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(216,169,74,.10),transparent 70%)}
+.hero-kick{font-family:var(--hd);font-size:.72rem;font-weight:600;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:.15rem}
+.hero-name{font-family:var(--hd);font-size:2.7rem;font-weight:700;letter-spacing:.03em;
+  text-transform:uppercase;line-height:.95;margin-bottom:.3rem}
+.hero-sub{font-size:.72rem;color:var(--tx2);letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.hero-cd{margin-top:.55rem;display:inline-flex;align-items:center;gap:.4rem;
+  background:rgba(216,169,74,.10);border:1px solid rgba(216,169,74,.28);
+  padding:.28rem .7rem;border-radius:99px;font-size:.7rem;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--gold)}
+
+/* ══ TABS ══ */
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:90;
+  background:rgba(12,20,16,.96);backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);display:flex;padding-bottom:var(--safe-b)}
+.tab{flex:1;padding:.6rem .2rem .55rem;display:flex;flex-direction:column;
+  align-items:center;gap:.18rem;color:var(--tx3);transition:color .15s}
+.tab svg{width:21px;height:21px;stroke-width:1.9}
+.tab span{font-family:var(--hd);font-size:.63rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase}
+.tab.on{color:var(--gold)}
+.tab[hidden]{display:none}
+.view{display:none;max-width:760px;margin:0 auto;padding:0 .85rem 2rem}
+.view.on{display:block;animation:fade .22s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ══ SHARED ══ */
+.sect{margin-top:1.5rem}
+.sect-h{font-family:var(--hd);font-size:.76rem;font-weight:600;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--tx2);margin-bottom:.6rem;
+  display:flex;align-items:center;gap:.55rem}
+.sect-h::after{content:'';flex:1;height:1px;background:var(--line)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card+.card{margin-top:.6rem}
+.muted{color:var(--tx2)}
+.tiny{font-size:.7rem}
+.empty{text-align:center;padding:2.2rem 1rem;color:var(--tx3);font-size:.85rem}
+.pill{display:inline-block;padding:.16rem .48rem;border-radius:5px;font-family:var(--hd);
+  font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.pill-live{background:rgba(224,86,80,.16);color:var(--a-lt);border:1px solid rgba(224,86,80,.35)}
+.pill-final{background:rgba(143,165,150,.12);color:var(--tx2);border:1px solid var(--line2)}
+.pill-next{background:rgba(216,169,74,.13);color:var(--gold);border:1px solid rgba(216,169,74,.3)}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--a-lt);
+  margin-right:.3rem;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
+  padding:.6rem 1rem;border-radius:9px;background:var(--card2);border:1px solid var(--line2);
+  font-family:var(--hd);font-size:.8rem;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--tx);transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn-gold{background:var(--gold);color:#1a1204;border-color:var(--gold)}
+.btn-gh{background:transparent;border-color:rgba(216,169,74,.4);color:var(--gold)}
+.btn-sm{padding:.38rem .7rem;font-size:.72rem}
+.btn-full{width:100%}
+.btn:disabled{opacity:.4;pointer-events:none}
+.row{display:flex;align-items:center;gap:.5rem}
+.grow{flex:1}
+</style>
+<style>
+/* ══ BIG SCORE ══ */
+.bigscore{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  gap:.5rem;padding:1.3rem 0 .9rem}
+.bs-side{text-align:center;min-width:0}
+.bs-nm{font-family:var(--hd);font-size:.82rem;font-weight:700;letter-spacing:.11em;
+  text-transform:uppercase;line-height:1.15;margin-bottom:.3rem;
+  overflow-wrap:anywhere;padding:0 .2rem}
+.bs-nm.a{color:var(--a-lt)} .bs-nm.b{color:var(--b-lt)}
+.bs-pts{font-family:var(--hd);font-size:3.9rem;font-weight:700;line-height:.85}
+.bs-pts.a{color:var(--a-lt)} .bs-pts.b{color:var(--b-lt)}
+.bs-pts.dim{color:var(--tx3)}
+.bs-cap{font-size:.66rem;color:var(--tx3);margin-top:.28rem;letter-spacing:.06em}
+.bs-mid{font-family:var(--hd);font-size:1.05rem;color:var(--tx3);font-weight:600}
+@media(max-width:400px){.bs-pts{font-size:3.1rem}.bs-nm{font-size:.72rem}}
+
+.track{height:9px;border-radius:99px;background:var(--bg3);overflow:hidden;
+  display:flex;position:relative;border:1px solid var(--line)}
+.track-a{background:linear-gradient(90deg,var(--a-dk),var(--a));transition:width .5s cubic-bezier(.4,0,.2,1)}
+.track-b{background:linear-gradient(90deg,var(--b),var(--b-dk));transition:width .5s cubic-bezier(.4,0,.2,1);margin-left:auto}
+.track-mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;
+  background:var(--gold);transform:translateX(-50%);z-index:2;border-radius:2px}
+.track-lbl{display:flex;justify-content:space-between;margin-top:.4rem;
+  font-size:.66rem;color:var(--tx3);letter-spacing:.05em}
+.clinch{text-align:center;margin-top:.7rem;font-family:var(--hd);font-size:.76rem;
+  font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--tx2)}
+.clinch b{color:var(--gold)}
+.won-banner{text-align:center;padding:.85rem;margin-top:.8rem;border-radius:11px;
+  background:linear-gradient(135deg,rgba(216,169,74,.18),rgba(216,169,74,.06));
+  border:1px solid rgba(216,169,74,.4);font-family:var(--hd);font-size:1rem;
+  font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--gold)}
+
+/* ══ ROUND BLOCK ══ */
+.rnd{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  margin-bottom:.65rem;overflow:hidden}
+.rnd.up{opacity:.62}
+.rnd-h{padding:.7rem .8rem;background:var(--bg2);border-bottom:1px solid var(--line);
+  display:flex;align-items:flex-start;gap:.6rem}
+.rnd-h-l{flex:1;min-width:0}
+.rnd-fmt{font-family:var(--hd);font-size:1rem;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;line-height:1.1}
+.rnd-meta{font-size:.68rem;color:var(--tx2);margin-top:.16rem;letter-spacing:.03em}
+.rnd-pts{text-align:right;font-family:var(--hd);flex-shrink:0}
+.rnd-pts-v{font-size:1.15rem;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.rnd-pts-v .a{color:var(--a-lt)} .rnd-pts-v .b{color:var(--b-lt)}
+.rnd-pts-v .s{color:var(--tx3);margin:0 .18rem}
+.rnd-pts-l{font-size:.6rem;color:var(--tx3);letter-spacing:.1em;text-transform:uppercase;margin-top:.1rem}
+
+.mt{display:grid;grid-template-columns:1fr auto 1fr;gap:.45rem;align-items:center;
+  padding:.6rem .7rem;border-top:1px solid var(--line)}
+.mt:first-of-type{border-top:none}
+.mt-s{min-width:0}
+.mt-s.r{text-align:right}
+.mt-p{font-size:.79rem;font-weight:600;line-height:1.35;overflow-wrap:anywhere}
+.mt-p.win{color:var(--tx)} .mt-p.lose{color:var(--tx3)}
+.mt-c{text-align:center;flex-shrink:0;min-width:66px}
+.mt-res{font-family:var(--hd);font-size:.86rem;font-weight:700;letter-spacing:.05em;
+  white-space:nowrap;line-height:1.2}
+.mt-res.a{color:var(--a-lt)} .mt-res.b{color:var(--b-lt)}
+.mt-res.h{color:var(--tx2)} .mt-res.pend{color:var(--tx3);font-size:.72rem}
+.mt-thru{font-size:.6rem;color:var(--tx3);letter-spacing:.06em;margin-top:.1rem;text-transform:uppercase}
+.mt-lbl{font-size:.6rem;color:var(--tx3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.18rem}
+
+/* ══ TABLE ══ */
+.tbl{width:100%;border-collapse:collapse;font-size:.8rem}
+.tbl th{font-family:var(--hd);font-size:.66rem;font-weight:600;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--tx3);text-align:left;padding:.5rem .55rem;
+  border-bottom:1px solid var(--line2);white-space:nowrap}
+.tbl td{padding:.52rem .55rem;border-bottom:1px solid var(--line)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl .ctr{text-align:center}
+.tdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:.4rem;
+  vertical-align:middle;flex-shrink:0}
+.tdot.a{background:var(--a-lt)} .tdot.b{background:var(--b-lt)}
+.rk{font-family:var(--hd);font-weight:700;color:var(--tx3);width:26px;font-size:.85rem}
+.rk.top{color:var(--gold)}
+
+/* ══ SCHEDULE ══ */
+.day{margin-bottom:1rem}
+.day-h{display:flex;align-items:baseline;gap:.55rem;margin-bottom:.5rem;
+  padding-bottom:.35rem;border-bottom:1px solid var(--line)}
+.day-d{font-family:var(--hd);font-size:1.1rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.day-x{font-size:.7rem;color:var(--tx2)}
+.slot{display:grid;grid-template-columns:64px 1fr;gap:.6rem;padding:.5rem .1rem;
+  border-bottom:1px solid rgba(34,54,43,.5)}
+.slot:last-child{border-bottom:none}
+.slot-t{font-family:var(--hd);font-size:.82rem;font-weight:600;color:var(--tx2);
+  letter-spacing:.02em;padding-top:.05rem;white-space:nowrap}
+.slot.tee .slot-t{color:var(--gold)}
+.slot-l{font-size:.85rem;font-weight:600;line-height:1.3}
+.slot-d{font-size:.72rem;color:var(--tx2);margin-top:.12rem;line-height:1.35}
+.wx{display:flex;gap:.5rem;overflow-x:auto;padding:.15rem 0 .3rem;scrollbar-width:none}
+.wx::-webkit-scrollbar{display:none}
+.wx-c{flex:0 0 auto;min-width:74px;text-align:center;background:var(--card);
+  border:1px solid var(--line);border-radius:10px;padding:.5rem .35rem}
+.wx-h{font-family:var(--hd);font-size:.68rem;font-weight:600;color:var(--tx3);
+  letter-spacing:.08em;text-transform:uppercase}
+.wx-i{font-size:1.35rem;line-height:1.4}
+.wx-t{font-family:var(--hd);font-size:.95rem;font-weight:700}
+.wx-w{font-size:.62rem;color:var(--tx2);margin-top:.1rem}
+</style>
+<style>
+/* ══ LIVE SCORING ══ */
+.lv-pick{display:flex;gap:.4rem;overflow-x:auto;padding:.2rem 0 .5rem;scrollbar-width:none}
+.lv-pick::-webkit-scrollbar{display:none}
+.lv-chip{flex:0 0 auto;padding:.42rem .75rem;border-radius:99px;background:var(--card);
+  border:1px solid var(--line2);font-family:var(--hd);font-size:.75rem;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--tx2);white-space:nowrap}
+.lv-chip.on{background:var(--gold);color:#1a1204;border-color:var(--gold)}
+.lv-hd{background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+  padding:.75rem .85rem;margin-bottom:.7rem}
+.lv-st{font-family:var(--hd);font-size:1.65rem;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;text-align:center;line-height:1}
+.lv-st.a{color:var(--a-lt)} .lv-st.b{color:var(--b-lt)} .lv-st.h{color:var(--tx)}
+.lv-thru{text-align:center;font-size:.68rem;color:var(--tx3);letter-spacing:.13em;
+  text-transform:uppercase;margin-top:.3rem}
+.lv-teams{display:flex;justify-content:space-between;gap:.7rem;margin-top:.65rem;
+  padding-top:.6rem;border-top:1px solid var(--line)}
+.lv-tm{flex:1;min-width:0;font-size:.75rem;line-height:1.4}
+.lv-tm.r{text-align:right}
+.lv-tm-n{font-family:var(--hd);font-size:.66rem;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;margin-bottom:.18rem}
+.lv-tm-n.a{color:var(--a-lt)} .lv-tm-n.b{color:var(--b-lt)}
+
+.hole{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:.75rem;margin-bottom:.55rem}
+.hole.done{background:var(--bg2)}
+.hole-h{display:flex;align-items:center;gap:.5rem;margin-bottom:.55rem}
+.hole-n{font-family:var(--hd);font-size:1.5rem;font-weight:700;line-height:1;min-width:1.6rem}
+.hole-i{font-size:.66rem;color:var(--tx3);letter-spacing:.07em;line-height:1.4}
+.hole-str{margin-left:auto;font-family:var(--hd);font-size:.64rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;padding:.2rem .45rem;border-radius:5px;
+  background:rgba(216,169,74,.13);color:var(--gold);border:1px solid rgba(216,169,74,.28)}
+.wbtns{display:grid;grid-template-columns:1fr .8fr 1fr;gap:.4rem}
+.wb{padding:.7rem .3rem;border-radius:9px;background:var(--bg3);border:1.5px solid var(--line2);
+  font-family:var(--hd);font-size:.82rem;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--tx3);transition:all .12s;min-height:46px}
+.wb:active{transform:scale(.96)}
+.wb.a.on{background:var(--a);border-color:var(--a-lt);color:#fff}
+.wb.b.on{background:var(--b);border-color:var(--b-lt);color:#fff}
+.wb.h.on{background:var(--card2);border-color:var(--tx2);color:var(--tx)}
+.wb:disabled{opacity:.45;pointer-events:none}
+.hole-by{font-size:.62rem;color:var(--tx3);text-align:center;margin-top:.4rem;letter-spacing:.04em}
+.gross{margin-top:.55rem;padding-top:.55rem;border-top:1px solid var(--line);display:none}
+.gross.open{display:block}
+.gross-g{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+.gross-f{display:flex;align-items:center;gap:.4rem;background:var(--bg3);
+  border:1px solid var(--line);border-radius:7px;padding:.3rem .45rem}
+.gross-f label{font-size:.7rem;color:var(--tx2);flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.gross-f input{width:38px;background:var(--card2);border:1px solid var(--line2);
+  border-radius:5px;color:var(--tx);text-align:center;padding:.25rem;font-weight:700;font-size:15px}
+.gross-t{font-size:.64rem;color:var(--tx3);letter-spacing:.09em;text-transform:uppercase;
+  margin-bottom:.35rem;font-family:var(--hd);font-weight:600}
+.togg{font-size:.66rem;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;
+  font-family:var(--hd);font-weight:600;padding:.3rem 0;width:100%;text-align:center;margin-top:.3rem}
+
+/* ══ MODAL ══ */
+.ov{position:fixed;inset:0;z-index:200;background:rgba(6,10,8,.82);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:1rem}
+.ov.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--line2);border-radius:15px;
+  padding:1.3rem 1.1rem;max-width:380px;width:100%;max-height:88vh;overflow-y:auto}
+.modal h3{font-family:var(--hd);font-size:1.25rem;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;margin-bottom:.3rem;text-align:center}
+.modal p.sub{font-size:.76rem;color:var(--tx2);text-align:center;margin-bottom:1rem;line-height:1.45}
+.fld{margin-bottom:.7rem}
+.fld label{display:block;font-family:var(--hd);font-size:.68rem;font-weight:600;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--tx2);margin-bottom:.28rem}
+.fld input,.fld select{width:100%;background:var(--bg3);border:1px solid var(--line2);
+  border-radius:8px;padding:.6rem .65rem;color:var(--tx);font-weight:500}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--gold)}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;margin-bottom:.75rem}
+.who-b{padding:.7rem .4rem;border-radius:9px;background:var(--bg3);border:1.5px solid var(--line2);
+  font-family:var(--hd);font-size:.78rem;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--tx2);line-height:1.25}
+.who-b.on.a{background:rgba(184,51,47,.2);border-color:var(--a-lt);color:var(--a-lt)}
+.who-b.on.b{background:rgba(31,111,74,.2);border-color:var(--b-lt);color:var(--b-lt)}
+.err{background:rgba(184,51,47,.14);border:1px solid rgba(224,86,80,.35);color:var(--a-lt);
+  padding:.5rem .6rem;border-radius:7px;font-size:.76rem;margin-bottom:.7rem;display:none}
+.err.show{display:block}
+.note{background:rgba(216,169,74,.08);border:1px solid rgba(216,169,74,.22);
+  border-radius:9px;padding:.6rem .7rem;font-size:.74rem;color:var(--tx2);line-height:1.5}
+.note b{color:var(--gold)}
+
+/* ══ STATUS STRIP ══ */
+.strip{position:sticky;top:0;z-index:80;background:rgba(12,20,16,.95);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  padding:.42rem .85rem;display:flex;align-items:center;gap:.5rem;font-size:.7rem}
+.strip-s{display:flex;align-items:center;gap:.3rem;color:var(--tx3);letter-spacing:.05em}
+.strip-d{width:6px;height:6px;border-radius:50%;background:var(--tx3)}
+.strip-d.live{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.strip-d.local{background:var(--warn)}
+.strip-u{margin-left:auto;font-family:var(--hd);font-size:.7rem;font-weight:600;
+  letter-spacing:.09em;text-transform:uppercase}
+.strip-u.a{color:var(--a-lt)} .strip-u.b{color:var(--b-lt)} .strip-u.admin{color:var(--gold)}
+
+.money-row{display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;
+  border-bottom:1px solid var(--line)}
+.money-row:last-child{border-bottom:none}
+.money-n{flex:1;font-size:.85rem;font-weight:600}
+.money-v{font-family:var(--hd);font-size:1.05rem;font-weight:700;font-variant-numeric:tabular-nums}
+.money-v.pos{color:var(--ok)} .money-v.neg{color:var(--a-lt)} .money-v.zero{color:var(--tx3)}
+</style>
+<style>
+/* ══ SUNLIGHT MODE ══ */
+:root[data-light]{
+  --bg:#f4f1e8; --bg2:#ebe7db; --bg3:#e2ddcf; --card:#fffdf7; --card2:#f1ede2;
+  --line:#d9d3c3; --line2:#c4bca8; --tx:#17201a; --tx2:#4c5a50; --tx3:#75827a;
+  --a:#b8332f; --a-lt:#a5231f; --b:#1f6f4a; --b-lt:#186642; --gold:#8a6a1c; --ok:#1f7a4c;
+}
+:root[data-light] .hero{background:linear-gradient(165deg,#e6e1d2,var(--bg) 80%)}
+:root[data-light] .tabbar,:root[data-light] .strip{background:rgba(244,241,232,.96)}
+:root[data-light] .btn-gold{background:#c9a24a;color:#1a1204}
+:root[data-light] .wb.a.on,:root[data-light] .wb.b.on{color:#fff}
+.sun{font-size:.95rem;line-height:1;padding:.1rem .3rem;color:var(--tx3)}
+
+/* ══ SCORECARD ══ */
+.mine{background:linear-gradient(135deg,rgba(216,169,74,.16),rgba(216,169,74,.04));
+  border:1px solid rgba(216,169,74,.42);border-radius:13px;padding:.9rem .9rem .8rem;margin-top:1rem}
+.mine-k{font-family:var(--hd);font-size:.66rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+.mine-t{font-family:var(--hd);font-size:1.35rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin:.15rem 0 .1rem}
+.mine-d{font-size:.78rem;color:var(--tx2);line-height:1.45}
+.grp{display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-top:1px solid var(--line)}
+.grp:first-child{border-top:none}
+.grp-n{flex:1;min-width:0;font-size:.8rem;line-height:1.35}
+.grp-n b{font-family:var(--hd);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);display:block}
+.grp-s{font-family:var(--hd);font-weight:700;font-size:.95rem;white-space:nowrap;text-align:right}
+.grp-s small{display:block;font-size:.58rem;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.grp-go{color:var(--tx3);font-size:1.1rem}
+.sc-top{position:sticky;top:33px;z-index:70;background:var(--bg);padding:.5rem 0 .4rem;border-bottom:1px solid var(--line)}
+.sc-vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.5rem}
+.sc-side{min-width:0}
+.sc-side.r{text-align:right}
+.sc-side .n{font-size:.72rem;color:var(--tx2);line-height:1.3;overflow-wrap:anywhere}
+.sc-side .v{font-family:var(--hd);font-size:1.7rem;font-weight:700;line-height:1}
+.sc-side .v.a{color:var(--a-lt)} .sc-side .v.b{color:var(--b-lt)}
+.sc-mid{font-family:var(--hd);font-size:.66rem;color:var(--tx3);letter-spacing:.12em;text-transform:uppercase;text-align:center;line-height:1.35}
+.sc-mid b{display:block;font-size:.95rem;color:var(--tx)}
+.hnav{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:.5rem;margin:.8rem 0 .6rem}
+.hnav-b{height:52px;border-radius:11px;background:var(--card);border:1px solid var(--line2);font-size:1.3rem;color:var(--tx2)}
+.hnav-b:disabled{opacity:.25}
+.hnav-c{text-align:center}
+.hnav-n{font-family:var(--hd);font-size:2.6rem;font-weight:700;line-height:.9}
+.hnav-n small{font-size:.9rem;color:var(--tx3);font-weight:600;letter-spacing:.1em;margin-right:.25rem;vertical-align:middle}
+.hnav-i{font-size:.7rem;color:var(--tx2);letter-spacing:.08em;text-transform:uppercase;margin-top:.2rem}
+.srow{display:grid;grid-template-columns:1fr 50px 64px 50px;align-items:center;gap:.4rem;
+  padding:.55rem .6rem;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:.45rem}
+.srow.a{border-left:3px solid var(--a)} .srow.b{border-left:3px solid var(--b)}
+.srow-n{min-width:0}
+.srow-nm{font-size:.86rem;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow-x{font-size:.66rem;color:var(--tx3);margin-top:.12rem;letter-spacing:.03em}
+.sd{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-left:.15rem;vertical-align:middle}
+.stp{height:46px;border-radius:10px;background:var(--bg3);border:1px solid var(--line2);font-size:1.5rem;color:var(--tx);font-weight:500}
+.stp:active{background:var(--card2)}
+.stp:disabled{opacity:.3}
+.sval{height:46px;border-radius:10px;background:var(--bg3);border:1px solid var(--line2);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-family:var(--hd);font-weight:700;font-size:1.6rem;line-height:1;cursor:pointer}
+.sval.empty{color:var(--tx3);font-size:1.1rem}
+.sval small{font-size:.58rem;color:var(--tx3);letter-spacing:.06em;font-family:var(--bd);font-weight:600;margin-top:.1rem}
+.sval.birdie{color:var(--ok)} .sval.eagle{color:var(--gold)} .sval.bogey{color:var(--tx)} .sval.dbl{color:var(--a-lt)}
+.hres{text-align:center;font-size:.74rem;color:var(--tx2);padding:.5rem .2rem .2rem;min-height:1.6rem}
+.hres b{color:var(--tx)}
+.grid{overflow-x:auto;margin-top:.9rem;border:1px solid var(--line);border-radius:12px;background:var(--card);scrollbar-width:thin}
+.grid table{border-collapse:collapse;font-size:.72rem;min-width:100%}
+.grid th,.grid td{padding:.38rem .3rem;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;min-width:30px}
+.grid th{font-family:var(--hd);font-weight:600;color:var(--tx3);font-size:.62rem;letter-spacing:.06em}
+.grid td:first-child,.grid th:first-child{text-align:left;position:sticky;left:0;background:var(--card);
+  padding-left:.6rem;min-width:88px;max-width:88px;overflow:hidden;text-overflow:ellipsis;font-weight:600;z-index:1}
+.grid td.cur{background:rgba(216,169,74,.14)}
+.grid td.tot{font-weight:700;background:var(--bg2)}
+.grid tr:last-child td{border-bottom:none}
+.grid td.pick{cursor:pointer}
+.grid .u1{color:var(--ok)} .grid .u2{color:var(--gold);font-weight:700} .grid .o1{color:var(--tx2)} .grid .o2{color:var(--a-lt)}
+.grid .st{color:var(--gold)}
+.entered{font-size:.62rem;color:var(--tx3);text-align:center;margin-top:.5rem}
+.rankrow td{padding:.5rem .55rem}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-kick" id="heroKick">The</div>
+  <h1 class="hero-name" id="heroName">Boyne Cup</h1>
+  <div class="hero-sub" id="heroSub">Harbor Springs, Michigan</div>
+  <div class="hero-cd" id="heroCd"></div>
+</header>
+
+<div class="strip">
+  <div class="strip-s"><span class="strip-d" id="connDot"></span><span id="connTxt">Loading</span></div>
+  <button class="sun" id="sunBtn" title="Sunlight mode">☀︎</button>
+  <button class="strip-u" id="whoBtn">Sign in</button>
+</div>
+
+<main>
+  <section id="v-cup"   class="view on"></section>
+  <section id="v-live"  class="view"></section>
+  <section id="v-act"   class="view"></section>
+  <section id="v-money" class="view"></section>
+  <section id="v-trip"  class="view"></section>
+</main>
+
+<nav class="tabbar">
+  <button class="tab on" data-v="cup">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 4h12v5a6 6 0 0 1-12 0V4Z"/><path d="M6 6H3v1a4 4 0 0 0 4 4M18 6h3v1a4 4 0 0 1-4 4"/><path d="M12 15v4M8 21h8"/></svg>
+    <span>Cup</span></button>
+  <button class="tab" data-v="live">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8M2.8 2.8a13 13 0 0 0 0 18.4M21.2 2.8a13 13 0 0 1 0 18.4"/></svg>
+    <span>Live</span></button>
+  <button class="tab" data-v="act">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <span>Action</span></button>
+  <button class="tab" data-v="money">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>
+    <span>Money</span></button>
+  <button class="tab" data-v="trip">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    <span>Trip</span></button>
+</nav>
+
+<div class="ov" id="loginOv">
+  <div class="modal">
+    <h3>Sign In</h3>
+    <p class="sub">Pick your name. Anyone can watch without signing in &mdash; you only need this to <em>enter</em> scores. Picked the wrong guy? Tap your name at the top to switch.</p>
+    <div class="err" id="loginErr"></div>
+    <div class="fld">
+      <label for="whoSel">Who are you?</label>
+      <select id="whoSel"></select>
+    </div>
+    <div class="fld" id="pinFld" hidden>
+      <label for="pcIn">Commissioner code</label>
+      <input type="password" id="pcIn" autocomplete="off" inputmode="numeric" autocapitalize="off" spellcheck="false" placeholder="&bull;&bull;&bull;&bull;">
+    </div>
+    <button class="btn btn-gold btn-full" id="loginGo">Sign In</button>
+    <button class="btn btn-full" id="loginX" style="margin-top:.45rem">Just Watching</button>
+    <div class="note" style="margin-top:.9rem">
+      This isn't an account, just a name tag &mdash; every score shows who entered it and when.
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="outOv">
+  <div class="modal">
+    <h3 id="outNm">Signed In</h3>
+    <p class="sub" id="outSub"></p>
+    <button class="btn btn-gold btn-full" id="outSwitch">Switch player</button>
+    <button class="btn btn-full" id="outGo" style="margin-top:.45rem">Sign out</button>
+    <button class="btn btn-full" id="outX" style="margin-top:.45rem">Cancel</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   ██  EDIT EVERYTHING IN THIS BLOCK. NOTHING BELOW IT NEEDS TOUCHING.  ██
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const CONFIG = {
+
+  /* ── 1. THE TRIP ─────────────────────────────────────────────── */
+  kicker:  "The",                       // small gold word above the title
+  title:   "Boyne Cup",                 // big title
+  subtitle:"Harbor Springs, Michigan",  // small line under the title
+
+  /* ── 2. THE TEAMS ────────────────────────────────────────────── */
+  // "a" and "b" are internal ids -- don't rename the keys, just the values.
+  teams: {
+    a: { name:"Team A", short:"A", captain:"", color:"red"   },
+    b: { name:"Team B", short:"B", captain:"", color:"green" },
+  },
+
+  /* ── 3. THE PLAYERS ──────────────────────────────────────────── */
+  // hcp = strokes vs scratch (0 = scratch), straight from the Teams and Handicaps sheet.
+  // Players sign in by picking their name -- no pin. (Add  pin:"1234"  to a player if you ever want one.)
+  // Keep the ids (a1, a2...) as they are -- the matches below refer to them.
+  players: [
+    { id:"a1", name:"Giancarlo Bonfiglio", team:"a", hcp:0 },
+    { id:"a2", name:"Matt Iannuzzi",       team:"a", hcp:12 },
+    { id:"a3", name:"Mike Chun",           team:"a", hcp:5 },
+    { id:"a4", name:"Adrian Skakie",       team:"a", hcp:5 },
+    { id:"a5", name:"Drake Wilton",        team:"a", hcp:0 },
+    { id:"a6", name:"Kevin Sayers",        team:"a", hcp:8 },
+    { id:"b1", name:"Matt Jackson",        team:"b", hcp:12 },
+    { id:"b2", name:"Cam Sayers",          team:"b", hcp:14 },
+    { id:"b3", name:"Billy Bryer",         team:"b", hcp:0 },
+    { id:"b4", name:"Anthony Gentilli",    team:"b", hcp:9 },
+    { id:"b5", name:"Jimmy Cusan",         team:"b", hcp:7 },
+    { id:"b6", name:"Ryan Adams",          team:"b", hcp:5 },
+  ],
+
+  /* ── 4. THE COURSES ──────────────────────────────────────────── */
+  // par: one number per hole.  si: the "Handicap" row on the scorecard (1 = hardest).
+  // All five taken from the real scorecards (men's stroke index).
+  courses: {
+    arthur:  { name:"Arthur Hills", club:"The Highlands", lat:45.4680, lon:-84.9346,
+      par:[4,4,5,4,4,5,3,4,3, 4,5,4,5,3,4,3,4,5],
+      si: [9,17,5,7,1,13,15,3,11, 18,4,8,14,12,2,16,6,10] },
+    moor:    { name:"The Moor", club:"The Highlands", lat:45.4680, lon:-84.9346,
+      par:[4,4,5,3,4,3,4,5,4, 4,3,4,4,5,4,4,3,5],
+      si: [5,15,17,9,1,7,11,13,3, 4,14,10,8,18,2,6,16,12] },
+    // Preserve is 9 holes. si here is the rank 1-9 (1 = hardest) taken from the men's row.
+    preserve:{ name:"The Preserve", club:"Bay Harbor", lat:45.3623, lon:-85.0606,
+      par:[4,4,4,5,3,5,4,4,3],
+      si: [6,7,2,4,5,1,8,9,3] },
+    heather: { name:"The Heather", club:"The Highlands", lat:45.4680, lon:-84.9346,
+      par:[4,4,4,3,5,3,4,4,5, 4,5,3,4,4,5,3,4,4],
+      si: [15,5,13,11,1,17,7,3,9, 6,18,16,8,10,2,14,12,4] },
+    ross:    { name:"Donald Ross Memorial", club:"The Highlands", lat:45.4680, lon:-84.9346,
+      par:[4,4,3,4,5,4,4,3,5, 4,4,3,5,4,4,5,3,4],
+      si: [11,13,5,9,1,7,17,15,3, 4,16,18,2,8,10,14,12,6] },
+  },
+
+  /* ── 5. THE ROUNDS ───────────────────────────────────────────── */
+  // scoring: "bestball" (each plays own ball, best net per hole counts)
+  //          "scramble" (one team ball, team handicap = 35% low + 15% high)
+  //          "singles"  (own ball, own net)
+  // points:  "match" = each pairing below is worth `pts` to the lower net total (tie splits)
+  //          "rank"  = everyone ranked on net; `rankPoints` paid by finishing position
+  // a: / b: are lists of player ids from section 3 above.
+  rounds: [
+    { id:"r1", date:"2026-09-17", tee:"12:50 PM", course:"arthur", holes:18,
+      format:"Best Ball", scoring:"bestball", points:"match",
+      note:"Own ball &bull; better net of two counts &bull; pair v pair", matches:[
+      { id:"m1", label:"Match 1", pts:1, a:["a1","a4"], b:["b1","b4"] },
+      { id:"m2", label:"Match 2", pts:1, a:["a2","a5"], b:["b2","b5"] },
+      { id:"m3", label:"Match 3", pts:1, a:["a3","a6"], b:["b3","b6"] },
+    ]},
+    { id:"r2", date:"2026-09-18", tee:"9:00 AM", course:"moor", holes:18,
+      format:"Scramble", scoring:"scramble", points:"match",
+      note:"Two-man scramble &bull; team handicap &bull; pair v pair", matches:[
+      { id:"m1", label:"Match 1", pts:1, a:["a1","a6"], b:["b1","b6"] },
+      { id:"m2", label:"Match 2", pts:1, a:["a2","a4"], b:["b2","b4"] },
+      { id:"m3", label:"Match 3", pts:1, a:["a3","a5"], b:["b3","b5"] },
+    ]},
+    { id:"r3", date:"2026-09-18", tee:"3:10 PM", course:"preserve", holes:9,
+      format:"Singles", scoring:"singles", points:"rank",
+      note:"Own ball &bull; 9 holes &bull; all 12 ranked on net",
+      // Points paid to each finishing position 1st..12th (ties share). Adds up to 6.
+      rankPoints:[2, 1.5, 1, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0],
+      // Groups are just who tees off together -- they don't affect points in a rank round.
+      matches:[
+      { id:"g1", label:"Group 1", pts:0, a:["a1","a2"], b:["b1","b2"] },
+      { id:"g2", label:"Group 2", pts:0, a:["a3","a4"], b:["b3","b4"] },
+      { id:"g3", label:"Group 3", pts:0, a:["a5","a6"], b:["b5","b6"] },
+    ]},
+    { id:"r4", date:"2026-09-19", tee:"10:20 AM", course:"heather", holes:18,
+      format:"Best Ball", scoring:"bestball", points:"match",
+      note:"Own ball &bull; better net of two counts &bull; pair v pair", matches:[
+      { id:"m1", label:"Match 1", pts:1, a:["a1","a2"], b:["b1","b2"] },
+      { id:"m2", label:"Match 2", pts:1, a:["a3","a4"], b:["b3","b4"] },
+      { id:"m3", label:"Match 3", pts:1, a:["a5","a6"], b:["b5","b6"] },
+    ]},
+    { id:"r5", date:"2026-09-19", tee:"4:00 PM", course:"ross", holes:18,
+      format:"Scramble", scoring:"scramble", points:"match",
+      note:"Two-man scramble &bull; team handicap &bull; the closer", matches:[
+      { id:"m1", label:"Match 1", pts:1, a:["a1","a5"], b:["b1","b5"] },
+      { id:"m2", label:"Match 2", pts:1, a:["a2","a6"], b:["b2","b6"] },
+      { id:"m3", label:"Match 3", pts:1, a:["a3","a4"], b:["b3","b4"] },
+    ]},
+  ],
+
+  /* ── 5b. HANDICAPS + THE INDIVIDUAL TITLE ─────────────────────── */
+  // allowance = share of a player's strokes used in that format (1 = all of them).
+  // 9-hole rounds automatically use half.
+  allowance: { bestball:1, singles:1 },
+  scramble:  { low:0.35, high:0.15 },        // USGA two-man scramble formula
+  // Trip-long best net: total net over these rounds (no individual score in a scramble).
+  solo: { name:"Individual Title", rounds:["r1","r3","r4"] },
+
+  /* ── 6. THE SCHEDULE ─────────────────────────────────────────── */
+  // Anything you like -- meals, drives, drafts. Tee times are added automatically.
+  schedule: {
+    "2026-09-17":[
+      { t:"9:00 AM",  i:"\u{1F697}", l:"Depart",            d:"Add your drive time" },
+      { t:"11:45 AM", i:"⛳",    l:"Arrive Highlands",  d:"Range + putting green" },
+      { t:"7:00 PM",  i:"\u{1F37D}", l:"Dinner",            d:"Add the spot" },
+      { t:"Evening",  i:"\u{1F3B2}", l:"Match draft",       d:"Set Friday pairings" },
+    ],
+    "2026-09-18":[
+      { t:"7:45 AM",  i:"☕",    l:"Breakfast" },
+      { t:"~2:00 PM", i:"\u{1F96A}", l:"Lunch + drive",     d:"Highlands to Bay Harbor, ~30 min" },
+      { t:"7:30 PM",  i:"\u{1F37D}", l:"Dinner" },
+    ],
+    "2026-09-19":[
+      { t:"9:00 AM",  i:"☕",    l:"Breakfast" },
+      { t:"~2:30 PM", i:"\u{1F96A}", l:"Lunch" },
+      { t:"8:00 PM",  i:"\u{1F942}", l:"Final dinner",      d:"Cup presented" },
+    ],
+  },
+
+  /* ── 6b. WHICH TABS SHOW ─────────────────────────────────────── */
+  // Flip to true when the side bets are sorted. Money depends on Action, so it hides with it.
+  tabs: { action:false, money:false },
+
+  /* ── 7. SIDE ACTION ──────────────────────────────────────────── */
+  // Per round: the skins pot and which holes are closest-to-pin / long drive.
+  side: {
+  // ctpVal / ldVal = what each closest-to-pin / long drive pays the winner (everyone else chips in).
+    r1:{ pot:120, ctp:[7,16],  ld:[13], ctpVal:20, ldVal:20 },   // Arthur Hills par 3s: 7, 9, 14, 16
+    r2:{ pot:120, ctp:[4,17],  ld:[14], ctpVal:20, ldVal:20 },   // Moor par 3s: 4, 6, 11, 17
+    r3:{ pot:120, ctp:[5,9],   ld:[4],  ctpVal:20, ldVal:20 },   // Preserve par 3s: 5, 9
+    r4:{ pot:120, ctp:[4,16],  ld:[11], ctpVal:20, ldVal:20 },   // Heather par 3s: 4, 6, 12, 16
+    r5:{ pot:120, ctp:[3,17],  ld:[13], ctpVal:20, ldVal:20 },   // Ross par 3s: 3, 8, 12, 17
+  },
+
+  /* ── 8. COMMISSIONER CODE ────────────────────────────────────── */
+  // Only the commissioner needs a code. It unlocks CTP/LD winners, handicap tweaks, etc.
+  // ⚠ All codes live in the page source, so anyone who really wants to look can
+  // find them. They stop mix-ups and fat-fingers. They are NOT security.
+  // Never reuse a real password.
+  adminPin: "matteo",
+
+  /* ── 9. LIVE SYNC (fill in later -- I'll walk you through it) ── */
+  // Leave as null and the app still works perfectly, but scores stay on
+  // one phone. Paste your Firebase config here to make it live for everyone.
+  firebase: {
+    apiKey: "AIzaSyAuTx5BqV6qU7mbxbNspioQ-fFFI1BZj1k",
+    authDomain: "boyne-cup.firebaseapp.com",
+    databaseURL: "https://boyne-cup-default-rtdb.firebaseio.com",
+    projectId: "boyne-cup",
+    storageBucket: "boyne-cup.firebasestorage.app",
+    messagingSenderId: "1085713375829",
+    appId: "1:1085713375829:web:240d87432f00816ff42adc",
+  },
+  tripKey: "boyne2026",   // change if you ever reuse the same Firebase project
+};
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   ENGINE — no need to edit below here.
+   ═══════════════════════════════════════════════════════════════ */
+"use strict";
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+const P = {}; CONFIG.players.forEach(p => P[p.id] = p);
+const pname  = id => P[id]?.name ?? id;
+const pshort = id => { const n = P[id]?.name ?? id, b = n.trim().split(/\s+/); return b.length < 2 ? n : b[0][0] + ". " + b.slice(1).join(" "); };
+const pfirst = id => (P[id]?.name ?? id).split(/\s+/)[0];
+const teamOf = id => P[id]?.team;
+const ROUND = {}; CONFIG.rounds.forEach(r => ROUND[r.id] = r);
+const courseOf = r => CONFIG.courses[r.course] || { name:r.course, par:[], si:[] };
+const mkey = (rid, mid) => rid + "_" + mid;
+const TA = () => CONFIG.teams.a, TB = () => CONFIG.teams.b;
+const fmtPts = n => Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+const toPar = n => n === 0 ? "E" : n > 0 ? "+" + n : String(n);
+
+/* ── store ─────────────────────────────────────────────────── */
+const Store = {
+  data: { gross:{}, side:{}, hcp:{}, cash:{}, meta:{} }, mode:"local", _subs:[],
+  onChange(fn){ this._subs.push(fn); },
+  _fire(){ this._subs.forEach(f => { try { f(); } catch(e){ console.error(e); } }); },
+  async init(){
+    if (CONFIG.firebase) { try { await this._initFb(); return; } catch(e){ console.error("Firebase failed, using local:", e); } }
+    this._initLocal();
+  },
+  _initLocal(){
+    this.mode = "local";
+    try { const raw = localStorage.getItem("cup:" + CONFIG.tripKey); if (raw) Object.assign(this.data, JSON.parse(raw)); } catch(e){}
+    setConn("local"); this._fire();
+  },
+  _saveLocal(){ try { localStorage.setItem("cup:" + CONFIG.tripKey, JSON.stringify(this.data)); } catch(e){} },
+  async _initFb(){
+    const B = "https://www.gstatic.com/firebasejs/10.12.0/";
+    const [app, dbm, auth] = await Promise.all([import(B + "firebase-app.js"), import(B + "firebase-database.js"), import(B + "firebase-auth.js")]);
+    const a = app.initializeApp(CONFIG.firebase);
+    try { await auth.signInAnonymously(auth.getAuth(a)); } catch(e){ console.warn("anon auth off:", e.code); }
+    const db = dbm.getDatabase(a); this._db = db; this._dbm = dbm; this.mode = "live";
+    dbm.onValue(dbm.ref(db, "trips/" + CONFIG.tripKey), snap => {
+      const v = snap.val() || {};
+      this.data = { gross:v.gross||{}, side:v.side||{}, hcp:v.hcp||{}, cash:v.cash||{}, meta:v.meta||{} };
+      setConn("live"); this._fire();
+    }, err => { console.error(err); setConn("error"); });
+    dbm.onValue(dbm.ref(db, ".info/connected"), s => { if (this.mode === "live") setConn(s.val() ? "live" : "offline"); });
+  },
+  set(path, val){
+    let n = this.data;
+    for (let i = 0; i < path.length - 1; i++) { if (typeof n[path[i]] !== "object" || n[path[i]] === null) n[path[i]] = {}; n = n[path[i]]; }
+    const last = path[path.length - 1];
+    if (val === null || val === undefined) delete n[last]; else n[last] = val;
+    if (this.mode === "live") this._dbm.set(this._dbm.ref(this._db, "trips/" + CONFIG.tripKey + "/" + path.join("/")), val ?? null).catch(e => console.error("write:", e));
+    else this._saveLocal();
+    this._fire();
+  },
+  get(path, dflt){ let n = this.data; for (const seg of path) { if (n == null || typeof n !== "object") return dflt; n = n[seg]; } return n === undefined ? dflt : n; },
+};
+function setConn(m){
+  const d = $("#connDot"), t = $("#connTxt"); if (!d) return;
+  d.className = "strip-d " + (m === "live" ? "live" : "local");
+  t.textContent = { live:"Live — synced", local:"This device only", offline:"Offline — will sync", error:"Connection problem" }[m] || m;
+}
+
+/* ── who am I ──────────────────────────────────────────────── */
+const Me = {
+  role:null,
+  load(){ try { this.role = localStorage.getItem("cup:role:" + CONFIG.tripKey); } catch(e){} if (this.role && this.role !== "admin" && !P[this.role]) this.role = null; },
+  save(r){ this.role = r; try { r ? localStorage.setItem("cup:role:" + CONFIG.tripKey, r) : localStorage.removeItem("cup:role:" + CONFIG.tripKey); } catch(e){} },
+  canScore(){ return this.role === "admin" || !!P[this.role]; },
+  isAdmin(){ return this.role === "admin"; },
+  team(){ return this.role === "admin" ? "admin" : (P[this.role]?.team || ""); },
+  label(){ return this.role === "admin" ? "Commissioner" : P[this.role] ? pshort(this.role) : "Sign in"; },
+};
+
+/* ── handicaps ─────────────────────────────────────────────── */
+function liveHcp(id){ return Number(Store.get(["hcp", id], P[id]?.hcp ?? 0)); }
+function strokesFor(total, si, holes){ let n = 0; if (total >= si) n++; if (total >= si + holes) n++; if (total >= si + 2 * holes) n++; return n; }
+// One "scorer" = one row on the scorecard: a player (own ball) or a side (scramble).
+function scorers(r, m){
+  const half = r.holes <= 9 ? 0.5 : 1, c = courseOf(r);
+  const mk = (key, side, ids, label, hcp) => {
+    const total = Math.round(hcp * half), holes = {};
+    for (let i = 1; i <= r.holes; i++) { const n = strokesFor(total, c.si[i-1] ?? i, r.holes); if (n) holes[i] = n; }
+    return { key, side, ids, label, total, holes };
+  };
+  if (r.scoring === "scramble") {
+    const th = ids => { const h = ids.map(liveHcp).sort((x, y) => x - y); return CONFIG.scramble.low * h[0] + CONFIG.scramble.high * (h[h.length - 1]); };
+    return [mk("a", "a", m.a, m.a.map(pfirst).join(" & "), th(m.a)), mk("b", "b", m.b, m.b.map(pfirst).join(" & "), th(m.b))];
+  }
+  const allow = CONFIG.allowance[r.scoring] ?? 1;
+  return [...m.a.map(id => mk(id, "a", [id], pname(id), liveHcp(id) * allow)), ...m.b.map(id => mk(id, "b", [id], pname(id), liveHcp(id) * allow))];
+}
+const gross = (rid, mid, hole, key) => { const v = Store.get(["gross", mkey(rid, mid), String(hole), key], null); return (v === null || v === "") ? null : Number(v); };
+
+/* ── stroke-play maths ─────────────────────────────────────── */
+// Per side, per hole: the net that counts (best ball -> lowest net of the pair).
+function sideNet(r, m, sc, hole, side){
+  const rows = sc.filter(s => s.side === side); let best = null, any = 0;
+  rows.forEach(s => { const g = gross(r.id, m.id, hole, s.key); if (g === null) return; any++;
+    const n = g - (s.holes[hole] || 0); if (best === null || n < best) best = n; });
+  const complete = r.scoring === "bestball" ? any === rows.length : any === rows.length; // require all rows in
+  return { net: best, complete, any };
+}
+function matchState(rid, mid){
+  const r = ROUND[rid], m = r.matches.find(x => x.id === mid), c = courseOf(r), sc = scorers(r, m);
+  let thru = 0, aNet = 0, bNet = 0, par = 0, holesDone = [];
+  for (let i = 1; i <= r.holes; i++) {
+    const A = sideNet(r, m, sc, i, "a"), B = sideNet(r, m, sc, i, "b");
+    if (A.complete && B.complete) { thru = i; aNet += A.net; bNet += B.net; par += c.par[i-1]; holesDone.push(i); }
+  }
+  const complete = holesDone.length === r.holes;
+  const diff = aNet - bNet, lead = diff < 0 ? "a" : diff > 0 ? "b" : "h";
+  const pts = { a:0, b:0 };
+  if (complete && r.points === "match") { if (lead === "a") pts.a = m.pts; else if (lead === "b") pts.b = m.pts; else { pts.a = m.pts / 2; pts.b = m.pts / 2; } }
+  const started = holesDone.length > 0 || sc.some(s => [...Array(r.holes)].some((_, i) => gross(rid, mid, i + 1, s.key) !== null));
+  const gap = Math.abs(diff);
+  const text = !started ? "Not started" : lead === "h" ? "LEVEL" : (gap + (gap === 1 ? " SHOT" : " SHOTS"));
+  return { r, m, sc, thru, played:holesDone.length, complete, started, aNet, bNet, aToPar:aNet - par, bToPar:bNet - par, diff, lead, pts, text };
+}
+// One player's own round (singles / best ball): gross, net, thru.
+function playerRound(rid, id){
+  const r = ROUND[rid]; if (r.scoring === "scramble") return null;
+  const m = r.matches.find(x => x.a.includes(id) || x.b.includes(id)); if (!m) return null;
+  const s = scorers(r, m).find(x => x.key === id), c = courseOf(r);
+  let g = 0, n = 0, thru = 0, par = 0, birdies = 0, eagles = 0, pars = 0;
+  for (let i = 1; i <= r.holes; i++) { const v = gross(rid, m.id, i, id); if (v === null) continue;
+    thru++; g += v; n += v - (s.holes[i] || 0); par += c.par[i-1];
+    const d = v - c.par[i-1]; if (d <= -2) eagles++; else if (d === -1) birdies++; else if (d === 0) pars++; }
+  return { id, rid, thru, holes:r.holes, complete:thru === r.holes, gross:g, net:n, par, netToPar:n - par, grossToPar:g - par, birdies, eagles, pars, strokes:s.total };
+}
+function rankRound(rid){
+  const r = ROUND[rid], rows = [];
+  r.matches.forEach(m => [...m.a, ...m.b].forEach(id => { const pr = playerRound(rid, id); if (pr) rows.push(pr); }));
+  rows.sort((x, y) => (y.thru - x.thru) || (x.netToPar - y.netToPar));
+  const allDone = rows.length && rows.every(x => x.complete);
+  const table = r.rankPoints || [];
+  // ties share the points of the positions they span
+  const done = rows.filter(x => x.complete).sort((x, y) => x.net - y.net);
+  let i = 0; const ptsBy = {};
+  while (i < done.length) { let j = i; while (j + 1 < done.length && done[j+1].net === done[i].net) j++;
+    let pool = 0; for (let k = i; k <= j; k++) pool += table[k] || 0;
+    for (let k = i; k <= j; k++) { done[k].rank = i + 1; done[k].tied = j > i; ptsBy[done[k].id] = pool / (j - i + 1); } i = j + 1; }
+  const pts = { a:0, b:0 };
+  if (allDone) Object.entries(ptsBy).forEach(([id, v]) => pts[teamOf(id)] += v);
+  return { rows, done, allDone, pts, ptsBy, avail:table.reduce((x, y) => x + y, 0) };
+}
+function roundPoints(rid){
+  const r = ROUND[rid];
+  if (r.points === "rank") { const k = rankRound(rid); return { a:k.pts.a, b:k.pts.b, avail:k.avail, final:k.allDone }; }
+  let a = 0, b = 0, avail = 0, final = true;
+  r.matches.forEach(m => { avail += m.pts; const s = matchState(rid, m.id); a += s.pts.a; b += s.pts.b; if (!s.complete) final = false; });
+  return { a, b, avail, final };
+}
+function roundStatus(rid){
+  const r = ROUND[rid], p = roundPoints(rid); if (p.final) return "final";
+  return r.matches.some(m => matchState(rid, m.id).started) ? "live" : "upcoming";
+}
+function cupTotals(){
+  let a = 0, b = 0, avail = 0, done = 0;
+  CONFIG.rounds.forEach(r => { const p = roundPoints(r.id); a += p.a; b += p.b; avail += p.avail; if (p.final) done += p.avail; });
+  return { a, b, avail, done, toWin: avail / 2 + 0.5, left: avail - done };
+}
+function nextRound(){ return CONFIG.rounds.find(r => roundStatus(r.id) !== "final") || CONFIG.rounds[CONFIG.rounds.length - 1]; }
+function soloStandings(){
+  const rids = CONFIG.solo.rounds.filter(id => ROUND[id]);
+  return CONFIG.players.map(p => {
+    const rounds = rids.map(rid => playerRound(rid, p.id)).filter(Boolean);
+    const played = rounds.filter(x => x.thru > 0);
+    return { id:p.id, rounds, net:played.reduce((s, x) => s + x.netToPar, 0), holes:played.reduce((s, x) => s + x.thru, 0),
+      complete:rounds.length === rids.length && rounds.every(x => x.complete), birdies:played.reduce((s, x) => s + x.birdies, 0), eagles:played.reduce((s, x) => s + x.eagles, 0) };
+  }).filter(x => x.holes > 0).sort((x, y) => (y.holes - x.holes) || (x.net - y.net));
+}
+</script>
+<script>
+/* ═══ RENDER: CUP ═══════════════════════════════════════════ */
+const dayName  = iso => new Date(iso + "T12:00:00").toLocaleDateString(undefined, { weekday:"long", month:"short", day:"numeric" });
+const dayShort = iso => new Date(iso + "T12:00:00").toLocaleDateString(undefined, { weekday:"short", month:"numeric", day:"numeric" });
+const sideNames = ids => ids.map(pshort).map(esc).join("<br>");
+
+function renderCup(){
+  const t = cupTotals(), aPct = t.avail ? t.a / t.avail * 100 : 0, bPct = t.avail ? t.b / t.avail * 100 : 0;
+  const aWon = t.a >= t.toWin, bWon = t.b >= t.toWin, tie = !aWon && !bWon && t.left === 0 && t.a === t.b;
+  const banner = aWon ? `<div class="won-banner">${esc(TA().name)} wins the cup</div>` : bWon ? `<div class="won-banner">${esc(TB().name)} wins the cup</div>` : tie ? `<div class="won-banner">Tied — cup shared</div>` : "";
+  const clinch = (aWon || bWon) ? "" : `<div class="clinch">${esc(TA().short)} needs <b>${fmtPts(Math.max(0, t.toWin - t.a))}</b> &nbsp;·&nbsp; ${esc(TB().short)} needs <b>${fmtPts(Math.max(0, t.toWin - t.b))}</b> &nbsp;·&nbsp; <b>${fmtPts(t.left)}</b> still out there</div>`;
+  $("#v-cup").innerHTML = `
+    <div class="bigscore">
+      <div class="bs-side"><div class="bs-nm a">${esc(TA().name)}</div><div class="bs-pts ${t.a >= t.b ? "a" : "dim"}">${fmtPts(t.a)}</div><div class="bs-cap">${esc(TA().captain || "")}</div></div>
+      <div class="bs-mid">v</div>
+      <div class="bs-side"><div class="bs-nm b">${esc(TB().name)}</div><div class="bs-pts ${t.b >= t.a ? "b" : "dim"}">${fmtPts(t.b)}</div><div class="bs-cap">${esc(TB().captain || "")}</div></div>
+    </div>
+    <div class="track"><div class="track-a" style="width:${aPct}%"></div><div class="track-mid"></div><div class="track-b" style="width:${bPct}%"></div></div>
+    <div class="track-lbl"><span>0</span><span>${fmtPts(t.toWin)} to win</span><span>${fmtPts(t.avail)}</span></div>
+    ${clinch}${banner}
+    <div class="sect"><div class="sect-h">The Rounds</div>${CONFIG.rounds.map(renderRoundBlock).join("")}</div>
+    ${renderSolo()}${renderHonours()}`;
+}
+
+function renderRoundBlock(r){
+  const st = roundStatus(r.id), p = roundPoints(r.id), c = courseOf(r);
+  const badge = st === "live" ? `<span class="pill pill-live"><span class="dot"></span>Live</span>` : st === "final" ? `<span class="pill pill-final">Final</span>` : `<span class="pill pill-next">${esc(r.tee)}</span>`;
+  let body;
+  if (r.points === "rank") {
+    const k = rankRound(r.id);
+    body = k.rows.length ? `<table class="tbl"><thead><tr><th></th><th>Player</th><th class="num">Thru</th><th class="num">Net</th><th class="num">Pts</th></tr></thead><tbody>` +
+      k.rows.map((x, i) => `<tr class="rankrow"><td class="rk ${x.rank === 1 ? "top" : ""}">${x.rank ? (x.tied ? "T" : "") + x.rank : "—"}</td>
+        <td><span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}</td><td class="num muted">${x.complete ? "F" : x.thru}</td>
+        <td class="num" style="font-weight:700">${toPar(x.netToPar)}</td><td class="num muted">${k.ptsBy[x.id] != null ? fmtPts(k.ptsBy[x.id]) : ""}</td></tr>`).join("") + `</tbody></table>`
+      : `<div class="empty" style="padding:1rem">Nobody out yet</div>`;
+  } else {
+    body = r.matches.map(m => {
+      const s = matchState(r.id, m.id), aW = s.complete && s.lead === "a", bW = s.complete && s.lead === "b";
+      const cls = !s.started ? "mt-res pend" : s.lead === "a" ? "mt-res a" : s.lead === "b" ? "mt-res b" : "mt-res h";
+      const sub = s.complete ? (s.lead === "h" ? "Tied" : `${esc(s.lead === "a" ? TA().short : TB().short)} by ${Math.abs(s.diff)}`) : s.text;
+      return `<div class="mt">
+        <div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p ${s.complete ? (aW ? "win" : "lose") : ""}">${sideNames(m.a)}</div>
+          ${s.started ? `<div class="tiny" style="color:var(--a-lt);font-weight:700">${toPar(s.aToPar)}</div>` : ""}</div>
+        <div class="mt-c"><div class="${cls}">${s.started ? (s.complete ? "FINAL" : "thru " + s.thru) : "—"}</div><div class="mt-thru">${s.started ? sub : esc(r.tee)}</div></div>
+        <div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p ${s.complete ? (bW ? "win" : "lose") : ""}">${sideNames(m.b)}</div>
+          ${s.started ? `<div class="tiny" style="color:var(--b-lt);font-weight:700">${toPar(s.bToPar)}</div>` : ""}</div>
+      </div>`;
+    }).join("");
+  }
+  return `<div class="rnd ${st === "upcoming" ? "up" : ""}">
+    <div class="rnd-h"><div class="rnd-h-l"><div class="rnd-fmt">${esc(r.format)}</div>
+      <div class="rnd-meta">${dayShort(r.date)} &bull; ${esc(r.tee)} &bull; ${esc(c.name)} &bull; ${r.holes} holes</div></div>
+      <div class="rnd-pts"><div class="rnd-pts-v"><span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span></div><div class="rnd-pts-l">of ${fmtPts(p.avail)}</div></div></div>
+    <div style="padding:.4rem .8rem .5rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">${r.note}</span><span style="margin-left:auto">${badge}</span></div>
+    ${body}</div>`;
+}
+
+function renderSolo(){
+  const rows = soloStandings(), rids = CONFIG.solo.rounds;
+  const head = `<div class="sect"><div class="sect-h">${esc(CONFIG.solo.name)}</div>
+    <div class="tiny muted" style="margin-bottom:.5rem">Total net to par over ${rids.map(id => ROUND[id]?.format + " " + dayShort(ROUND[id]?.date)).join(", ")}.</div>`;
+  if (!rows.length) return head + `<div class="empty">Standings appear after the first hole is scored</div></div>`;
+  return head + `<div class="card"><table class="tbl"><thead><tr><th></th><th>Player</th>${rids.map(id => `<th class="num">${esc(ROUND[id].format.split(" ")[0])}</th>`).join("")}<th class="num">Holes</th><th class="num">Net</th></tr></thead><tbody>` +
+    rows.map((x, i) => `<tr><td class="rk ${i === 0 ? "top" : ""}">${i + 1}</td><td><span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}</td>
+      ${rids.map(rid => { const pr = x.rounds.find(q => q.rid === rid); return `<td class="num muted">${pr && pr.thru ? toPar(pr.netToPar) + (pr.complete ? "" : "*") : "—"}</td>`; }).join("")}
+      <td class="num muted">${x.holes}</td><td class="num" style="font-weight:700">${toPar(x.net)}</td></tr>`).join("") +
+    `</tbody></table></div><div class="tiny muted" style="margin-top:.35rem;text-align:center">* round in progress</div></div>`;
+}
+
+function playerStats(){
+  const S = {}; CONFIG.players.forEach(p => S[p.id] = { id:p.id, w:0, l:0, h:0, pts:0, birdies:0, eagles:0, lowNet:null, lowGross:null, skins:0, ctp:0, ld:0, cash:0 });
+  CONFIG.rounds.forEach(r => {
+    if (r.points === "match") r.matches.forEach(m => { const s = matchState(r.id, m.id); if (!s.complete) return;
+      m.a.forEach(id => { s.lead === "a" ? S[id].w++ : s.lead === "b" ? S[id].l++ : S[id].h++; S[id].pts += s.pts.a / m.a.length; });
+      m.b.forEach(id => { s.lead === "b" ? S[id].w++ : s.lead === "a" ? S[id].l++ : S[id].h++; S[id].pts += s.pts.b / m.b.length; }); });
+    else { const k = rankRound(r.id); Object.entries(k.ptsBy).forEach(([id, v]) => S[id].pts += v); k.done.forEach(x => { x.rank === 1 ? S[x.id].w++ : S[x.id].l++; }); }
+    if (r.scoring !== "scramble") r.matches.forEach(m => [...m.a, ...m.b].forEach(id => { const pr = playerRound(r.id, id); if (!pr || !pr.thru) return;
+      S[id].birdies += pr.birdies; S[id].eagles += pr.eagles;
+      if (pr.complete && r.holes === 18) { if (S[id].lowNet === null || pr.net < S[id].lowNet) S[id].lowNet = pr.net; if (S[id].lowGross === null || pr.gross < S[id].lowGross) S[id].lowGross = pr.gross; } }));
+    const sk = roundSkins(r.id); Object.entries(sk.byPlayer).forEach(([id, n]) => { if (S[id]) S[id].skins += n; });
+    const sd = CONFIG.side[r.id] || {};
+    (sd.ctp || []).forEach(h => { const w = Store.get(["side", r.id, "ctp", String(h)], null); if (S[w]) S[w].ctp++; });
+    (sd.ld  || []).forEach(h => { const w = Store.get(["side", r.id, "ld",  String(h)], null); if (S[w]) S[w].ld++; });
+  });
+  const { bal } = moneyBook(); Object.keys(S).forEach(id => S[id].cash = bal[id] || 0);
+  return S;
+}
+function renderHonours(){
+  const list = Object.values(playerStats()), side = (CONFIG.tabs || {}).action !== false;
+  if (!list.some(x => x.pts || x.birdies || x.eagles || x.w || x.skins)) return `<div class="sect"><div class="sect-h">Individual Honours</div><div class="empty">Awards appear once rounds finish</div></div>`;
+  const best = (key, label, fmt, min = 1, low = false) => {
+    const ok = list.filter(x => x[key] !== null && (low ? true : x[key] >= min)); if (!ok.length) return "";
+    ok.sort((p, q) => low ? p[key] - q[key] : q[key] - p[key]); const lead = ok.filter(x => x[key] === ok[0][key]);
+    return `<div class="money-row"><div style="min-width:118px;font-family:var(--hd);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.72rem;color:var(--gold)">${label}</div>
+      <div class="money-n" style="font-size:.8rem">${lead.map(x => `<span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}`).join(", ")}</div><div class="money-v" style="font-size:.95rem">${fmt(ok[0][key])}</div></div>`;
+  };
+  const awards = [best("pts", "Top Scorer", v => fmtPts(v) + " pts", 0.01), best("w", "Most Wins", v => v + " W"),
+    best("birdies", "Birdie Machine", v => v), best("eagles", "Eagle", v => v),
+    best("lowNet", "Low Net Round", v => v, 0, true), best("lowGross", "Low Gross Round", v => v, 0, true),
+    side && best("skins", "Skins King", v => v), side && best("ctp", "Dart Thrower", v => v + " CTP"), side && best("ld", "Big Stick", v => v + " LD"), side && best("cash", "Bank", v => "+$" + v.toFixed(0), 0.01)].filter(Boolean).join("");
+  const rows = list.sort((p, q) => q.pts - p.pts || q.w - p.w || q.birdies - p.birdies).map((x, i) => `<tr>
+    <td class="rk ${i === 0 && x.pts > 0 ? "top" : ""}">${i + 1}</td><td><span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}</td>
+    <td class="ctr" style="color:var(--tx2)">${x.w}-${x.l}-${x.h}</td><td class="num" style="font-weight:700">${fmtPts(x.pts)}</td><td class="num muted">${x.birdies || "—"}</td></tr>`).join("");
+  return `<div class="sect"><div class="sect-h">Individual Honours</div><div class="card" style="margin-bottom:.6rem">${awards}</div>
+    <div class="card"><table class="tbl"><thead><tr><th></th><th>Player</th><th class="ctr">W-L-T</th><th class="num">Pts</th><th class="num">Birdies</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="tiny muted" style="margin-top:.4rem;text-align:center">Points from partnered rounds are split between partners.</div></div>`;
+}
+</script>
+<script>
+/* ═══ RENDER: LIVE — groups list + scorecard ════════════════ */
+const UI = { rid:null, mid:null, hole:1, card:false };
+function myMatch(rid){ const r = ROUND[rid]; if (!P[Me.role]) return null; return r.matches.find(m => m.a.includes(Me.role) || m.b.includes(Me.role)) || null; }
+function pickDefaults(){
+  if (!UI.rid || !ROUND[UI.rid]) { UI.rid = nextRound().id; UI.mid = null; }
+  const r = ROUND[UI.rid];
+  if (UI.mid && !r.matches.some(m => m.id === UI.mid)) UI.mid = null;
+}
+function firstOpenHole(rid, mid){
+  const r = ROUND[rid], m = r.matches.find(x => x.id === mid), sc = scorers(r, m);
+  for (let i = 1; i <= r.holes; i++) if (sc.some(s => gross(rid, mid, i, s.key) === null)) return i;
+  return r.holes;
+}
+function openCard(rid, mid){ UI.rid = rid; UI.mid = mid; UI.card = true; UI.hole = firstOpenHole(rid, mid); renderLive(); window.scrollTo({ top:0 }); }
+
+function renderLive(){
+  pickDefaults();
+  if (UI.card && UI.mid) return renderCard();
+  const r = ROUND[UI.rid], c = courseOf(r), t = cupTotals(), mine = myMatch(UI.rid);
+  const chips = CONFIG.rounds.map(x => { const st = roundStatus(x.id);
+    return `<button class="lv-chip ${x.id === UI.rid ? "on" : ""}" data-r="${x.id}">${esc(dayShort(x.date).split(" ")[0])} ${esc(x.format)}${st === "live" ? " ●" : st === "final" ? " ✓" : ""}</button>`; }).join("");
+  const mineHtml = mine ? `<div class="mine"><div class="mine-k">Your ${r.points === "rank" ? "group" : "match"} · ${esc(dayShort(r.date))} ${esc(r.tee)}</div>
+      <div class="mine-t">${esc(r.format)} · ${esc(c.name)}</div>
+      <div class="mine-d">${mine.a.map(pshort).map(esc).join(" & ")} &nbsp;<span class="muted">v</span>&nbsp; ${mine.b.map(pshort).map(esc).join(" & ")}</div>
+      <button class="btn btn-gold btn-full" style="margin-top:.7rem" data-open="${mine.id}">Open scorecard</button></div>`
+    : Me.canScore() ? "" : `<div class="note" style="margin-top:1rem">You're watching. Tap <b>Sign in</b> at the top to open your scorecard.</div>`;
+  const groups = r.matches.map(m => { const s = matchState(r.id, m.id);
+    const status = !s.started ? `<small>${esc(r.tee)}</small>` : s.complete ? `${s.lead === "h" ? "Tied" : `<span class="${s.lead}" style="color:var(--${s.lead}-lt)">${esc(s.lead === "a" ? TA().short : TB().short)} by ${Math.abs(s.diff)}</span>`}<small>Final</small>`
+      : `<span style="color:var(--a-lt)">${toPar(s.aToPar)}</span> <span class="muted">·</span> <span style="color:var(--b-lt)">${toPar(s.bToPar)}</span><small>thru ${s.thru}</small>`;
+    return `<div class="grp" data-open="${m.id}" style="cursor:pointer"><div class="grp-n"><b>${esc(m.label)}</b>${m.a.map(pshort).map(esc).join(" & ")} <span class="muted">v</span> ${m.b.map(pshort).map(esc).join(" & ")}</div>
+      <div class="grp-s">${status}</div><div class="grp-go">›</div></div>`; }).join("");
+  $("#v-live").innerHTML = `
+    <div class="lv-pick" style="margin-top:.6rem">${chips}</div>
+    <div class="tiny muted" style="display:flex;gap:.6rem;justify-content:center;margin:.1rem 0 .3rem">
+      <span style="color:var(--a-lt);font-weight:700">${esc(TA().short)} ${fmtPts(t.a)}</span><span>cup</span><span style="color:var(--b-lt);font-weight:700">${fmtPts(t.b)} ${esc(TB().short)}</span></div>
+    ${mineHtml}
+    <div class="sect"><div class="sect-h">${r.points === "rank" ? "Groups" : "Matches"} · ${esc(r.format)}</div><div class="card">${groups}</div>
+      <div class="tiny muted" style="margin-top:.45rem;text-align:center">${r.note}${Me.canScore() ? " · Tap any group to score it" : ""}</div></div>`;
+}
+
+function scoreClass(g, par){ if (g === null) return "empty"; const d = g - par; return d <= -2 ? "eagle" : d === -1 ? "birdie" : d === 0 ? "" : d === 1 ? "bogey" : "dbl"; }
+function renderCard(){
+  const r = ROUND[UI.rid], m = r.matches.find(x => x.id === UI.mid), c = courseOf(r), sc = scorers(r, m), s = matchState(r.id, m.id);
+  const h = UI.hole = Math.min(Math.max(1, UI.hole), r.holes), par = c.par[h-1], si = c.si[h-1], can = Me.canScore();
+  const rows = sc.map(x => { const g = gross(r.id, m.id, h, x.key), st = x.holes[h] || 0, net = g === null ? null : g - st;
+    return `<div class="srow ${x.side}">
+      <div class="srow-n"><div class="srow-nm">${esc(x.label)}${"<span class='sd'></span>".repeat(st)}</div>
+        <div class="srow-x">${x.total ? x.total + " strokes" : "scratch"}${st ? ` · gets ${st} here` : ""}${net !== null && st ? ` · net ${net}` : ""}</div></div>
+      <button class="stp" data-stp="-1" data-k="${esc(x.key)}" ${can && g !== null && g > 1 ? "" : "disabled"}>−</button>
+      <div class="sval ${scoreClass(g, par)}" data-tap="${esc(x.key)}">${g === null ? "tap" : g}${g === null ? "" : `<small>${g - par === 0 ? "par" : toPar(g - par)}</small>`}</div>
+      <button class="stp" data-stp="1" data-k="${esc(x.key)}" ${can && (g === null || g < 15) ? "" : "disabled"}>+</button></div>`; }).join("");
+  const A = sideNet(r, m, sc, h, "a"), B = sideNet(r, m, sc, h, "b");
+  let hres = "";
+  if (A.complete && B.complete) hres = r.points === "rank" ? `Hole ${h} in the book` : A.net === B.net ? `Hole ${h} <b>halved</b> — net ${A.net} each`
+    : `Hole ${h} to <b style="color:var(--${A.net < B.net ? "a" : "b"}-lt)">${esc(A.net < B.net ? TA().short : TB().short)}</b> — net ${Math.min(A.net, B.net)} v ${Math.max(A.net, B.net)}`;
+  else if (A.any || B.any) hres = `<span class="muted">Waiting on ${sc.filter(x => gross(r.id, m.id, h, x.key) === null).map(x => esc(x.label.split(" ")[0])).join(", ")}</span>`;
+  const who = Store.get(["meta", mkey(r.id, m.id), String(h)], null);
+
+  const grid = () => { const cols = [...Array(r.holes)].map((_, i) => i + 1);
+    const cell = (x, i) => { const g = gross(r.id, m.id, i, x.key); if (g === null) return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}">·</td>`;
+      const d = g - c.par[i-1], cls = d <= -2 ? "u2" : d === -1 ? "u1" : d === 1 ? "o1" : d >= 2 ? "o2" : "";
+      return `<td class="pick ${cls} ${i === h ? "cur" : ""}" data-jump="${i}">${g}${x.holes[i] ? "<sup class='st'>•</sup>" : ""}</td>`; };
+    const tot = x => { let g = 0, n = 0, k = 0; cols.forEach(i => { const v = gross(r.id, m.id, i, x.key); if (v === null) return; k++; g += v; n += v - (x.holes[i] || 0); }); return k ? `<td class="tot">${g}</td><td class="tot">${n}</td>` : `<td class="tot">—</td><td class="tot">—</td>`; };
+    return `<div class="grid"><table><thead><tr><th>Hole</th>${cols.map(i => `<th class="${i === h ? "cur" : ""}">${i}</th>`).join("")}<th>Gr</th><th>Net</th></tr>
+      <tr><th>Par</th>${cols.map(i => `<th>${c.par[i-1]}</th>`).join("")}<th>${c.par.reduce((a, b) => a + b, 0)}</th><th></th></tr></thead><tbody>
+      ${sc.map(x => `<tr><td>${esc(x.side === "a" ? "🔴 " : "🟢 ")}${esc(x.label.length > 12 ? x.label.split(" ")[0] : x.label)}</td>${cols.map(i => cell(x, i)).join("")}${tot(x)}</tr>`).join("")}</tbody></table></div>`; };
+
+  const vsTop = r.points === "rank"
+    ? `<div class="sc-vs">${["a", "b"].map(side => `<div class="sc-side ${side === "b" ? "r" : ""}">${sc.filter(x => x.side === side).map(x => { const pr = playerRound(r.id, x.key); return `<div class="n">${esc(pfirst(x.key))} <b style="color:var(--${side}-lt)">${pr && pr.thru ? toPar(pr.netToPar) : "—"}</b></div>`; }).join("")}</div>`).join(`<div class="sc-mid">net<b>thru ${s.thru}</b></div>`)}</div>`
+    : `<div class="sc-vs"><div class="sc-side"><div class="n">${m.a.map(pfirst).map(esc).join(" & ")}</div><div class="v a">${s.thru ? toPar(s.aToPar) : "—"}</div></div>
+       <div class="sc-mid">${s.complete ? "final" : "thru " + s.thru}<b>${s.thru ? (s.lead === "h" ? "level" : (s.lead === "a" ? TA().short : TB().short) + " by " + Math.abs(s.diff)) : "—"}</b></div>
+       <div class="sc-side r"><div class="n">${m.b.map(pfirst).map(esc).join(" & ")}</div><div class="v b">${s.thru ? toPar(s.bToPar) : "—"}</div></div></div>`;
+
+  $("#v-live").innerHTML = `
+    <div class="sc-top"><div class="row" style="margin-bottom:.35rem"><button class="btn btn-sm" id="cardBack">‹ Groups</button>
+      <span class="tiny muted grow" style="text-align:center">${esc(r.format)} · ${esc(c.name)} · ${esc(m.label)}</span>
+      <button class="btn btn-sm" data-v="cup" id="cardCup">Cup</button></div>${vsTop}</div>
+    <div class="hnav"><button class="hnav-b" data-nav="-1" ${h === 1 ? "disabled" : ""}>‹</button>
+      <div class="hnav-c"><div class="hnav-n"><small>HOLE</small>${h}</div><div class="hnav-i">Par ${par} · SI ${si}</div></div>
+      <button class="hnav-b" data-nav="1" ${h === r.holes ? "disabled" : ""}>›</button></div>
+    ${can ? "" : `<div class="note" style="margin-bottom:.6rem">Read-only — sign in to enter scores.</div>`}
+    ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}
+    ${grid()}
+    <div class="tiny muted" style="text-align:center;margin-top:.6rem">Tap any hole in the card to jump to it · ${sc.some(x => x.total) ? "• = stroke hole" : "no strokes in this group"}</div>
+    ${can && r.points !== "rank" ? "" : ""}`;
+}
+
+let advanceTimer = null;
+function setScore(key, val){
+  if (!Me.canScore()) return;
+  const r = ROUND[UI.rid], m = r.matches.find(x => x.id === UI.mid), sc = scorers(r, m), h = UI.hole;
+  const wasComplete = sc.every(x => gross(r.id, m.id, h, x.key) !== null);
+  Store.set(["gross", mkey(r.id, m.id), String(h), key], val);
+  Store.set(["meta", mkey(r.id, m.id), String(h)], val === null ? null : Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }));
+  if (navigator.vibrate) navigator.vibrate(10);
+  const nowComplete = sc.every(x => gross(r.id, m.id, h, x.key) !== null);
+  clearTimeout(advanceTimer);
+  if (!wasComplete && nowComplete && h < r.holes) advanceTimer = setTimeout(() => { if (UI.card && UI.hole === h) { UI.hole = h + 1; renderLive(); window.scrollTo({ top:0 }); } }, 900);
+}
+</script>
+<script>
+/* ═══ SKINS + SIDE ACTION (hidden until CONFIG.tabs.action is true) ═══ */
+function roundSkins(rid){
+  const r = ROUND[rid]; if (r.scoring === "scramble") return { skins:[], byPlayer:{}, count:0, field:[] };
+  const c = courseOf(r), field = [], strokes = {};
+  r.matches.forEach(m => scorers(r, m).forEach(x => { field.push(x.key); strokes[x.key] = { m:m.id, holes:x.holes }; }));
+  const skins = [], byPlayer = {};
+  for (let i = 1; i <= r.holes; i++) {
+    const nets = field.map(id => { const g = gross(rid, strokes[id].m, i, id); return g === null ? null : { id, net:g - (strokes[id].holes[i] || 0), gross:g }; }).filter(Boolean);
+    if (nets.length < 2) continue;
+    const lo = Math.min(...nets.map(n => n.net)), win = nets.filter(n => n.net === lo);
+    if (win.length === 1) { skins.push({ hole:i, id:win[0].id, net:lo, gross:win[0].gross }); byPlayer[win[0].id] = (byPlayer[win[0].id] || 0) + 1; }
+  }
+  return { skins, byPlayer, count:skins.length, field };
+}
+function renderAct(){
+  const admin = Me.isAdmin();
+  const blocks = CONFIG.rounds.map(r => { const sd = CONFIG.side[r.id] || {}, pot = Number(sd.pot || 0), sk = roundSkins(r.id), per = sk.count ? pot / sk.count : 0, c = courseOf(r);
+    const skinRows = r.scoring === "scramble" ? `<tr><td colspan="4" class="empty" style="padding:1rem">No skins in a scramble</td></tr>` : sk.skins.length ? sk.skins.map(s => `<tr><td class="ctr" style="width:36px;color:var(--tx3);font-weight:700">${s.hole}</td><td><span class="tdot ${teamOf(s.id)}"></span>${esc(pname(s.id))}</td><td class="num muted">${s.gross}${s.net !== s.gross ? " → " + s.net : ""}</td><td class="num" style="color:var(--gold);font-weight:700">$${per.toFixed(0)}</td></tr>`).join("") : `<tr><td colspan="4" class="empty" style="padding:1rem">No skins yet</td></tr>`;
+    const fieldIds = []; r.matches.forEach(m => fieldIds.push(...m.a, ...m.b));
+    const propRow = (label, holes, kind) => (holes || []).map(h => { const win = Store.get(["side", r.id, kind, String(h)], null);
+      return `<div class="money-row"><div style="font-family:var(--hd);font-weight:700;color:var(--gold);min-width:56px;font-size:.8rem;letter-spacing:.06em">${label} ${h}</div>
+        <div class="money-n">${win ? `<span class="tdot ${teamOf(win)}"></span>${esc(pname(win))}` : `<span class="muted tiny">not won yet</span>`}</div>
+        ${admin ? `<select data-prop="${kind}" data-r="${r.id}" data-h="${h}" style="background:var(--bg3);border:1px solid var(--line2);border-radius:6px;color:var(--tx);padding:.25rem;font-size:.75rem;max-width:130px"><option value="">—</option>${fieldIds.map(id => `<option value="${id}" ${id === win ? "selected" : ""}>${esc(pshort(id))}</option>`).join("")}</select>` : ""}</div>`; }).join("");
+    return `<div class="sect"><div class="sect-h">${esc(r.format)} &bull; ${esc(c.name)}</div><div class="card">
+      <div style="padding:.6rem .75rem;background:var(--bg2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">Skins pot</span><span style="font-family:var(--hd);font-weight:700;color:var(--gold)">$${pot}</span><span class="tiny muted" style="margin-left:auto">${sk.count} skin${sk.count === 1 ? "" : "s"}${sk.count ? " &bull; $" + per.toFixed(0) + " each" : ""}</span></div>
+      <table class="tbl"><tbody>${skinRows}</tbody></table></div>
+      ${(sd.ctp?.length || sd.ld?.length) ? `<div class="card">${propRow("CTP", sd.ctp, "ctp")}${propRow("LD", sd.ld, "ld")}</div>` : ""}</div>`; }).join("");
+  $("#v-act").innerHTML = `<div class="note" style="margin-top:1rem"><b>Skins:</b> lowest net on a hole wins it, ties wash (no carryover). Fills in from the scorecards automatically.${admin ? "" : "<br>Sign in as commissioner to record closest-to-pin and long drive."}</div>${blocks}`;
+}
+function moneyBook(){
+  const bal = {}, lines = {}; CONFIG.players.forEach(p => { bal[p.id] = 0; lines[p.id] = []; });
+  const add = (id, amt, why) => { if (bal[id] === undefined) return; bal[id] += amt; lines[id].push({ amt, why }); };
+  if ((CONFIG.tabs || {}).action !== false) CONFIG.rounds.forEach(r => {
+    const sd = CONFIG.side[r.id] || {}, pot = Number(sd.pot || 0), sk = roundSkins(r.id);
+    const fieldIds = []; r.matches.forEach(m => fieldIds.push(...m.a, ...m.b));
+    if (pot && sk.field.length && sk.count) { const buy = pot / sk.field.length; sk.field.forEach(id => add(id, -buy, r.format + " skins buy-in"));
+      const per = pot / sk.count; Object.entries(sk.byPlayer).forEach(([id, n]) => add(id, per * n, `${n} skin${n === 1 ? "" : "s"} — ${r.format}`)); }
+    const prop = (kind, val, label) => (sd[kind] || []).forEach(h => { const w = Store.get(["side", r.id, kind, String(h)], null); if (!w || !val) return;
+      const pool = fieldIds.filter(id => id !== w); pool.forEach(id => add(id, -val / pool.length, `${label} ${h} — ${r.format}`)); add(w, val, `${label} hole ${h} — ${r.format}`); });
+    prop("ctp", Number(sd.ctpVal || 0), "CTP"); prop("ld", Number(sd.ldVal || 0), "LD");
+  });
+  Object.values(Store.get(["cash"], {}) || {}).forEach(v => { if (v && typeof v === "object") add(v.id, Number(v.amt || 0), v.why || "Adjustment"); });
+  return { bal, lines };
+}
+function renderMoney(){
+  const { bal, lines } = moneyBook();
+  const rows = CONFIG.players.slice().sort((x, y) => bal[y.id] - bal[x.id]).map(p => { const v = bal[p.id], cls = Math.abs(v) < 0.005 ? "zero" : v > 0 ? "pos" : "neg", det = lines[p.id].filter(l => Math.abs(l.amt) >= 0.005);
+    return `<details class="card" style="margin-bottom:.4rem"><summary class="money-row" style="list-style:none;cursor:pointer"><span class="tdot ${p.team}"></span><span class="money-n">${esc(p.name)}</span><span class="money-v ${cls}">${v >= 0 ? "+" : "−"}$${Math.abs(v).toFixed(2)}</span></summary>
+      ${det.length ? det.map(l => `<div class="money-row" style="padding-left:1.5rem"><span class="money-n tiny muted">${esc(l.why)}</span><span class="tiny money-v ${l.amt >= 0 ? "pos" : "neg"}" style="font-size:.8rem">${l.amt >= 0 ? "+" : "−"}$${Math.abs(l.amt).toFixed(2)}</span></div>`).join("") : `<div class="money-row"><span class="tiny muted">Nothing yet</span></div>`}</details>`; }).join("");
+  const sum = Object.values(bal).reduce((a, b) => a + b, 0);
+  $("#v-money").innerHTML = `<div class="sect"><div class="sect-h">Settle Up</div><div class="note" style="margin-bottom:.7rem">Green means the trip owes them, red means they owe the trip. Tap a name for the breakdown.</div>${rows}
+    <div class="tiny muted" style="text-align:center;margin-top:.7rem">Book balance ${Math.abs(sum) < 0.01 ? "checks out ✓" : "off by $" + Math.abs(sum).toFixed(2)}</div></div>`;
+}
+
+/* ═══ TRIP: SCHEDULE + WEATHER + ROSTER ═════════════════════ */
+let WX = null, wxBusy = false;
+function tripDates(){ const s = new Set(CONFIG.rounds.map(r => r.date)); Object.keys(CONFIG.schedule || {}).forEach(d => s.add(d)); return [...s].sort(); }
+function parseTee(t){ const m = /(\d+):(\d+)\s*(AM|PM)?/i.exec(t || ""); if (!m) return 9e9; let h = +m[1]; const ap = (m[3] || "").toUpperCase(); if (ap === "PM" && h < 12) h += 12; if (ap === "AM" && h === 12) h = 0; return h * 60 + +m[2]; }
+function wxIcon(c){ if (c === 0) return "☀️"; if (c <= 2) return "🌤️"; if (c === 3) return "☁️"; if (c <= 49) return "🌫️"; if (c <= 59) return "🌦️"; if (c <= 69) return "🌧️"; if (c <= 79) return "🌨️"; if (c <= 84) return "🌧️"; if (c <= 94) return "🌨️"; return "⛈️"; }
+async function loadWeather(){
+  if (WX || wxBusy) return; wxBusy = true;
+  const dates = tripDates(); if ((new Date(dates[0]) - new Date()) / 864e5 > 15) { wxBusy = false; WX = { tooFar:true }; renderTrip(); return; }
+  const spots = {}; CONFIG.rounds.forEach(r => { spots[r.date] = spots[r.date] || courseOf(r); }); WX = {};
+  await Promise.all(dates.map(async d => { const c = spots[d] || Object.values(CONFIG.courses)[0]; if (!c?.lat) return;
+    try { const j = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation_probability,weathercode,windspeed_10m&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=America%2FDetroit&start_date=${d}&end_date=${d}`)).json(); WX[d] = j.hourly; } catch(e){ console.warn("wx", e); } }));
+  wxBusy = false; renderTrip();
+}
+function wxStrip(date){
+  if (!WX) return `<div class="tiny muted">Loading forecast…</div>`; if (WX.tooFar) return `<div class="tiny muted">Forecast unlocks about two weeks out.</div>`;
+  const h = WX[date]; if (!h) return `<div class="tiny muted">No forecast yet.</div>`; const cards = [];
+  for (let i = 7; i <= 19; i += 2) { const t = h.time?.[i]; if (!t) continue; const hr = +t.slice(11, 13), lbl = hr === 12 ? "12p" : hr > 12 ? (hr - 12) + "p" : hr + "a";
+    cards.push(`<div class="wx-c"><div class="wx-h">${lbl}</div><div class="wx-i">${wxIcon(h.weathercode[i])}</div><div class="wx-t">${Math.round(h.temperature_2m[i])}°</div><div class="wx-w">${Math.round(h.windspeed_10m[i])} mph · ${h.precipitation_probability[i]}%</div></div>`); }
+  return `<div class="wx">${cards.join("")}</div>`;
+}
+function renderTrip(){
+  const admin = Me.isAdmin();
+  const days = tripDates().map(d => { const items = (CONFIG.schedule[d] || []).map(x => ({ ...x, _t:parseTee(x.t), kind:"" }));
+    CONFIG.rounds.filter(r => r.date === d).forEach(r => { const c = courseOf(r); items.push({ t:r.tee, i:"⛳", l:r.format + " tee off", d:c.name + " · " + r.holes + " holes · " + c.club, _t:parseTee(r.tee), kind:"tee" }); });
+    items.sort((x, y) => x._t - y._t);
+    return `<div class="day"><div class="day-h"><div class="day-d">${dayName(d)}</div></div>${wxStrip(d)}<div class="card" style="margin-top:.5rem;padding:.2rem .7rem">
+      ${items.map(x => `<div class="slot ${x.kind}"><div class="slot-t">${esc(x.t)}</div><div><div class="slot-l">${x.i || ""} ${esc(x.l)}</div>${x.d ? `<div class="slot-d">${esc(x.d)}</div>` : ""}</div></div>`).join("") || `<div class="empty">Nothing planned yet</div>`}</div></div>`; }).join("");
+  const roster = ["a", "b"].map(t => { const T = CONFIG.teams[t];
+    const rows = CONFIG.players.filter(p => p.team === t).map(p => { const live = liveHcp(p.id), delta = live - p.hcp;
+      return `<tr><td><span class="tdot ${t}"></span>${esc(p.name)}${p.name === T.captain ? ' <span class="pill pill-next" style="font-size:.55rem">C</span>' : ""}</td><td class="num muted">${p.hcp}</td>
+        <td class="num" style="font-weight:700">${admin ? `<input type="number" step="1" value="${live}" data-hcp="${p.id}" style="width:54px;background:var(--bg3);border:1px solid var(--line2);border-radius:5px;color:var(--tx);text-align:right;padding:.2rem .3rem;font-weight:700">` : live}</td>
+        <td class="num tiny" style="color:${delta > 0 ? "var(--a-lt)" : delta < 0 ? "var(--ok)" : "var(--tx3)"}">${delta === 0 ? "—" : (delta > 0 ? "▲" : "▼") + Math.abs(delta)}</td></tr>`; }).join("");
+    return `<div class="card" style="margin-bottom:.6rem"><div style="padding:.55rem .75rem;background:var(--bg2);border-bottom:1px solid var(--line);font-family:var(--hd);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--${t}-lt);font-size:.85rem">${esc(T.name)}${T.captain ? `<span class="tiny muted" style="font-family:var(--bd);letter-spacing:0;text-transform:none;font-weight:500;margin-left:.4rem">Capt. ${esc(T.captain)}</span>` : ""}</div>
+      <table class="tbl"><thead><tr><th>Player</th><th class="num">Start</th><th class="num">Now</th><th class="num">Trend</th></tr></thead><tbody>${rows}</tbody></table></div>`; }).join("");
+  const cards = Object.values(CONFIG.courses).map(c => `<details class="card" style="margin-bottom:.4rem"><summary style="padding:.6rem .75rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem"><span style="font-weight:600">${esc(c.name)}</span><span class="tiny muted">${esc(c.club)}</span><span style="margin-left:auto;font-family:var(--hd);font-weight:700;color:var(--gold)">Par ${c.par.reduce((a, b) => a + b, 0)}</span></summary>
+    <div style="overflow-x:auto"><table class="tbl" style="font-size:.72rem;min-width:520px"><tbody><tr><th>Hole</th>${c.par.map((_, i) => `<th class="ctr">${i + 1}</th>`).join("")}</tr><tr><td class="muted">Par</td>${c.par.map(p => `<td class="ctr">${p}</td>`).join("")}</tr><tr><td class="muted">SI</td>${c.si.map(p => `<td class="ctr muted">${p}</td>`).join("")}</tr></tbody></table></div></details>`).join("");
+  $("#v-trip").innerHTML = `<div class="sect"><div class="sect-h">Schedule</div>${days}</div>
+    <div class="sect"><div class="sect-h">Roster &amp; Handicaps</div><div class="tiny muted" style="margin-bottom:.5rem">Numbers are strokes vs scratch. Scramble teams play off 35% of the low + 15% of the high. 9-hole rounds use half.${admin ? " You can adjust the “Now” column." : ""}</div>${roster}</div>
+    <div class="sect"><div class="sect-h">Courses</div>${cards}</div>
+    ${admin ? `<div class="sect"><div class="sect-h">Commissioner</div><div class="card" style="padding:.75rem">
+      <div class="tiny muted" style="margin-bottom:.6rem">Clearing removes every score entered for that round on every phone. Handicaps and the schedule are untouched. There is no undo.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.6rem">
+        ${CONFIG.rounds.map(r => `<button class="btn btn-sm" data-clear="${r.id}" ${roundStatus(r.id) === "upcoming" ? "disabled" : ""}>Clear ${esc(dayShort(r.date).split(" ")[0])} ${esc(r.format)}</button>`).join("")}
+      </div>
+      <button class="btn btn-full" id="wipeAll" style="border-color:rgba(224,86,80,.5);color:var(--a-lt)">Wipe every score — fresh start</button>
+    </div></div>` : ""}
+    <div class="sect"><div class="sect-h">Tips</div><div class="note">📱 <b>Add to Home Screen</b> (Share → Add to Home Screen on iPhone, ⋮ → Add to Home screen on Android) so this opens full-screen like an app.<br><br>☀︎ Tap the sun at the top for a bright-daylight colour scheme.<br><br>📶 Spotty signal? Keep scoring — entries queue and sync when you're back in range.</div></div>
+    <div class="tiny muted" style="text-align:center;margin:1.5rem 0 0;line-height:1.6">Weather by Open-Meteo · Built for the boys</div>`;
+  if (!WX) loadWeather();
+}
+
+/* ═══ BOOT + EVENTS ═════════════════════════════════════════ */
+let curView = "cup";
+function renderAll(){
+  renderCup();
+  if (curView === "live") renderLive(); if (curView === "act") renderAct(); if (curView === "money") renderMoney(); if (curView === "trip") renderTrip();
+  const w = $("#whoBtn"); w.textContent = Me.role ? Me.label() : "Sign in"; w.className = "strip-u " + (Me.role ? Me.team() : "");
+}
+function showView(v){ curView = v; $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-" + v)); $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.v === v)); renderAll(); window.scrollTo({ top:0 }); }
+function applyTabs(){ const t = CONFIG.tabs || {}; $$(".tab").forEach(b => { const v = b.dataset.v; if ((v === "act" && t.action === false) || (v === "money" && t.money === false)) b.hidden = true; }); }
+function hero(){
+  $("#heroKick").textContent = CONFIG.kicker; $("#heroName").textContent = CONFIG.title; $("#heroSub").textContent = CONFIG.subtitle; document.title = CONFIG.title;
+  const ds = tripDates(), now = new Date(); now.setHours(0, 0, 0, 0);
+  const d0 = new Date(ds[0] + "T00:00:00"), d1 = new Date(ds[ds.length - 1] + "T23:59:59"), n = Math.ceil((d0 - now) / 864e5), cd = $("#heroCd");
+  if (now > d1) { const t = cupTotals(); cd.textContent = t.a === t.b ? "Cup shared" : (t.a > t.b ? TA().name : TB().name) + " · Champions"; }
+  else if (n > 1) cd.textContent = n + " days out"; else if (n === 1) cd.textContent = "Tomorrow"; else cd.innerHTML = `<span class="dot"></span>Game on`;
+}
+function openLogin(){
+  const sel = $("#whoSel"), grp = t => `<optgroup label="${esc(CONFIG.teams[t].name)}">` + CONFIG.players.filter(p => p.team === t).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("") + "</optgroup>";
+  sel.innerHTML = `<option value="">Choose…</option>${grp("a")}${grp("b")}<optgroup label="Officials"><option value="admin">Commissioner</option></optgroup>`;
+  $("#loginErr").classList.remove("show"); $("#pcIn").value = ""; $("#loginOv").classList.add("open");
+  const needs = who => who === "admin" ? CONFIG.adminPin : (P[who]?.pin || null);
+  const showPin = () => { $("#pinFld").hidden = !needs(sel.value); $("#loginGo").textContent = needs(sel.value) ? "Sign in" : "That's me"; };
+  sel.onchange = showPin; sel.value = P[Me.role] ? Me.role : ""; showPin();
+  const err = m => { const e = $("#loginErr"); e.textContent = m; e.classList.add("show"); };
+  const go = () => { const who = sel.value, pc = $("#pcIn").value.trim(); if (!who) return err("Pick your name first.");
+    const want = needs(who); if (want && pc !== String(want)) return err("That code isn't right.");
+    Me.save(who); $("#loginOv").classList.remove("open"); UI.card = false; UI.rid = null; renderAll(); };
+  $("#loginGo").onclick = go; $("#pcIn").onkeydown = e => { if (e.key === "Enter") go(); }; $("#loginX").onclick = () => $("#loginOv").classList.remove("open");
+}
+function setLight(on){ document.documentElement.toggleAttribute("data-light", on); try { localStorage.setItem("cup:light", on ? "1" : ""); } catch(e){} }
+
+document.addEventListener("click", e => {
+  const tab = e.target.closest(".tab,[data-v]"); if (tab && tab.dataset.v) return showView(tab.dataset.v);
+  if (e.target.closest("#sunBtn")) return setLight(!document.documentElement.hasAttribute("data-light"));
+  if (e.target.closest("#whoBtn")) { if (!Me.role) return openLogin(); $("#outNm").textContent = Me.label();
+    $("#outSub").textContent = Me.isAdmin() ? "You can edit everything." : "Playing for " + CONFIG.teams[Me.team()].name + ". You can score any group."; $("#outOv").classList.add("open"); return; }
+  if (e.target.closest("#outSwitch")) { $("#outOv").classList.remove("open"); return openLogin(); }
+  if (e.target.closest("#outGo")) { Me.save(null); $("#outOv").classList.remove("open"); UI.card = false; return renderAll(); }
+  if (e.target.closest("#outX")) return $("#outOv").classList.remove("open");
+  const rc = e.target.closest("[data-r].lv-chip"); if (rc) { UI.rid = rc.dataset.r; UI.mid = null; UI.card = false; return renderLive(); }
+  const op = e.target.closest("[data-open]"); if (op) return openCard(UI.rid, op.dataset.open);
+  if (e.target.closest("#cardBack")) { UI.card = false; renderLive(); return window.scrollTo({ top:0 }); }
+  const nav = e.target.closest("[data-nav]"); if (nav) { UI.hole += +nav.dataset.nav; renderLive(); return window.scrollTo({ top:0 }); }
+  const cl = e.target.closest("[data-clear]"); if (cl && Me.isAdmin()) { const r = ROUND[cl.dataset.clear];
+    if (!confirm(`Clear every score in ${r.format} (${dayShort(r.date)})? This hits every phone and cannot be undone.`)) return;
+    r.matches.forEach(m => { Store.set(["gross", mkey(r.id, m.id)], null); Store.set(["meta", mkey(r.id, m.id)], null); }); Store.set(["side", r.id], null); return; }
+  if (e.target.closest("#wipeAll") && Me.isAdmin()) { const word = prompt("This wipes EVERY score for the whole trip, on every phone. Type RESET to confirm.");
+    if (word !== "RESET") return; ["gross", "meta", "side", "cash"].forEach(k => Store.set([k], null)); UI.card = false; UI.rid = null; alert("Clean slate. Game on."); return; }
+  const jp = e.target.closest("[data-jump]"); if (jp) { UI.hole = +jp.dataset.jump; renderLive(); return window.scrollTo({ top:0 }); }
+  const stp = e.target.closest("[data-stp]"); if (stp) { const cur = gross(UI.rid, UI.mid, UI.hole, stp.dataset.k), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1];
+    return setScore(stp.dataset.k, cur === null ? par + (+stp.dataset.stp > 0 ? 0 : 0) : Math.max(1, Math.min(15, cur + +stp.dataset.stp))); }
+  const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1];
+    if (cur === null) return setScore(tap.dataset.tap, par); if (Me.canScore() && confirm("Clear this score?")) return setScore(tap.dataset.tap, null); }
+});
+document.addEventListener("change", e => {
+  const p = e.target.closest("[data-prop]"); if (p && Me.isAdmin()) return Store.set(["side", p.dataset.r, p.dataset.prop, p.dataset.h], p.value || null);
+  const h = e.target.closest("[data-hcp]"); if (h && Me.isAdmin()) return Store.set(["hcp", h.dataset.hcp], h.value === "" ? null : +h.value);
+});
+// swipe between holes on the scorecard
+let tx0 = null; document.addEventListener("touchstart", e => { tx0 = UI.card && curView === "live" ? e.touches[0].clientX : null; }, { passive:true });
+document.addEventListener("touchend", e => { if (tx0 === null) return; const dx = e.changedTouches[0].clientX - tx0; tx0 = null;
+  if (Math.abs(dx) < 70 || e.target.closest(".grid")) return; const r = ROUND[UI.rid]; UI.hole = Math.min(r.holes, Math.max(1, UI.hole + (dx < 0 ? 1 : -1))); renderLive(); });
+
+try { if (localStorage.getItem("cup:light")) setLight(true); } catch(e){}
+Me.load(); applyTabs(); hero();
+Store.onChange(() => { renderAll(); hero(); });
+Store.init();
+</script>
+</body>
+</html>
