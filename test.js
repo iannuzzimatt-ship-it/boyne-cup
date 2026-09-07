@@ -147,6 +147,8 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
   Store.set(["surv","r1","m1","b"], 2); Store.set(["surv","r1","m2","a"], 17); const S2 = playerStats();
   eq([S2.b1.svLost, S2.b1.earliest, S2.a1.svKept, S2.a1.svPts, S2.a3.heart, S2.b3.reckless], [1, 2, 1, 0.5, 1, 0], "E12b survivor accolades: early exit hole 2, kept +0.5, heartbreaker on 17, no reckless (b3 kept & won)");
   eq(S2.a3.reckless, 0, "E12c a3 lost ball and lost match → not reckless"); Store.set(["surv","r1","m2","b"], 9); eq(playerStats().b3.reckless, 1, "E12d b3 won 11&2 but lost ball on 9 → reckless winner");
+  Store.set(["surv","r1","m1","b"], { hole:5, by:"b2" }); const S3 = playerStats(); eq([S3.b2.svLost, S3.b2.earliest, S3.b1.svLost, S3.b1.svKept], [1, 5, 0, 0], "E12e loss with a named player: only the loser is charged; partner neither lost nor kept");
+  eq(survLoss("r1","m1","b"), { hole:5, by:"b2" }, "E12f loss record keeps hole and who");
   // render smoke tests (no exceptions)
   let okRender = true; try { renderCup(); renderHonours(); renderFormat(); UI.rid = "r1"; UI.mid = "m1"; UI.card = false; renderLive(); UI.card = true; UI.hole = 5; renderLive(); renderField(r1, "m1"); Me.save("admin"); UI.editPairs = true; renderLive(); } catch(e){ okRender = false; console.error(e); }
   ok(okRender, "E13 all renderers run without throwing"); Me.save(null); UI.editPairs = false;
