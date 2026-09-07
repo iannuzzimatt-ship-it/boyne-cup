@@ -915,7 +915,7 @@ function renderTiles(){
       <div class="tile-d">${esc(dayShort(r.date).split(",")[0])} ${parseTee(r.tee) < 720 ? "AM" : "PM"}</div>
       <div class="tile-f">${esc(r.format.split(" ·")[0])}</div>
       <div class="tile-s">${st === "upcoming" ? `<span class="muted" style="font-size:.8rem">${esc(r.tee)}</span>` : `<span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span>`}</div>
-      <div class="tile-b ${st}">${st === "live" ? "● live" : st === "final" ? "final" : esc(courseOf(r).name.split(" ")[0])}</div></div>`; }).join("")}</div>`;
+      <div class="tile-b ${st}">${st === "live" ? "● live" : st === "final" ? "final" : esc(courseOf(r).name.replace(/^The /, "").replace(/ Memorial$/, "").split(/ [\/·] /)[0].split(" ")[0])}</div></div>`; }).join("")}</div>`;
 }
 function renderRoundBlock(r){
   const st = roundStatus(r.id), p = roundPoints(r.id), c = courseOf(r), admin = Me.isAdmin(), sp = Number(CONFIG.survivorPts || 0);
