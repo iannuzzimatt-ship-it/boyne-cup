@@ -152,6 +152,43 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
   O("r1","m1",3,"b"); eq(matchState("r1","m1").closed, false, "F4 commissioner amendment reopens the match (8-1 thru 10, 8 left)"); Me.save("a1"); eq(canEdit("r1","m1"), true, "F5 …and players can score again");
   reset(); }
 
+
+/* ── H. EVERY PAIRING PERMUTATION vs AN INDEPENDENT ORACLE ── */
+// Oracle: rules re-implemented from scratch, straight from the group's notes. Shares no code with the app.
+{ const HCP = Object.fromEntries(CONFIG.players.map(p => [p.id, p.hcp]));
+  const oracleStrokes = (ids, si, holes, halve) => { const low = Math.min(...ids.map(i => HCP[i])); const out = {};
+    ids.forEach(id => { const n = Math.round((HCP[id] - low) * (halve ? 0.5 : 1)); const per = {}; for (let h = 1; h <= holes; h++) { const rank = si[h-1]; per[h] = (n >= rank ? 1 : 0) + (n >= rank + holes ? 1 : 0); } out[id] = { n, per }; }); return out; };
+  const oracleHole = (fmt, aIds, bIds, grossOf, strokes, h) => { const nets = ids => ids.map(id => grossOf(id) - strokes[id].per[h]).sort((x, y) => x - y);
+    const A = nets(aIds), B = nets(bIds); if (A[0] !== B[0]) return A[0] < B[0] ? "a" : "b"; if (fmt === "bestball2" && A[1] !== undefined && A[1] !== B[1]) return A[1] < B[1] ? "a" : "b"; return "h"; };
+  const pairs = ids => { const out = []; for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) out.push([ids[i], ids[j]]); return out; };
+  const A = CONFIG.players.filter(p => p.team === "a").map(p => p.id), B = CONFIG.players.filter(p => p.team === "b").map(p => p.id);
+  let seed = 7; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  let combos = 0, holesChecked = 0, strokeMismatch = 0, holeMismatch = 0, dblStroke = 0;
+  for (const rid of ["r1","r4","r3"]) { const r = ROUND[rid], c = courseOf(r), single = r.scoring === "singles";
+    const sidesA = single ? A.map(x => [x]) : pairs(A), sidesB = single ? B.map(x => [x]) : pairs(B);
+    for (const sa of sidesA) for (const sb of sidesB) { combos++; reset(); Store.set(["pair", rid, "m1"], { a:sa, b:sb }); const m = matchOf(rid, "m1"), sc = scorers(r, m);
+      const ora = oracleStrokes([...sa, ...sb], c.si, r.holes, r.holes <= 9);
+      for (const x of sc) { const o = ora[x.key]; if (o.n !== x.total) strokeMismatch++; for (let h = 1; h <= r.holes; h++) if ((x.holes[h] || 0) !== o.per[h]) strokeMismatch++; if (Object.values(x.holes).some(v => v > 1)) dblStroke++; }
+      // random gross scores on 6 random holes, compare hole results
+      for (let k = 0; k < 6; k++) { const h = 1 + Math.floor(rnd() * r.holes), p = c.par[h-1], g = {}; [...sa, ...sb].forEach(id => g[id] = p + Math.floor(rnd() * 5) - 1); play(rid, "m1", h, g);
+        const want = oracleHole(r.scoring, sa, sb, id => g[id], ora, h), got = holeResult(r, m, sc, h)?.res; if (want !== got) { holeMismatch++; if (holeMismatch <= 3) console.log("hole mismatch", { rid, sa, sb, h, g, want, got }); } holesChecked++; } } }
+  eq(strokeMismatch, 0, "H1 strokes match the oracle for every pairing (" + combos + " combinations)"); eq(holeMismatch, 0, "H2 hole results match the oracle (" + holesChecked + " holes across " + combos + " pairings)");
+  const maxGap = Math.max(...Object.values(HCP)) - Math.min(...Object.values(HCP));
+  ok(maxGap <= 18 ? dblStroke === 0 : dblStroke > 0, "H3 2-stroke holes appear only if the biggest handicap gap exceeds 18 (this roster: gap " + maxGap + ")", { dblStroke, maxGap });
+  // every full-round arrangement: 3 disjoint A pairs v 3 disjoint B pairs, in every order → 15 × 15 × 6 = 1350 arrangements
+  const perfect = ids => { const [x, ...rest] = ids; if (!rest.length) return [[]]; const out = []; for (let i = 0; i < rest.length; i++) { const y = rest[i], others = rest.filter((_, j) => j !== i); perfect(others).forEach(pm => out.push([[x, y], ...pm])); } return out; };
+  const permute = a => a.length <= 1 ? [a] : a.flatMap((x, i) => permute([...a.slice(0, i), ...a.slice(i + 1)]).map(p => [x, ...p]));
+  let arrangements = 0, badRound = 0; const pa = perfect(A), pb = perfect(B);
+  for (const xa of pa) for (const xb of pb) for (const order of permute([0, 1, 2])) { arrangements++; reset();
+    ROUND.r1.matches.forEach((m, i) => Store.set(["pair","r1",m.id], { a:xa[i], b:xb[order[i]] }));
+    const ms = matchesOf(ROUND.r1), seen = new Set(); ms.forEach(m => [...m.a, ...m.b].forEach(id => seen.add(id)));
+    if (seen.size !== 12 || !ms.every(isSet)) { badRound++; continue; }
+    // each match: A wins holes 1-10; expect round 6-0 final, every A player 1 pt, every B player 0
+    ms.forEach(m => winHoles("r1", m.id, "a", 1, 10)); const p = roundPoints("r1"); const S = playerStats();
+    if (!(p.a === 6 && p.b === 0 && p.final && A.every(id => S[id].pts === 1 && S[id].w === 1) && B.every(id => S[id].pts === 0 && S[id].l === 1))) badRound++; }
+  eq(badRound, 0, "H4 every full-round arrangement (" + arrangements + ") pairs all 12 exactly once and scores 6–0 correctly");
+  reset(); }
+
 /* ── G. FUZZ ────────────────────────────────────────────────── */
 { let seed = 42; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
   let bad = 0, closedCount = 0, halvedCount = 0; const N = 1500;
