@@ -113,12 +113,16 @@ summary::-webkit-details-marker{display:none}
 .bs-mid{font-family:var(--hd);font-size:1.05rem;color:var(--tx3);font-weight:600}
 @media(max-width:400px){.bs-pts{font-size:3.1rem}.bs-nm{font-size:.72rem}}
 
-.track{height:9px;border-radius:99px;background:var(--bg3);overflow:hidden;
-  display:flex;position:relative;border:1px solid var(--line)}
-.track-a{background:linear-gradient(90deg,var(--a-dk),var(--a));transition:width .5s cubic-bezier(.4,0,.2,1)}
-.track-b{background:linear-gradient(90deg,var(--b),var(--b-dk));transition:width .5s cubic-bezier(.4,0,.2,1);margin-left:auto}
-.track-mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;
-  background:var(--gold);transform:translateX(-50%);z-index:2;border-radius:2px}
+.track{height:54px;border-radius:14px;background:var(--bg3);overflow:hidden;
+  display:flex;position:relative;border:1px solid var(--line2);margin-top:.4rem}
+.track-a{background:linear-gradient(90deg,var(--a-dk),var(--a));transition:width .6s cubic-bezier(.4,0,.2,1);height:100%}
+.track-b{background:linear-gradient(90deg,var(--b),var(--b-dk));transition:width .6s cubic-bezier(.4,0,.2,1);margin-left:auto;height:100%}
+.track-mid{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--gold);transform:translateX(-50%);z-index:2;opacity:.9}
+.track-mid::after{content:attr(data-l);position:absolute;top:-1.15rem;left:50%;transform:translateX(-50%);font-family:var(--hd);font-size:.62rem;font-weight:700;letter-spacing:.12em;color:var(--gold);white-space:nowrap}
+.track-n{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-family:var(--hd);font-weight:700;font-size:1.9rem;line-height:1;z-index:3;padding:0 .8rem;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.track-n.a{left:0;color:#fff} .track-n.b{right:0;color:#fff}
+.track-n.a.off{color:var(--a-lt);text-shadow:none} .track-n.b.off{color:var(--b-lt);text-shadow:none}
+.track-wrap{padding-top:1.2rem}
 .track-lbl{display:flex;justify-content:space-between;margin-top:.4rem;
   font-size:.66rem;color:var(--tx3);letter-spacing:.05em}
 .clinch{text-align:center;margin-top:.7rem;font-family:var(--hd);font-size:.76rem;
@@ -751,14 +755,16 @@ function renderCup(){
   const banner = t.aWon ? `<div class="won-banner">${esc(TA().name)} wins the cup</div>` : t.bWon ? `<div class="won-banner">${esc(TB().name)} wins the cup</div>` : (t.done && t.a === t.b) ? `<div class="won-banner">Tied — cup shared</div>` : "";
   const need = (n, can) => can ? `needs <b>${fmtPts(n)}</b> to clinch` : `<span class="muted">can't clinch yet</span>`;
   const clinch = (t.aWon || t.bWon || t.done) ? "" : `<div class="clinch">${esc(TA().short)} ${need(t.aNeeds, t.aCan)} &nbsp;·&nbsp; ${esc(TB().short)} ${need(t.bNeeds, t.bCan)} &nbsp;·&nbsp; <b>${fmtPts(t.matchLeft)}</b> match pts left</div>`;
+  const toWin = t.avail / 2 + 0.5;
   $("#v-cup").innerHTML = `
-    <div class="bigscore">
-      <div class="bs-side"><div class="bs-nm a">${esc(TA().name)}</div><div class="bs-pts ${t.a >= t.b ? "a" : "dim"}">${fmtPts(t.a)}</div><div class="bs-cap">${esc(TA().captain || "")}</div></div>
+    <div class="bigscore" style="padding-bottom:0">
+      <div class="bs-side"><div class="bs-nm a">${esc(TA().name)}</div><div class="bs-cap">${esc(TA().captain || "")}</div></div>
       <div class="bs-mid">v</div>
-      <div class="bs-side"><div class="bs-nm b">${esc(TB().name)}</div><div class="bs-pts ${t.b >= t.a ? "b" : "dim"}">${fmtPts(t.b)}</div><div class="bs-cap">${esc(TB().captain || "")}</div></div>
+      <div class="bs-side"><div class="bs-nm b">${esc(TB().name)}</div><div class="bs-cap">${esc(TB().captain || "")}</div></div>
     </div>
-    <div class="track"><div class="track-a" style="width:${aPct}%"></div><div class="track-mid"></div><div class="track-b" style="width:${bPct}%"></div></div>
-    <div class="track-lbl"><span>0</span><span>${fmtPts(t.avail)} match pts + survivor bonuses</span><span>${fmtPts(t.avail)}</span></div>
+    <div class="track-wrap"><div class="track"><div class="track-a" style="width:${aPct}%"></div><div class="track-mid" data-l="${fmtPts(toWin)} clinches"></div><div class="track-b" style="width:${bPct}%"></div>
+      <div class="track-n a ${aPct < 14 ? "off" : ""}">${fmtPts(t.a)}</div><div class="track-n b ${bPct < 14 ? "off" : ""}">${fmtPts(t.b)}</div></div></div>
+    <div class="track-lbl"><span>0</span><span>${fmtPts(t.avail)} match points + survivor bonuses</span><span>${fmtPts(t.avail)}</span></div>
     ${clinch}${banner}
     ${renderFormat()}
     <div class="sect"><div class="sect-h">The Rounds</div>${CONFIG.rounds.map(renderRoundBlock).join("")}</div>
@@ -798,14 +804,17 @@ function renderRoundBlock(r){
   const body = matchesOf(r).map(m => { if (!isSet(m)) return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p">${names(m.a)}</div></div><div class="mt-c"><div class="mt-res pend">—</div><div class="mt-thru">pairings TBD</div></div><div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p">${names(m.b)}</div></div></div>`;
     const s = matchState(r.id, m.id), aW = s.closed && s.lead === "a", bW = s.closed && s.lead === "b";
     const cls = !s.started ? "mt-res pend" : s.lead === "a" ? "mt-res a" : s.lead === "b" ? "mt-res b" : "mt-res h";
-    return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p ${s.closed ? (aW ? "win" : "lose") : ""}">${names(m.a)}</div></div>
-      <div class="mt-c"><div class="${cls}">${esc(s.short)}</div><div class="mt-thru">${s.closed ? "Final" : s.started ? "thru " + s.thru + (s.stack ? " · " + s.stack + " carried" : "") : esc(r.tee)}</div></div>
+    const main = !s.started ? "—" : s.closed ? (s.lead === "h" ? "Halved" : TS(s.lead) + " wins") : (s.lead === "h" ? "All square" : TS(s.lead) + " " + s.short);
+    const sub = !s.started ? esc(r.tee) : s.closed ? (s.lead === "h" ? "1 pt each" : esc(s.short) + " · " + m.pts + " pts") : "thru " + s.thru + (s.stack ? " · " + s.stack + " carried" : "");
+    return `<div class="mt" data-go="${r.id}:${m.id}" style="cursor:pointer"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p ${s.closed ? (aW ? "win" : "lose") : ""}">${names(m.a)}</div></div>
+      <div class="mt-c"><div class="${cls}" style="font-size:.8rem">${main}</div><div class="mt-thru">${sub}</div></div>
       <div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p ${s.closed ? (bW ? "win" : "lose") : ""}">${names(m.b)}</div></div></div>`; }).join("");
   const survHtml = survRow(r.id, false);
   return `<div class="rnd ${st === "upcoming" ? "up" : ""}"><div class="rnd-h"><div class="rnd-h-l"><div class="rnd-fmt">${esc(r.format)}</div>
       <div class="rnd-meta">${dayShort(r.date)} &bull; ${esc(r.tee)} &bull; ${esc(c.name)} &bull; ${r.holes} holes</div></div>
       <div class="rnd-pts"><div class="rnd-pts-v"><span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span></div><div class="rnd-pts-l">of ${fmtPts(p.avail)}${sp ? " +" + sp : ""}</div></div></div>
-    <div style="padding:.4rem .8rem .5rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">${r.note}</span><span style="margin-left:auto">${badge}</span></div>${body}${survHtml}</div>`;
+    <div style="padding:.4rem .8rem .5rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">${r.note}</span><span style="margin-left:auto">${badge}</span></div>${body}${survHtml}
+    <div class="tiny muted" style="text-align:center;padding:.35rem;border-top:1px solid var(--line)">Tap a match to open its scorecard</div></div>`;
 }
 function renderSolo(){
   const rows = soloStandings(), rids = CONFIG.solo.rounds.filter(id => ROUND[id]);
@@ -973,15 +982,17 @@ async function loadWeather(){
   if ((new Date(dates[0]) - new Date()) / 864e5 > 15) { wxBusy = false; WX = { tooFar:true }; renderTrip(); return; }
   const spots = {}; CONFIG.rounds.forEach(r => { spots[r.date] = spots[r.date] || courseOf(r); }); WX = {};
   await Promise.all(dates.map(async d => { const c = spots[d] || Object.values(CONFIG.courses)[0]; if (!c?.lat) return;
-    try { const j = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation_probability,weathercode,windspeed_10m&temperature_unit=celsius&windspeed_unit=kmh&timezone=America%2FDetroit&start_date=${d}&end_date=${d}`)).json(); WX[d] = j.hourly; } catch(e){ console.warn("wx", e); } }));
+    WX[d + ":where"] = c.club || c.name; try { const j = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation_probability,precipitation,weathercode,windspeed_10m&temperature_unit=celsius&windspeed_unit=kmh&timezone=America%2FDetroit&start_date=${d}&end_date=${d}`)).json(); WX[d] = j.hourly; } catch(e){ console.warn("wx", e); } }));
   wxBusy = false; renderTrip();
 }
 function wxStrip(date){
   if (!WX) return `<div class="tiny muted">Loading forecast…</div>`; if (WX.tooFar) return `<div class="tiny muted">Forecast unlocks about two weeks out.</div>`;
   const h = WX[date]; if (!h) return `<div class="tiny muted">No forecast yet.</div>`; const cards = [];
   for (let i = 7; i <= 19; i += 2) { const t = h.time?.[i]; if (!t) continue; const hr = +t.slice(11, 13), lbl = hr === 12 ? "12p" : hr > 12 ? (hr - 12) + "p" : hr + "a";
-    cards.push(`<div class="wx-c"><div class="wx-h">${lbl}</div><div class="wx-i">${wxIcon(h.weathercode[i])}</div><div class="wx-t">${Math.round(h.temperature_2m[i])}°</div><div class="wx-w">${Math.round(h.windspeed_10m[i])} km/h · ${h.precipitation_probability[i]}%</div></div>`); }
-  return `<div class="wx">${cards.join("")}</div>`;
+    const mm = h.precipitation?.[i] || 0, pp = h.precipitation_probability[i];
+    cards.push(`<div class="wx-c"><div class="wx-h">${lbl}</div><div class="wx-i">${wxIcon(h.weathercode[i])}</div><div class="wx-t">${Math.round(h.temperature_2m[i])}°</div>
+      <div class="wx-w">💨 ${Math.round(h.windspeed_10m[i])} km/h</div><div class="wx-w" style="color:${pp >= 50 ? "var(--a-lt)" : pp >= 25 ? "var(--gold)" : "var(--tx2)"}">☔ ${pp}%${mm >= 0.1 ? " · " + (mm < 1 ? mm.toFixed(1) : Math.round(mm)) + " mm" : ""}</div></div>`); }
+  return `<div class="tiny muted" style="margin-bottom:.3rem">Forecast at ${esc(WX[date + ":where"] || "the course")} · °C · wind · chance of rain (mm if any)</div><div class="wx">${cards.join("")}</div>`;
 }
 function renderTrip(){
   const admin = Me.isAdmin();
@@ -1053,6 +1064,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("#outX")) return $("#outOv").classList.remove("open");
   const rc = e.target.closest("[data-r].lv-chip"); if (rc) { UI.rid = rc.dataset.r; UI.mid = null; UI.card = false; UI.editPairs = false; return renderLive(); }
   if (e.target.closest("#editPairs")) { UI.editPairs = !UI.editPairs; return renderLive(); }
+  const go = e.target.closest("[data-go]"); if (go) { const [rid, mid] = go.dataset.go.split(":"); if (!isSet(matchOf(rid, mid))) return; curView = "live"; $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-live")); $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.v === "live")); return openCard(rid, mid); }
   const op = e.target.closest("[data-open]"); if (op) return openCard(UI.rid, op.dataset.open);
   if (e.target.closest("#cardBack")) { UI.card = false; renderLive(); return window.scrollTo({ top:0 }); }
   const nav = e.target.closest("[data-nav]"); if (nav) { UI.hole += +nav.dataset.nav; renderLive(); return window.scrollTo({ top:0 }); }
