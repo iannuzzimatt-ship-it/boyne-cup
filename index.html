@@ -118,11 +118,11 @@ summary::-webkit-details-marker{display:none}
 .track-a{background:linear-gradient(90deg,var(--a-dk),var(--a));transition:width .6s cubic-bezier(.4,0,.2,1);height:100%}
 .track-b{background:linear-gradient(90deg,var(--b),var(--b-dk));transition:width .6s cubic-bezier(.4,0,.2,1);margin-left:auto;height:100%}
 .track-mid{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--gold);transform:translateX(-50%);z-index:2;opacity:.9}
-.track-mid::after{content:attr(data-l);position:absolute;top:-1.15rem;left:50%;transform:translateX(-50%);font-family:var(--hd);font-size:.62rem;font-weight:700;letter-spacing:.12em;color:var(--gold);white-space:nowrap}
 .track-n{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-family:var(--hd);font-weight:700;font-size:1.9rem;line-height:1;z-index:3;padding:0 .8rem;text-shadow:0 1px 3px rgba(0,0,0,.45)}
 .track-n.a{left:0;color:#fff} .track-n.b{right:0;color:#fff}
 .track-n.a.off{color:var(--a-lt);text-shadow:none} .track-n.b.off{color:var(--b-lt);text-shadow:none}
-.track-wrap{padding-top:1.2rem}
+.track-wrap{position:relative;padding-top:1.1rem}
+.track-cl{position:absolute;top:0;left:50%;transform:translateX(-50%);font-family:var(--hd);font-size:.62rem;font-weight:700;letter-spacing:.12em;color:var(--gold);white-space:nowrap;text-transform:uppercase}
 .track-lbl{display:flex;justify-content:space-between;margin-top:.4rem;
   font-size:.66rem;color:var(--tx3);letter-spacing:.05em}
 .clinch{text-align:center;margin-top:.7rem;font-family:var(--hd);font-size:.76rem;
@@ -762,7 +762,7 @@ function renderCup(){
       <div class="bs-mid">v</div>
       <div class="bs-side"><div class="bs-nm b">${esc(TB().name)}</div><div class="bs-cap">${esc(TB().captain || "")}</div></div>
     </div>
-    <div class="track-wrap"><div class="track"><div class="track-a" style="width:${aPct}%"></div><div class="track-mid" data-l="${fmtPts(toWin)} clinches"></div><div class="track-b" style="width:${bPct}%"></div>
+    <div class="track-wrap"><div class="track-cl">▼ ${fmtPts(toWin)} clinches</div><div class="track"><div class="track-a" style="width:${aPct}%"></div><div class="track-mid"></div><div class="track-b" style="width:${bPct}%"></div>
       <div class="track-n a ${aPct < 14 ? "off" : ""}">${fmtPts(t.a)}</div><div class="track-n b ${bPct < 14 ? "off" : ""}">${fmtPts(t.b)}</div></div></div>
     <div class="track-lbl"><span>0</span><span>${fmtPts(t.avail)} match points + survivor bonuses</span><span>${fmtPts(t.avail)}</span></div>
     ${clinch}${banner}
