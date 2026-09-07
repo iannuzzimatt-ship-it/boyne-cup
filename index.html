@@ -875,7 +875,7 @@ function renderRoundBlock(r){
   const st = roundStatus(r.id), p = roundPoints(r.id), c = courseOf(r), admin = Me.isAdmin(), sp = Number(CONFIG.survivorPts || 0);
   const badge = st === "live" ? `<span class="pill pill-live"><span class="dot"></span>Live</span>` : st === "final" ? `<span class="pill pill-final">Final</span>` : st === "awaiting" ? `<span class="pill pill-next">Survivor? ${p.pendA + p.pendB} to report</span>` : `<span class="pill pill-next">${esc(r.tee)}</span>`;
   const survMark = (m, side) => { if (!survApplies(r) || !isSet(m)) return ""; const st = survState(r.id, m.id, side); const s2 = matchState(r.id, m.id);
-    return st === true ? `<span class="pill" style="background:rgba(216,169,74,.15);color:var(--gold);border:1px solid rgba(216,169,74,.35);font-size:.58rem;padding:.1rem .35rem" title="kept the survivor ball"><b>+${String(CONFIG.survivorPts).replace(/^0/, "")}</b> kept ball</span>` : st === false ? `<span class="pill" style="background:rgba(184,51,47,.12);color:var(--a-lt);border:1px solid rgba(224,86,80,.3);font-size:.58rem;padding:.1rem .35rem" title="lost the survivor ball"><b>✕</b> lost ball</span>` : s2.closed ? `<span class="pill pill-next" style="font-size:.58rem;padding:.1rem .35rem" title="survivor ball not reported yet">? survivor</span>` : ""; };
+    return st === true ? `<span class="pill" style="background:rgba(63,174,114,.12);color:var(--gold);border:1px solid var(--ok);font-size:.58rem;padding:.1rem .35rem" title="kept the survivor ball"><b>+${String(CONFIG.survivorPts).replace(/^0/, "")}</b> kept ball</span>` : st === false ? `<span class="pill" style="background:rgba(184,51,47,.12);color:var(--a-lt);border:1px solid rgba(224,86,80,.3);font-size:.58rem;padding:.1rem .35rem" title="lost the survivor ball"><b>✕</b> lost ball</span>` : s2.closed ? `<span class="pill pill-next" style="font-size:.58rem;padding:.1rem .35rem" title="survivor ball not reported yet">? survivor</span>` : ""; };
   const body = matchesOf(r).map(m => { if (!isSet(m)) return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p">${names(m.a)}</div></div><div class="mt-c"><div class="mt-res pend">—</div><div class="mt-thru">pairings TBD</div></div><div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p">${names(m.b)}</div></div></div>`;
     const s = matchState(r.id, m.id), aW = s.closed && s.lead === "a", bW = s.closed && s.lead === "b";
     const cls = !s.started ? "mt-res pend" : s.lead === "a" ? "mt-res a" : s.lead === "b" ? "mt-res b" : "mt-res h";
@@ -885,9 +885,9 @@ function renderRoundBlock(r){
       <div class="mt-c"><div class="${cls}" style="font-size:.8rem">${main}</div><div class="mt-thru">${sub}</div></div>
       <div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p ${s.closed ? (bW ? "win" : "lose") : ""}">${names(m.b)}</div><div style="margin-top:.15rem">${survMark(m, "b")}</div></div></div>`; }).join("");
   return `<div class="rnd ${st === "upcoming" ? "up" : ""}"><div class="rnd-h"><div class="rnd-h-l"><div class="rnd-fmt">${esc(r.format)}</div>
-      <div class="rnd-meta">${dayShort(r.date)} &bull; ${esc(r.tee)} &bull; ${esc(c.name)} &bull; ${r.holes} holes</div></div>
+      <div class="rnd-meta">${dayShort(r.date)} &bull; ${esc(r.tee)} &bull; ${esc(c.name)} &bull; ${r.holes} holes</div><div style="margin-top:.3rem">${badge}</div></div>
       <div class="rnd-pts"><div class="rnd-pts-v"><span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span></div><div class="rnd-pts-l">of ${fmtPts(p.avail)}${sp ? " + survivor" : ""}</div></div></div>
-    <div style="padding:.4rem .8rem .5rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">${r.note}</span><span style="margin-left:auto">${badge}</span></div>${body}
+${body}
     <div class="tiny muted" style="text-align:center;padding:.35rem;border-top:1px solid var(--line)">Tap a match to open its scorecard</div></div>`;
 }
 function renderSolo(){
