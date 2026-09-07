@@ -64,6 +64,37 @@ a{color:var(--gold)}
 .tab.on{color:var(--gold)}
 .tab[hidden]{display:none}
 .blur{filter:blur(5px);user-select:none;-webkit-user-select:none;opacity:.8}
+/* round tiles */
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-bottom:.6rem}
+@media(max-width:420px){.tiles{grid-template-columns:repeat(5,minmax(64px,1fr));gap:.3rem}}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.45rem .3rem .4rem;text-align:center;cursor:pointer;position:relative;overflow:hidden;min-width:0}
+.tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line2)}
+.tile.lead-a::before{background:var(--a)} .tile.lead-b::before{background:var(--b)}
+.tile.on{border-color:var(--gold);background:var(--card2)}
+.tile-d{font-family:var(--hd);font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)}
+.tile-f{font-size:.6rem;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.05rem}
+.tile-s{font-family:var(--hd);font-size:1.05rem;font-weight:700;margin-top:.15rem;line-height:1}
+.tile-s .a{color:var(--a-lt)} .tile-s .b{color:var(--b-lt)} .tile-s .s{color:var(--tx3);margin:0 .1rem;font-size:.8rem}
+.tile-b{margin-top:.2rem;font-family:var(--hd);font-size:.55rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)}
+.tile-b.live{color:var(--a-lt)} .tile-b.final{color:var(--tx2)}
+/* live strip */
+.lnow{display:flex;gap:.45rem;overflow-x:auto;padding:.2rem 0 .4rem;scrollbar-width:none}
+.lnow::-webkit-scrollbar{display:none}
+.lnow-c{flex:0 0 auto;min-width:150px;max-width:190px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.5rem .6rem;cursor:pointer}
+.lnow-h{font-family:var(--hd);font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)}
+.lnow-n{font-size:.7rem;color:var(--tx2);line-height:1.3;margin:.15rem 0}
+.lnow-s{font-family:var(--hd);font-size:.95rem;font-weight:700;line-height:1}
+.lnow-t{font-size:.6rem;color:var(--tx3);letter-spacing:.06em;text-transform:uppercase}
+/* survivor dots */
+.sv-day{display:flex;align-items:center;gap:.5rem;padding:.4rem .2rem;border-top:1px solid var(--line)}
+.sv-day:first-child{border-top:none}
+.sv-lbl{font-family:var(--hd);font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tx2);min-width:52px}
+.sv-team{display:flex;align-items:center;gap:.25rem;flex:1;flex-wrap:wrap;padding:.2rem .35rem;border-radius:8px;border:1px solid transparent}
+.sv-team.swept{border-color:var(--gold);background:rgba(216,169,74,.08)}
+.sv-dot{width:11px;height:11px;border-radius:50%;background:var(--bg3);border:1px solid var(--line2);flex:0 0 auto}
+.sv-dot.kept{background:var(--ok);border-color:var(--ok)} .sv-dot.lost{background:var(--a);border-color:var(--a-lt)}
+.sv-gap{width:5px}
+.sv-pts{font-family:var(--hd);font-size:.62rem;font-weight:700;color:var(--gold);margin-left:auto;white-space:nowrap}
 details[open] .hint{display:none}
 summary::-webkit-details-marker{display:none}
 .view{display:none;max-width:760px;margin:0 auto;padding:0 .85rem 2rem}
@@ -735,11 +766,15 @@ function editNote(rid, mid){ if (canEdit(rid, mid)) return ""; if (!Me.canScore(
   if (!(m.a.includes(Me.role) || m.b.includes(Me.role))) return "Read-only — only the players in this match can score it."; return "Match complete and locked. Ask the commissioner if something needs fixing."; }
 function renderSweep(){
   const sw = Number(CONFIG.survivorSweep || 0); if (!sw || !CONFIG.rounds.some(survApplies)) return "";
-  const days = dayBonus();
-  const rows = Object.entries(days).map(([d, x]) => `<tr><td>${esc(dayName(d))}</td>${["a","b"].map(side => { const v = x[side]; const txt = v.swept ? `<b style="color:var(--gold)">Swept +${sw}</b>` : v.lost ? `<span style="color:var(--a-lt)">Lost ${v.lost} of ${v.n}</span>` : v.n ? `<span class="muted">${v.kept} of ${v.n} kept${v.pending ? " · " + v.pending + " still out" : ""}</span>` : `<span class="muted">—</span>`; return `<td class="ctr">${txt}</td>`; }).join("")}</tr>`).join("");
-  const t = cupTotals(); const hint = `${TS("a")} ${fmtPts(Object.values(days).reduce((n, d) => n + d.a.pts, 0))} · ${TS("b")} ${fmtPts(Object.values(days).reduce((n, d) => n + d.b.pts, 0))} sweep pts`;
-  return `<div class="sect"><div class="sect-h">Survivor Sweep</div><details class="card">${SUM("By day", hint)}<div style="padding:.4rem .85rem .85rem"><div class="tiny muted" style="margin-bottom:.5rem">Every pairing on the team finishes every round of the day with its ball → +${sw} to the team.</div>
-    <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden"><table class="tbl"><thead><tr><th>Day</th><th class="ctr" style="color:var(--a-lt)">${esc(TA().short)}</th><th class="ctr" style="color:var(--b-lt)">${esc(TB().short)}</th></tr></thead><tbody>${rows}</tbody></table></div></div></details></div>`;
+  const days = dayBonus(), dates = Object.keys(days);
+  const hint = `${TS("a")} ${fmtPts(Object.values(days).reduce((n, d) => n + d.a.pts, 0))} · ${TS("b")} ${fmtPts(Object.values(days).reduce((n, d) => n + d.b.pts, 0))} sweep pts`;
+  const dotsFor = (date, side) => CONFIG.rounds.filter(r => r.date === date && survApplies(r)).map(r => matchesOf(r).map(m => { const st = isSet(m) ? survStatus(r.id, m.id, side) : "play"; const L = isSet(m) ? survLoss(r.id, m.id, side) : null;
+      return `<span class="sv-dot ${st === "kept" ? "kept" : st === "lost" ? "lost" : ""}" title="${esc(r.format.split(" ·")[0])} · ${esc(m.label)} · ${st === "kept" ? "kept" : st === "lost" ? "lost on " + L.hole + (L.by ? " by " + pfirst(L.by) : "") : "still out"}"></span>`; }).join("")).join(`<span class="sv-gap"></span>`);
+  const row = date => `<div class="sv-day"><div class="sv-lbl">${esc(dayShort(date).split(",")[0])}</div>
+    ${["a", "b"].map(side => { const x = days[date][side]; return `<div class="sv-team ${x.swept ? "swept" : ""}" title="${x.kept} of ${x.n} kept"><b style="font-family:var(--hd);font-size:.62rem;color:var(--${side}-lt)">${TS(side)}</b>${dotsFor(date, side)}${x.swept ? `<span class="sv-pts">sweep +${sw}</span>` : x.lost ? `<span class="sv-pts" style="color:var(--tx3)">${x.lost} lost</span>` : ""}</div>`; }).join("")}</div>`;
+  return `<div class="sect"><div class="sect-h">Survivor Ball</div><details class="card">${SUM("By day", hint)}<div style="padding:.3rem .7rem .6rem">
+    ${dates.map(row).join("")}
+    <div class="tiny muted" style="margin-top:.5rem;line-height:1.5">One dot per pairing per round — <span style="color:var(--ok)">●</span> kept, <span style="color:var(--a-lt)">●</span> lost, ○ still out. A gold box means every pairing kept it all day: <b>+${sw}</b> to the team. Each kept ball is +${CONFIG.survivorPts}. Tap a dot for who and where.</div></div></details></div>`;
 }
 function roundPoints(rid){
   const r = ROUND[rid]; let a = 0, b = 0, avail = 0, final = true, any = false;
@@ -830,8 +865,9 @@ function renderCup(){
       <div class="track-n a ${aPct < 14 ? "off" : ""}">${fmtPts(t.a)}</div><div class="track-n b ${bPct < 14 ? "off" : ""}">${fmtPts(t.b)}</div></div></div>
     <div class="track-lbl"><span>0</span><span>${fmtPts(t.avail)} match points + survivor bonuses</span><span>${fmtPts(t.avail)}</span></div>
     ${clinch}${banner}
+    ${renderLiveNow()}
     ${renderFormat()}
-    <div class="sect"><div class="sect-h">The Rounds</div>${CONFIG.rounds.map(renderRoundBlock).join("")}</div>
+    <div class="sect"><div class="sect-h">The Rounds</div>${renderTiles()}${renderRoundBlock(ROUND[UI.cupRound && ROUND[UI.cupRound] ? UI.cupRound : nextRound().id])}</div>
     ${renderSweep()}${renderSolo()}${renderHonours()}`;
 }
 function renderFormat(){
@@ -861,6 +897,25 @@ function renderFormat(){
         ${sp ? `<tr><td colspan="3" class="muted">Survivor bonuses, max per team (pairings + day sweeps)</td><td class="num muted">+${fmtPts(survMax)}</td></tr>` : ""}</tbody></table>
       <div class="tiny muted" style="margin-top:.5rem">Each round's own rules (best ball, scramble, tiebreaks) are on the Scoring tab under that round.</div>
     </div></details>`;
+}
+function renderLiveNow(){
+  const live = [];
+  CONFIG.rounds.forEach(r => matchesOf(r).forEach(m => { if (!isSet(m)) return; const s = matchState(r.id, m.id); if (s.started && !s.closed) live.push({ r, m, s }); }));
+  if (!live.length) return "";
+  return `<div class="sect" style="margin-top:1rem"><div class="sect-h"><span class="dot"></span>On the course now</div><div class="lnow">${live.map(({ r, m, s }) => `<div class="lnow-c" data-go="${r.id}:${m.id}">
+    <div class="lnow-h">${esc(r.format.split(" ·")[0])} · ${esc(m.label)}</div>
+    <div class="lnow-n">${m.a.map(pfirst).map(esc).join(" & ")} <span class="muted">v</span> ${m.b.map(pfirst).map(esc).join(" & ")}</div>
+    <div class="lnow-s" style="color:${s.lead === "h" ? "var(--tx2)" : "var(--" + s.lead + "-lt)"}">${s.lead === "h" ? "All square" : TS(s.lead) + " " + esc(s.short)}</div>
+    <div class="lnow-t">thru ${s.thru}${s.stack ? " · carry ×" + (1 + s.stack) : ""}</div></div>`).join("")}</div></div>`;
+}
+function renderTiles(){
+  const cur = UI.cupRound && ROUND[UI.cupRound] ? UI.cupRound : nextRound().id;
+  return `<div class="tiles">${CONFIG.rounds.map(r => { const p = roundPoints(r.id), st = roundStatus(r.id), lead = p.a > p.b ? "a" : p.b > p.a ? "b" : "";
+    return `<div class="tile ${r.id === cur ? "on" : ""} ${lead ? "lead-" + lead : ""}" data-tile="${r.id}">
+      <div class="tile-d">${esc(dayShort(r.date).split(",")[0])} ${parseTee(r.tee) < 720 ? "AM" : "PM"}</div>
+      <div class="tile-f">${esc(r.format.split(" ·")[0])}</div>
+      <div class="tile-s">${st === "upcoming" ? `<span class="muted" style="font-size:.8rem">${esc(r.tee)}</span>` : `<span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span>`}</div>
+      <div class="tile-b ${st}">${st === "live" ? "● live" : st === "final" ? "final" : esc(courseOf(r).name.split(" ")[0])}</div></div>`; }).join("")}</div>`;
 }
 function renderRoundBlock(r){
   const st = roundStatus(r.id), p = roundPoints(r.id), c = courseOf(r), admin = Me.isAdmin(), sp = Number(CONFIG.survivorPts || 0);
@@ -931,7 +986,7 @@ function renderHonours(){
 
 <script>
 /* ═══ RENDER: LIVE ══════════════════════════════════════════ */
-const UI = { rid:null, mid:null, hole:1, card:false, editPairs:false, soloSort:"net" };
+const UI = { rid:null, mid:null, hole:1, card:false, editPairs:false, soloSort:"net", cupRound:null };
 function myMatch(rid){ if (!P[Me.role]) return null; return matchesOf(ROUND[rid]).find(m => m.a.includes(Me.role) || m.b.includes(Me.role)) || null; }
 function firstOpenHole(rid, mid){ const r = ROUND[rid], m = matchOf(rid, mid), sc = scorers(r, m); for (let i = 1; i <= r.holes; i++) if (!holeResult(r, m, sc, i)) return i; return r.holes; }
 function openCard(rid, mid){ UI.rid = rid; UI.mid = mid; UI.card = true; UI.hole = firstOpenHole(rid, mid); renderLive(); window.scrollTo({ top:0 }); }
@@ -1171,6 +1226,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("#outGo")) { Me.save(null); $("#outOv").classList.remove("open"); UI.card = false; UI.editPairs = false; return renderAll(); }
   if (e.target.closest("#outX")) return $("#outOv").classList.remove("open");
   if (e.target.closest("#honoursToggle") && Me.isAdmin()) return Store.set(["meta", "honoursPublic"], Store.get(["meta", "honoursPublic"], false) ? null : true);
+  const tl = e.target.closest("[data-tile]"); if (tl) { UI.cupRound = tl.dataset.tile; return renderCup(); }
   const ss = e.target.closest("[data-solo]"); if (ss) { UI.soloSort = ss.dataset.solo; return renderCup(); }
   const rc = e.target.closest("[data-r].lv-chip"); if (rc) { UI.rid = rc.dataset.r; UI.mid = null; UI.card = false; UI.editPairs = false; return renderLive(); }
   if (e.target.closest("#editPairs")) { UI.editPairs = !UI.editPairs; return renderLive(); }
