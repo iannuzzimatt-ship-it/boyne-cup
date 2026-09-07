@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0c1410">
+<meta name="theme-color" content="#0f2419">
 <title>Boyne Cup 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,9 +20,9 @@
   --a:#b8332f; --a-lt:#e05650; --a-dk:#8a221f;
   --b:#1f6f4a; --b-lt:#34a06c; --b-dk:#144d33;
   --gold:#d8a94a; --gold-dk:#a67f2e;
-  --bg:#0c1410; --bg2:#121d18; --bg3:#18291f;
-  --card:#131f19; --card2:#1a2a22;
-  --line:#22362b; --line2:#2e4738;
+  --bg:#0f2419; --bg2:#142d20; --bg3:#1a3828;
+  --card:#132b1f; --card2:#1a3a2a;
+  --line:#254a37; --line2:#316048;
   --tx:#e9f0ea; --tx2:#8fa596; --tx3:#5f7568;
   --ok:#3fae72; --warn:#d8a94a;
   --hd:'Barlow Condensed',system-ui,sans-serif;
@@ -38,7 +38,7 @@ input,select{font-family:inherit;font-size:16px}
 a{color:var(--gold)}
 
 /* ══ HERO ══ */
-.hero{background:linear-gradient(165deg,#16241c 0%,var(--bg) 78%);
+.hero{background:linear-gradient(165deg,#1a4030 0%,var(--bg) 78%);
   padding:1.4rem 1rem .9rem;text-align:center;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
 .hero::after{content:'';position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(216,169,74,.10),transparent 70%)}
@@ -54,7 +54,7 @@ a{color:var(--gold)}
 
 /* ══ TABS ══ */
 .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:90;
-  background:rgba(12,20,16,.96);backdrop-filter:blur(14px);
+  background:rgba(15,36,25,.96);backdrop-filter:blur(14px);
   border-top:1px solid var(--line);display:flex;padding-bottom:var(--safe-b)}
 .tab{flex:1;padding:.6rem .2rem .55rem;display:flex;flex-direction:column;
   align-items:center;gap:.18rem;color:var(--tx3);transition:color .15s}
@@ -264,7 +264,7 @@ summary::-webkit-details-marker{display:none}
   font-family:var(--hd);font-weight:600;padding:.3rem 0;width:100%;text-align:center;margin-top:.3rem}
 
 /* ══ MODAL ══ */
-.ov{position:fixed;inset:0;z-index:200;background:rgba(6,10,8,.82);backdrop-filter:blur(6px);
+.ov{position:fixed;inset:0;z-index:200;background:rgba(8,20,14,.82);backdrop-filter:blur(6px);
   display:none;align-items:center;justify-content:center;padding:1rem}
 .ov.open{display:flex}
 .modal{background:var(--card);border:1px solid var(--line2);border-radius:15px;
@@ -292,7 +292,7 @@ summary::-webkit-details-marker{display:none}
 .note b{color:var(--gold)}
 
 /* ══ STATUS STRIP ══ */
-.strip{position:sticky;top:0;z-index:80;background:rgba(12,20,16,.95);
+.strip{position:sticky;top:0;z-index:80;background:rgba(15,36,25,.95);
   backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
   padding:.42rem .85rem;display:flex;align-items:center;gap:.5rem;font-size:.7rem}
 .strip-s{display:flex;align-items:center;gap:.3rem;color:var(--tx3);letter-spacing:.05em}
@@ -1052,7 +1052,7 @@ function renderTrip(){
   $("#v-trip").innerHTML = `<div class="sect"><div class="sect-h">Schedule</div>${days}</div>
     <div class="sect"><div class="sect-h">Roster &amp; Handicaps</div><div class="tiny muted" style="margin-bottom:.5rem">Strokes vs scratch. In a match you play off the lowest man in your group.${admin ? " Tap a number to change it — it updates every phone." : ""}</div>${roster}</div>
     <div class="sect"><div class="sect-h">Courses</div>${cards}</div>${comm}
-    <div class="sect"><div class="sect-h">Tips</div><div class="note">📱 <b>Add to Home Screen</b> (Share → Add to Home Screen on iPhone, ⋮ → Add to Home screen on Android) so this opens full-screen like an app.<br><br>☀︎ Tap the sun at the top for a bright-daylight colour scheme.<br><br>📶 Spotty signal? Keep scoring — entries queue and sync when you're back in range.</div></div>
+    <div class="sect"><div class="sect-h">Tips</div><div class="note">📱 <b>Add to Home Screen</b> (Share → Add to Home Screen on iPhone, ⋮ → Add to Home screen on Android) so this opens full-screen like an app.<br><br>☀︎ / 🌙 at the top switches between the daylight scheme (default) and dark green.<br><br>📶 Spotty signal? Keep scoring — entries queue and sync when you're back in range.</div></div>
     <div class="tiny muted" style="text-align:center;margin:1.5rem 0 0;line-height:1.6">Weather by Open-Meteo · Built with love by Metteo</div>`;
   if (!WX) loadWeather();
 }
@@ -1089,7 +1089,7 @@ function ask(title, text, opts = {}){
     $("#askNo").onclick = () => close(false); inp.style.borderColor = ""; if (opts.typed) setTimeout(() => inp.focus(), 50);
   });
 }
-function setLight(on){ document.documentElement.toggleAttribute("data-light", on); try { localStorage.setItem("cup:light", on ? "1" : ""); } catch(e){} }
+function setLight(on){ document.documentElement.toggleAttribute("data-light", on); const b = $("#sunBtn"); if (b) { b.textContent = on ? "🌙" : "☀︎"; b.title = on ? "Switch to dark mode" : "Switch to light mode"; } try { localStorage.setItem("cup:theme", on ? "light" : "dark"); } catch(e){} }
 
 document.addEventListener("click", e => {
   const tab = e.target.closest("[data-v]"); if (tab) return showView(tab.dataset.v);
@@ -1143,7 +1143,7 @@ if (DEMO) {
     Store.set(["over","r1_m2","17"], "a"); Store.set(["surv","r1","a"], true); Store.set(["surv","r2","b"], true);
     Me.save("a2"); renderAll(); });
 }
-try { if (localStorage.getItem("cup:light")) setLight(true); } catch(e){}
+(function(){ let t = "light"; try { t = localStorage.getItem("cup:theme") || "light"; } catch(e){} setLight(t !== "dark"); })();
 Me.load(); hero(); Store.onChange(() => { renderAll(); hero(); }); Store.init();
 </script>
 </body>
