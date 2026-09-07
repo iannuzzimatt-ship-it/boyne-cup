@@ -734,13 +734,13 @@ function survCtl(rid, side){
 }
 function survCard(rid){
   const r = ROUND[rid]; if (!survApplies(r)) return ""; const sp = Number(CONFIG.survivorPts || 0);
-  return `<div class="card" style="margin-top:.8rem;padding:.65rem .75rem"><div class="row" style="margin-bottom:.5rem"><span style="font-family:var(--hd);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;color:var(--gold)">🏐 Survivor ball</span>
+  return `<div class="card" style="margin-top:.8rem;padding:.65rem .75rem"><div class="row" style="margin-bottom:.5rem"><span style="font-family:var(--hd);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;color:var(--gold)">Survivor ball</span>
     <span class="tiny muted grow" style="text-align:right">+${sp} if it makes it round · both teams must answer to close the round</span></div>
     <div style="display:flex;gap:.5rem">${survCtl(rid, "a")}${survCtl(rid, "b")}</div></div>`;
 }
 function survRow(rid){
   if (!survApplies(ROUND[rid])) return "";
-  return `<div style="padding:.5rem .8rem;border-top:1px solid var(--line);background:var(--bg2)"><div class="tiny muted" style="margin-bottom:.35rem">🏐 Survivor ball</div><div style="display:flex;gap:.5rem">${survCtl(rid, "a")}${survCtl(rid, "b")}</div></div>`;
+  return `<div style="padding:.5rem .8rem;border-top:1px solid var(--line);background:var(--bg2)"><div class="tiny muted" style="margin-bottom:.35rem">Survivor ball</div><div style="display:flex;gap:.5rem">${survCtl(rid, "a")}${survCtl(rid, "b")}</div></div>`;
 }
 function roundPoints(rid){
   const r = ROUND[rid]; let a = 0, b = 0, avail = 0, final = true, any = false;
@@ -861,7 +861,7 @@ function renderFormat(){
 }
 function renderRoundBlock(r){
   const st = roundStatus(r.id), p = roundPoints(r.id), c = courseOf(r), admin = Me.isAdmin(), sp = Number(CONFIG.survivorPts || 0);
-  const badge = st === "live" ? `<span class="pill pill-live"><span class="dot"></span>Live</span>` : st === "final" ? `<span class="pill pill-final">Final</span>` : st === "awaiting" ? `<span class="pill pill-next">🏐 Survivor? ${[p.pendA && TS("a"), p.pendB && TS("b")].filter(Boolean).join(" & ")}</span>` : `<span class="pill pill-next">${esc(r.tee)}</span>`;
+  const badge = st === "live" ? `<span class="pill pill-live"><span class="dot"></span>Live</span>` : st === "final" ? `<span class="pill pill-final">Final</span>` : st === "awaiting" ? `<span class="pill pill-next">Survivor? ${[p.pendA && TS("a"), p.pendB && TS("b")].filter(Boolean).join(" & ")}</span>` : `<span class="pill pill-next">${esc(r.tee)}</span>`;
   const body = matchesOf(r).map(m => { if (!isSet(m)) return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p">${names(m.a)}</div></div><div class="mt-c"><div class="mt-res pend">—</div><div class="mt-thru">pairings TBD</div></div><div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p">${names(m.b)}</div></div></div>`;
     const s = matchState(r.id, m.id), aW = s.closed && s.lead === "a", bW = s.closed && s.lead === "b";
     const cls = !s.started ? "mt-res pend" : s.lead === "a" ? "mt-res a" : s.lead === "b" ? "mt-res b" : "mt-res h";
@@ -929,7 +929,7 @@ function renderLive(){
   if (UI.card && UI.mid && isSet(matchOf(UI.rid, UI.mid))) return renderCard();
   UI.card = false;
   const c = courseOf(r), t = cupTotals(), mine = myMatch(UI.rid), admin = Me.isAdmin();
-  const chips = CONFIG.rounds.map(x => { const st = roundStatus(x.id); return `<button class="lv-chip ${x.id === UI.rid ? "on" : ""}" data-r="${x.id}">${esc(dayShort(x.date).split(",")[0])} ${esc(x.format.split(" ·")[0])}${st === "live" ? " ●" : st === "final" ? " ✓" : st === "awaiting" ? " 🏐" : ""}</button>`; }).join("");
+  const chips = CONFIG.rounds.map(x => { const st = roundStatus(x.id); return `<button class="lv-chip ${x.id === UI.rid ? "on" : ""}" data-r="${x.id}">${esc(dayShort(x.date).split(",")[0])} ${esc(x.format.split(" ·")[0])}${st === "live" ? " ●" : st === "final" ? " ✓" : st === "awaiting" ? " · survivor?" : ""}</button>`; }).join("");
   const unset = ms.some(m => !isSet(m));
   const mineHtml = mine ? `<div class="mine"><div class="mine-k">Your match · ${esc(dayShort(r.date))} ${esc(r.tee)}</div><div class="mine-t">${esc(r.format)} · ${esc(c.name)}</div>
       <div class="mine-d">${mine.a.map(pshort).map(esc).join(" & ")} &nbsp;<span class="muted">v</span>&nbsp; ${mine.b.map(pshort).map(esc).join(" & ")}</div>
