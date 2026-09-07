@@ -737,8 +737,9 @@ function renderSweep(){
   const sw = Number(CONFIG.survivorSweep || 0); if (!sw || !CONFIG.rounds.some(survApplies)) return "";
   const days = dayBonus();
   const rows = Object.entries(days).map(([d, x]) => `<tr><td>${esc(dayName(d))}</td>${["a","b"].map(side => { const v = x[side]; const txt = v.swept ? `<b style="color:var(--gold)">Swept +${sw}</b>` : v.lost ? `<span style="color:var(--a-lt)">Lost ${v.lost} of ${v.n}</span>` : v.n ? `<span class="muted">${v.kept} of ${v.n} kept${v.pending ? " · " + v.pending + " still out" : ""}</span>` : `<span class="muted">—</span>`; return `<td class="ctr">${txt}</td>`; }).join("")}</tr>`).join("");
-  return `<div class="sect"><div class="sect-h">Survivor Sweep</div><div class="tiny muted" style="margin-bottom:.5rem">Every pairing on the team finishes every round of the day with its ball → +${sw} to the team.</div>
-    <div class="card"><table class="tbl"><thead><tr><th>Day</th><th class="ctr" style="color:var(--a-lt)">${esc(TA().short)}</th><th class="ctr" style="color:var(--b-lt)">${esc(TB().short)}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  const t = cupTotals(); const hint = `${TS("a")} ${fmtPts(Object.values(days).reduce((n, d) => n + d.a.pts, 0))} · ${TS("b")} ${fmtPts(Object.values(days).reduce((n, d) => n + d.b.pts, 0))} sweep pts`;
+  return `<div class="sect"><div class="sect-h">Survivor Sweep</div><details class="card">${SUM("By day", hint)}<div style="padding:.4rem .85rem .85rem"><div class="tiny muted" style="margin-bottom:.5rem">Every pairing on the team finishes every round of the day with its ball → +${sw} to the team.</div>
+    <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden"><table class="tbl"><thead><tr><th>Day</th><th class="ctr" style="color:var(--a-lt)">${esc(TA().short)}</th><th class="ctr" style="color:var(--b-lt)">${esc(TB().short)}</th></tr></thead><tbody>${rows}</tbody></table></div></div></details></div>`;
 }
 function roundPoints(rid){
   const r = ROUND[rid]; let a = 0, b = 0, avail = 0, final = true, any = false;
@@ -881,17 +882,19 @@ function renderRoundBlock(r){
 ${body}
     <div class="tiny muted" style="text-align:center;padding:.35rem;border-top:1px solid var(--line)">Tap a match to open its scorecard</div></div>`;
 }
+const SUM = (label, hint) => `<summary style="padding:.7rem .85rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem;font-family:var(--hd);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:var(--gold)"><span>${label}</span><span class="hint" style="margin-left:auto;font-size:.7rem;color:var(--tx3);letter-spacing:.06em;font-weight:500;text-transform:none;font-family:var(--bd)">${hint}</span></summary>`;
 function renderSolo(){
   const rows = soloStandings(), rids = CONFIG.solo.rounds.filter(id => ROUND[id]), g = UI.soloSort === "gross";
-  const head = `<div class="sect"><div class="sect-h">${esc(CONFIG.solo.name)}</div>
+  const leader = rows.length ? `${pshort(rows[0].id)} ${toPar(g ? rows[0].grossTP : rows[0].net)}` : "no scores yet";
+  const head = `<div class="sect"><div class="sect-h">${esc(CONFIG.solo.name)}</div><details class="card">${SUM("Standings", esc(leader))}<div style="padding:.6rem .85rem .85rem">
     <div class="row" style="margin-bottom:.5rem"><span class="tiny muted grow">${g ? "Gross" : "Net"} to par, added up over ${rids.map(id => ROUND[id].format.split(" ·")[0] + " " + dayShort(ROUND[id].date).split(",")[0]).join(", ")}.</span>
       <span style="display:inline-flex;border:1px solid var(--line2);border-radius:99px;overflow:hidden"><button class="lv-chip ${g ? "" : "on"}" data-solo="net" style="border:none;border-radius:0;padding:.3rem .6rem;font-size:.66rem">Net</button><button class="lv-chip ${g ? "on" : ""}" data-solo="gross" style="border:none;border-radius:0;padding:.3rem .6rem;font-size:.66rem">Gross</button></span></div>`;
-  if (!rows.length) return head + `<div class="empty">Standings appear after the first hole is scored</div></div>`;
+  if (!rows.length) return head + `<div class="empty">Standings appear after the first hole is scored</div></div></details></div>`;
   const cell = pr => !pr || !pr.thru ? "—" : toPar(g ? pr.grossToPar : pr.netToPar) + (pr.complete ? "" : "*");
-  return head + `<div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th></th><th>Player</th>${rids.map(id => `<th class="num">${esc(dayShort(ROUND[id].date).split(",")[0])}</th>`).join("")}<th class="num">Holes</th><th class="num" style="${g ? "" : "color:var(--gold)"}">Net</th><th class="num" style="${g ? "color:var(--gold)" : ""}">Gross</th></tr></thead><tbody>` +
+  return head + `<div style="overflow-x:auto;border:1px solid var(--line);border-radius:10px"><table class="tbl"><thead><tr><th></th><th>Player</th>${rids.map(id => `<th class="num">${esc(dayShort(ROUND[id].date).split(",")[0])}</th>`).join("")}<th class="num">Holes</th><th class="num" style="${g ? "" : "color:var(--gold)"}">Net</th><th class="num" style="${g ? "color:var(--gold)" : ""}">Gross</th></tr></thead><tbody>` +
     rows.map((x, i) => `<tr><td class="rk ${i === 0 ? "top" : ""}">${i + 1}</td><td><span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}</td>${rids.map(rid => `<td class="num muted">${cell(x.rounds.find(q => q.rid === rid))}</td>`).join("")}<td class="num muted">${x.holes}</td>
       <td class="num" style="font-weight:${g ? 500 : 700};${g ? "color:var(--tx2)" : ""}">${toPar(x.net)}</td><td class="num" style="font-weight:${g ? 700 : 500};${g ? "" : "color:var(--tx2)"}">${toPar(x.grossTP)} <span class="tiny muted">(${x.gross})</span></td></tr>`).join("") +
-    `</tbody></table></div><div class="tiny muted" style="margin-top:.4rem;line-height:1.55"><b>How to read it:</b> ${g ? "gross to par is your actual strokes minus par" : "net to par is your strokes minus your <em>full</em> handicap, minus par"} — <b>−3</b> means three under, <b>E</b> is level, <b>+5</b> five over. Lower wins. ${g ? "" : "This uses each player's whole handicap (not the in-match strokes), so it's a fair comparison across everyone."} Scramble rounds don't count — no individual score. * = round still in progress. The Net/Gross toggle switches the sort and the per-round columns.</div></div>`;
+    `</tbody></table></div><div class="tiny muted" style="margin-top:.4rem;line-height:1.55"><b>How to read it:</b> ${g ? "gross to par is your actual strokes minus par" : "net to par is your strokes minus your <em>full</em> handicap, minus par"} — <b>−3</b> means three under, <b>E</b> is level, <b>+5</b> five over. Lower wins. ${g ? "" : "This uses each player's whole handicap (not the in-match strokes), so it's a fair comparison across everyone."} Scramble rounds don't count — no individual score. * = round still in progress. The Net/Gross toggle switches the sort and the per-round columns.</div></div></details></div>`;
 }
 function renderHonours(){
   const list = Object.values(playerStats()), revealed = !!Store.get(["meta", "honoursPublic"], false), admin = Me.isAdmin(), hide = !revealed && !admin;
