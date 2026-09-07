@@ -59,6 +59,8 @@ a{color:var(--gold)}
   letter-spacing:.1em;text-transform:uppercase}
 .tab.on{color:var(--gold)}
 .tab[hidden]{display:none}
+details[open] .hint{display:none}
+summary::-webkit-details-marker{display:none}
 .view{display:none;max-width:760px;margin:0 auto;padding:0 .85rem 2rem}
 .view.on{display:block;animation:fade .22s ease}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -373,6 +375,19 @@ a{color:var(--gold)}
 .grid .st{color:var(--gold)}
 .entered{font-size:.62rem;color:var(--tx3);text-align:center;margin-top:.5rem}
 .rankrow td{padding:.5rem .55rem}
+
+/* ══ PAIRINGS EDITOR + MISC ══ */
+.pe{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.7rem;margin-bottom:.5rem}
+.pe-h{font-family:var(--hd);font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);margin-bottom:.4rem}
+.pe-g{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+.pe select{width:100%;background:var(--bg3);border:1px solid var(--line2);border-radius:7px;color:var(--tx);padding:.45rem .4rem;font-size:.8rem;margin-bottom:.3rem}
+.pe .a select{border-left:3px solid var(--a)} .pe .b select{border-left:3px solid var(--b)}
+.ovr{display:grid;grid-template-columns:1fr .8fr 1fr;gap:.35rem;margin-top:.45rem}
+.ovr .wb{min-height:38px;font-size:.7rem;padding:.45rem .3rem}
+.surv{display:inline-flex;align-items:center;gap:.3rem;font-size:.66rem;color:var(--tx2)}
+.surv button{padding:.15rem .45rem;border-radius:5px;border:1px solid var(--line2);font-size:.62rem;font-family:var(--hd);letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)}
+.surv button.on{background:rgba(216,169,74,.18);color:var(--gold);border-color:rgba(216,169,74,.5)}
+.tab[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -391,11 +406,9 @@ a{color:var(--gold)}
 </div>
 
 <main>
-  <section id="v-cup"   class="view on"></section>
-  <section id="v-live"  class="view"></section>
-  <section id="v-act"   class="view"></section>
-  <section id="v-money" class="view"></section>
-  <section id="v-trip"  class="view"></section>
+  <section id="v-cup"  class="view on"></section>
+  <section id="v-live" class="view"></section>
+  <section id="v-trip" class="view"></section>
 </main>
 
 <nav class="tabbar">
@@ -405,12 +418,6 @@ a{color:var(--gold)}
   <button class="tab" data-v="live">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8M2.8 2.8a13 13 0 0 0 0 18.4M21.2 2.8a13 13 0 0 1 0 18.4"/></svg>
     <span>Live</span></button>
-  <button class="tab" data-v="act">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-    <span>Action</span></button>
-  <button class="tab" data-v="money">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>
-    <span>Money</span></button>
   <button class="tab" data-v="trip">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
     <span>Trip</span></button>
@@ -421,22 +428,23 @@ a{color:var(--gold)}
     <h3>Sign In</h3>
     <p class="sub">Pick your name. Anyone can watch without signing in &mdash; you only need this to <em>enter</em> scores. Picked the wrong guy? Tap your name at the top to switch.</p>
     <div class="err" id="loginErr"></div>
-    <div class="fld">
-      <label for="whoSel">Who are you?</label>
-      <select id="whoSel"></select>
-    </div>
-    <div class="fld" id="pinFld" hidden>
-      <label for="pcIn">Commissioner code</label>
-      <input type="password" id="pcIn" autocomplete="off" inputmode="numeric" autocapitalize="off" spellcheck="false" placeholder="&bull;&bull;&bull;&bull;">
-    </div>
-    <button class="btn btn-gold btn-full" id="loginGo">Sign In</button>
+    <div class="fld"><label for="whoSel">Who are you?</label><select id="whoSel"></select></div>
+    <div class="fld" id="pinFld" hidden><label for="pcIn">Commissioner code</label>
+      <input type="password" id="pcIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="&bull;&bull;&bull;&bull;"></div>
+    <button class="btn btn-gold btn-full" id="loginGo">That's me</button>
     <button class="btn btn-full" id="loginX" style="margin-top:.45rem">Just Watching</button>
-    <div class="note" style="margin-top:.9rem">
-      This isn't an account, just a name tag &mdash; every score shows who entered it and when.
-    </div>
+    <div class="note" style="margin-top:.9rem">This isn't an account, just a name tag &mdash; every score shows who entered it and when.</div>
   </div>
 </div>
-
+<div class="ov" id="askOv">
+  <div class="modal">
+    <h3 id="askTitle">Are you sure?</h3>
+    <p class="sub" id="askText"></p>
+    <div class="fld" id="askFld" hidden><label for="askIn" id="askLbl">Type RESET to confirm</label><input type="text" id="askIn" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+    <button class="btn btn-full" id="askYes" style="border-color:rgba(224,86,80,.5);color:var(--a-lt)">Yes, do it</button>
+    <button class="btn btn-full" id="askNo" style="margin-top:.45rem">Cancel</button>
+  </div>
+</div>
 <div class="ov" id="outOv">
   <div class="modal">
     <h3 id="outNm">Signed In</h3>
@@ -451,187 +459,117 @@ a{color:var(--gold)}
 /* ═══════════════════════════════════════════════════════════════════════
    ██  EDIT EVERYTHING IN THIS BLOCK. NOTHING BELOW IT NEEDS TOUCHING.  ██
    ═══════════════════════════════════════════════════════════════════════ */
-
 const CONFIG = {
 
   /* ── 1. THE TRIP ─────────────────────────────────────────────── */
-  kicker:  "The",                       // small gold word above the title
-  title:   "Boyne Cup",                 // big title
-  subtitle:"Harbor Springs, Michigan",  // small line under the title
+  kicker:  "The",
+  title:   "Boyne Cup",
+  subtitle:"Harbor Springs, Michigan",
 
   /* ── 2. THE TEAMS ────────────────────────────────────────────── */
-  // "a" and "b" are internal ids -- don't rename the keys, just the values.
   teams: {
-    a: { name:"Team A", short:"A", captain:"", color:"red"   },
-    b: { name:"Team B", short:"B", captain:"", color:"green" },
+    a: { name:"Team A", short:"A", captain:"Mike Chun & Kevin Sayers" },
+    b: { name:"Team B", short:"B", captain:"Matt Jackson & Ryan Adams" },
   },
 
   /* ── 3. THE PLAYERS ──────────────────────────────────────────── */
-  // hcp = strokes vs scratch (0 = scratch), straight from the Teams and Handicaps sheet.
-  // Players sign in by picking their name -- no pin. (Add  pin:"1234"  to a player if you ever want one.)
-  // Keep the ids (a1, a2...) as they are -- the matches below refer to them.
+  // hcp = strokes vs scratch. In best ball and singles everyone plays off the
+  // lowest man IN THEIR GROUP (full difference, hardest holes first). Scrambles: none.
   players: [
-    { id:"a1", name:"Giancarlo Bonfiglio", team:"a", hcp:0 },
-    { id:"a2", name:"Matt Iannuzzi",       team:"a", hcp:12 },
-    { id:"a3", name:"Mike Chun",           team:"a", hcp:5 },
-    { id:"a4", name:"Adrian Skakie",       team:"a", hcp:5 },
-    { id:"a5", name:"Drake Wilton",        team:"a", hcp:0 },
-    { id:"a6", name:"Kevin Sayers",        team:"a", hcp:8 },
-    { id:"b1", name:"Matt Jackson",        team:"b", hcp:12 },
-    { id:"b2", name:"Cam Sayers",          team:"b", hcp:14 },
-    { id:"b3", name:"Billy Bryer",         team:"b", hcp:0 },
-    { id:"b4", name:"Anthony Gentilli",    team:"b", hcp:9 },
-    { id:"b5", name:"Jimmy Cusan",         team:"b", hcp:7 },
-    { id:"b6", name:"Ryan Adams",          team:"b", hcp:5 },
+    { id:"a1", name:"Giancarlo Bonfiglio", team:"a", hcp:4  },
+    { id:"a2", name:"Matt Iannuzzi",       team:"a", hcp:16 },
+    { id:"a3", name:"Mike Chun",           team:"a", hcp:14  },
+    { id:"a4", name:"Adrian Skakie",       team:"a", hcp:14  },
+    { id:"a5", name:"Drake Wilton",        team:"a", hcp:7  },
+    { id:"a6", name:"Kevin Sayers",        team:"a", hcp:15  },
+    { id:"b1", name:"Matt Jackson",        team:"b", hcp:16 },
+    { id:"b2", name:"Cam Sayers",          team:"b", hcp:18 },
+    { id:"b3", name:"Billy Bryer",         team:"b", hcp:9  },
+    { id:"b4", name:"Anthony Gentilli",    team:"b", hcp:18  },
+    { id:"b5", name:"Jimmy Cusan",         team:"b", hcp:14  },
+    { id:"b6", name:"Ryan Adams",          team:"b", hcp:12  },
   ],
 
-  /* ── 4. THE COURSES ──────────────────────────────────────────── */
-  // par: one number per hole.  si: the "Handicap" row on the scorecard (1 = hardest).
-  // All five taken from the real scorecards (men's stroke index).
+  /* ── 4. THE COURSES (from the real scorecards, men's stroke index) ── */
   courses: {
     arthur:  { name:"Arthur Hills", club:"The Highlands", lat:45.4680, lon:-84.9346,
-      par:[4,4,5,4,4,5,3,4,3, 4,5,4,5,3,4,3,4,5],
-      si: [9,17,5,7,1,13,15,3,11, 18,4,8,14,12,2,16,6,10] },
+      par:[4,4,5,4,4,5,3,4,3, 4,5,4,5,3,4,3,4,5], si:[9,17,5,7,1,13,15,3,11, 18,4,8,14,12,2,16,6,10] },
     moor:    { name:"The Moor", club:"The Highlands", lat:45.4680, lon:-84.9346,
-      par:[4,4,5,3,4,3,4,5,4, 4,3,4,4,5,4,4,3,5],
-      si: [5,15,17,9,1,7,11,13,3, 4,14,10,8,18,2,6,16,12] },
-    // Preserve is 9 holes. si here is the rank 1-9 (1 = hardest) taken from the men's row.
-    preserve:{ name:"The Preserve", club:"Bay Harbor", lat:45.3623, lon:-85.0606,
-      par:[4,4,4,5,3,5,4,4,3],
-      si: [6,7,2,4,5,1,8,9,3] },
+      par:[4,4,5,3,4,3,4,5,4, 4,3,4,4,5,4,4,3,5], si:[5,15,17,9,1,7,11,13,3, 4,14,10,8,18,2,6,16,12] },
+    preserveLinks:{ name:"Preserve / Links", club:"Bay Harbor", lat:45.3623, lon:-85.0606, // use if Friday PM becomes 18
+      par:[4,4,4,5,3,5,4,4,3, 4,4,4,3,4,5,3,4,5], si:[11,13,3,7,9,1,15,17,5, 12,14,4,8,10,2,16,18,6] },
     heather: { name:"The Heather", club:"The Highlands", lat:45.4680, lon:-84.9346,
-      par:[4,4,4,3,5,3,4,4,5, 4,5,3,4,4,5,3,4,4],
-      si: [15,5,13,11,1,17,7,3,9, 6,18,16,8,10,2,14,12,4] },
+      par:[4,4,4,3,5,3,4,4,5, 4,5,3,4,4,5,3,4,4], si:[15,5,13,11,1,17,7,3,9, 6,18,16,8,10,2,14,12,4] },
     ross:    { name:"Donald Ross Memorial", club:"The Highlands", lat:45.4680, lon:-84.9346,
-      par:[4,4,3,4,5,4,4,3,5, 4,4,3,5,4,4,5,3,4],
-      si: [11,13,5,9,1,7,17,15,3, 4,16,18,2,8,10,14,12,6] },
+      par:[4,4,3,4,5,4,4,3,5, 4,4,3,5,4,4,5,3,4], si:[11,13,5,9,1,7,17,15,3, 4,16,18,2,8,10,14,12,6] },
   },
 
   /* ── 5. THE ROUNDS ───────────────────────────────────────────── */
-  // scoring: "bestball" (each plays own ball, best net per hole counts)
-  //          "scramble" (one team ball, team handicap = 35% low + 15% high)
-  //          "singles"  (own ball, own net)
-  // points:  "match" = each pairing below is worth `pts` to the lower net total (tie splits)
-  //          "rank"  = everyone ranked on net; `rankPoints` paid by finishing position
-  // a: / b: are lists of player ids from section 3 above.
+  // scoring: "bestball" | "bestball2" (second-man tiebreak) | "scramble" | "singles"
+  // Every match is match play, hole by hole, worth `pts` to the winner.
+  // Pairings here are the STARTING ones; the commissioner changes them in the app.
   rounds: [
-    { id:"r1", date:"2026-09-17", tee:"12:50 PM", course:"arthur", holes:18,
-      format:"Best Ball", scoring:"bestball", points:"match",
-      note:"Own ball &bull; better net of two counts &bull; pair v pair", matches:[
-      { id:"m1", label:"Match 1", pts:1, a:["a1","a4"], b:["b1","b4"] },
-      { id:"m2", label:"Match 2", pts:1, a:["a2","a5"], b:["b2","b5"] },
-      { id:"m3", label:"Match 3", pts:1, a:["a3","a6"], b:["b3","b6"] },
+    { id:"r1", date:"2026-09-17", tee:"12:50 PM", course:"arthur", holes:18, format:"Best Ball", scoring:"bestball",
+      note:"Match play &bull; better net ball &bull; strokes off the low man in the group", matches:[
+      { id:"m1", label:"Match 1", pts:2, a:["a1","a2"], b:["b1","b2"] },   // Giancarlo & Matt v Jackson & Cam
+      { id:"m2", label:"Match 2", pts:2, a:["a3","a4"], b:["b3","b4"] },   // Chun & Skakie v Billy & Gentilli
+      { id:"m3", label:"Match 3", pts:2, a:["a5","a6"], b:["b5","b6"] },   // Drake & Kevin v Jimmy & Ryan
     ]},
-    { id:"r2", date:"2026-09-18", tee:"9:00 AM", course:"moor", holes:18,
-      format:"Scramble", scoring:"scramble", points:"match",
-      note:"Two-man scramble &bull; team handicap &bull; pair v pair", matches:[
-      { id:"m1", label:"Match 1", pts:1, a:["a1","a6"], b:["b1","b6"] },
-      { id:"m2", label:"Match 2", pts:1, a:["a2","a4"], b:["b2","b4"] },
-      { id:"m3", label:"Match 3", pts:1, a:["a3","a5"], b:["b3","b5"] },
+    { id:"r2", date:"2026-09-18", tee:"9:00 AM", course:"moor", holes:18, format:"Scramble", scoring:"scramble",
+      note:"Match play &bull; one team ball &bull; no handicaps", matches:[
+      { id:"m1", label:"Match 1", pts:2, a:[], b:[] }, { id:"m2", label:"Match 2", pts:2, a:[], b:[] }, { id:"m3", label:"Match 3", pts:2, a:[], b:[] },
     ]},
-    { id:"r3", date:"2026-09-18", tee:"3:10 PM", course:"preserve", holes:9,
-      format:"Singles", scoring:"singles", points:"rank",
-      note:"Own ball &bull; 9 holes &bull; all 12 ranked on net",
-      // Points paid to each finishing position 1st..12th (ties share). Adds up to 6.
-      rankPoints:[2, 1.5, 1, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0],
-      // Groups are just who tees off together -- they don't affect points in a rank round.
-      matches:[
-      { id:"g1", label:"Group 1", pts:0, a:["a1","a2"], b:["b1","b2"] },
-      { id:"g2", label:"Group 2", pts:0, a:["a3","a4"], b:["b3","b4"] },
-      { id:"g3", label:"Group 3", pts:0, a:["a5","a6"], b:["b5","b6"] },
+    { id:"r3", date:"2026-09-18", tee:"3:10 PM", course:"preserveLinks", holes:18, format:"Singles", scoring:"singles",
+      note:"Ryder Cup singles &bull; man on man &bull; 2 pts a match", matches:[
+      { id:"m1", label:"Match 1", pts:2, a:[], b:[] }, { id:"m2", label:"Match 2", pts:2, a:[], b:[] }, { id:"m3", label:"Match 3", pts:2, a:[], b:[] },
+      { id:"m4", label:"Match 4", pts:2, a:[], b:[] }, { id:"m5", label:"Match 5", pts:2, a:[], b:[] }, { id:"m6", label:"Match 6", pts:2, a:[], b:[] },
     ]},
-    { id:"r4", date:"2026-09-19", tee:"10:20 AM", course:"heather", holes:18,
-      format:"Best Ball", scoring:"bestball", points:"match",
-      note:"Own ball &bull; better net of two counts &bull; pair v pair", matches:[
-      { id:"m1", label:"Match 1", pts:1, a:["a1","a2"], b:["b1","b2"] },
-      { id:"m2", label:"Match 2", pts:1, a:["a3","a4"], b:["b3","b4"] },
-      { id:"m3", label:"Match 3", pts:1, a:["a5","a6"], b:["b5","b6"] },
+    { id:"r4", date:"2026-09-19", tee:"10:20 AM", course:"heather", holes:18, format:"Best Ball · 2nd-Man Tiebreak", scoring:"bestball2",
+      note:"Match play &bull; best nets tie? second man decides &bull; both tie = halved", matches:[
+      { id:"m1", label:"Match 1", pts:2, a:[], b:[] }, { id:"m2", label:"Match 2", pts:2, a:[], b:[] }, { id:"m3", label:"Match 3", pts:2, a:[], b:[] },
     ]},
-    { id:"r5", date:"2026-09-19", tee:"4:00 PM", course:"ross", holes:18,
-      format:"Scramble", scoring:"scramble", points:"match",
-      note:"Two-man scramble &bull; team handicap &bull; the closer", matches:[
-      { id:"m1", label:"Match 1", pts:1, a:["a1","a5"], b:["b1","b5"] },
-      { id:"m2", label:"Match 2", pts:1, a:["a2","a6"], b:["b2","b6"] },
-      { id:"m3", label:"Match 3", pts:1, a:["a3","a4"], b:["b3","b4"] },
+    { id:"r5", date:"2026-09-19", tee:"4:00 PM", course:"ross", holes:18, format:"Scramble", scoring:"scramble",
+      note:"Match play &bull; one team ball &bull; no handicaps &bull; the closer", matches:[
+      { id:"m1", label:"Match 1", pts:2, a:[], b:[] }, { id:"m2", label:"Match 2", pts:2, a:[], b:[] }, { id:"m3", label:"Match 3", pts:2, a:[], b:[] },
     ]},
   ],
 
-  /* ── 5b. HANDICAPS + THE INDIVIDUAL TITLE ─────────────────────── */
-  // allowance = share of a player's strokes used in that format (1 = all of them).
-  // 9-hole rounds automatically use half.
-  allowance: { bestball:1, singles:1 },
-  scramble:  { low:0.35, high:0.15 },        // USGA two-man scramble formula
-  // Trip-long best net: total net over these rounds (no individual score in a scramble).
-  solo: { name:"Individual Title", rounds:["r1","r3","r4"] },
+  /* ── 6. RULES STILL UP FOR A VOTE — flip these when the group decides ── */
+  carry:        0,         // tied holes carry over? 0 = no (halved, move on) · 2 = stack caps at 2 · 99 = unlimited
+  halvedMatch:  "split",   // a match that finishes all square: "split" = 1 pt each · "none" = nobody scores
+  nineHoleHalf: true,      // 9-hole rounds: strokes are half the difference (standard)
+  survivorPts:  0.5,       // bonus per team per round for keeping the survivor ball (commissioner ticks it)
+  solo: { name:"Individual Title", rounds:["r1","r3","r4"] },   // best net over the own-ball rounds
 
-  /* ── 6. THE SCHEDULE ─────────────────────────────────────────── */
-  // Anything you like -- meals, drives, drafts. Tee times are added automatically.
+  /* ── 7. THE SCHEDULE ─────────────────────────────────────────── */
   schedule: {
-    "2026-09-17":[
-      { t:"9:00 AM",  i:"\u{1F697}", l:"Depart",            d:"Add your drive time" },
-      { t:"11:45 AM", i:"⛳",    l:"Arrive Highlands",  d:"Range + putting green" },
-      { t:"7:00 PM",  i:"\u{1F37D}", l:"Dinner",            d:"Add the spot" },
-      { t:"Evening",  i:"\u{1F3B2}", l:"Match draft",       d:"Set Friday pairings" },
-    ],
-    "2026-09-18":[
-      { t:"7:45 AM",  i:"☕",    l:"Breakfast" },
-      { t:"~2:00 PM", i:"\u{1F96A}", l:"Lunch + drive",     d:"Highlands to Bay Harbor, ~30 min" },
-      { t:"7:30 PM",  i:"\u{1F37D}", l:"Dinner" },
-    ],
-    "2026-09-19":[
-      { t:"9:00 AM",  i:"☕",    l:"Breakfast" },
-      { t:"~2:30 PM", i:"\u{1F96A}", l:"Lunch" },
-      { t:"8:00 PM",  i:"\u{1F942}", l:"Final dinner",      d:"Cup presented" },
-    ],
-  },
-
-  /* ── 6b. WHICH TABS SHOW ─────────────────────────────────────── */
-  // Flip to true when the side bets are sorted. Money depends on Action, so it hides with it.
-  tabs: { action:false, money:false },
-
-  /* ── 7. SIDE ACTION ──────────────────────────────────────────── */
-  // Per round: the skins pot and which holes are closest-to-pin / long drive.
-  side: {
-  // ctpVal / ldVal = what each closest-to-pin / long drive pays the winner (everyone else chips in).
-    r1:{ pot:120, ctp:[7,16],  ld:[13], ctpVal:20, ldVal:20 },   // Arthur Hills par 3s: 7, 9, 14, 16
-    r2:{ pot:120, ctp:[4,17],  ld:[14], ctpVal:20, ldVal:20 },   // Moor par 3s: 4, 6, 11, 17
-    r3:{ pot:120, ctp:[5,9],   ld:[4],  ctpVal:20, ldVal:20 },   // Preserve par 3s: 5, 9
-    r4:{ pot:120, ctp:[4,16],  ld:[11], ctpVal:20, ldVal:20 },   // Heather par 3s: 4, 6, 12, 16
-    r5:{ pot:120, ctp:[3,17],  ld:[13], ctpVal:20, ldVal:20 },   // Ross par 3s: 3, 8, 12, 17
+    "2026-09-17":[ { t:"9:00 AM", i:"🚗", l:"Depart", d:"Add your drive time" }, { t:"11:45 AM", i:"⛳", l:"Arrive Highlands", d:"Range + putting green" },
+                   { t:"7:00 PM", i:"🍽", l:"Dinner" }, { t:"Evening", i:"🎲", l:"Captains set Friday AM pairings" } ],
+    "2026-09-18":[ { t:"7:45 AM", i:"☕", l:"Breakfast" }, { t:"~2:00 PM", i:"🥪", l:"Lunch + drive", d:"Highlands to Bay Harbor, ~30 min" }, { t:"7:30 PM", i:"🍽", l:"Dinner" } ],
+    "2026-09-19":[ { t:"9:00 AM", i:"☕", l:"Breakfast" }, { t:"~2:30 PM", i:"🥪", l:"Lunch" }, { t:"8:00 PM", i:"🥂", l:"Final dinner", d:"Cup presented" } ],
   },
 
   /* ── 8. COMMISSIONER CODE ────────────────────────────────────── */
-  // Only the commissioner needs a code. It unlocks CTP/LD winners, handicap tweaks, etc.
-  // ⚠ All codes live in the page source, so anyone who really wants to look can
-  // find them. They stop mix-ups and fat-fingers. They are NOT security.
-  // Never reuse a real password.
   adminPin: "matteo",
 
-  /* ── 9. LIVE SYNC (fill in later -- I'll walk you through it) ── */
-  // Leave as null and the app still works perfectly, but scores stay on
-  // one phone. Paste your Firebase config here to make it live for everyone.
+  /* ── 9. LIVE SYNC ────────────────────────────────────────────── */
   firebase: {
-    apiKey: "AIzaSyAuTx5BqV6qU7mbxbNspioQ-fFFI1BZj1k",
-    authDomain: "boyne-cup.firebaseapp.com",
-    databaseURL: "https://boyne-cup-default-rtdb.firebaseio.com",
-    projectId: "boyne-cup",
-    storageBucket: "boyne-cup.firebasestorage.app",
-    messagingSenderId: "1085713375829",
-    appId: "1:1085713375829:web:240d87432f00816ff42adc",
+    apiKey: "AIzaSyAuTx5BqV6qU7mbxbNspioQ-fFFI1BZj1k", authDomain: "boyne-cup.firebaseapp.com",
+    databaseURL: "https://boyne-cup-default-rtdb.firebaseio.com", projectId: "boyne-cup",
+    storageBucket: "boyne-cup.firebasestorage.app", messagingSenderId: "1085713375829", appId: "1:1085713375829:web:240d87432f00816ff42adc",
   },
-  tripKey: "boyne2026",   // change if you ever reuse the same Firebase project
+  tripKey: "boyne2026",
 };
 </script>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════
-   ENGINE — no need to edit below here.
+   ENGINE — match play, hole by hole. No need to edit below here.
    ═══════════════════════════════════════════════════════════════ */
 "use strict";
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-
 const P = {}; CONFIG.players.forEach(p => P[p.id] = p);
 const pname  = id => P[id]?.name ?? id;
 const pshort = id => { const n = P[id]?.name ?? id, b = n.trim().split(/\s+/); return b.length < 2 ? n : b[0][0] + ". " + b.slice(1).join(" "); };
@@ -641,23 +579,18 @@ const ROUND = {}; CONFIG.rounds.forEach(r => ROUND[r.id] = r);
 const courseOf = r => CONFIG.courses[r.course] || { name:r.course, par:[], si:[] };
 const mkey = (rid, mid) => rid + "_" + mid;
 const TA = () => CONFIG.teams.a, TB = () => CONFIG.teams.b;
+const TS = side => side === "a" ? TA().short : TB().short;
 const fmtPts = n => Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
 const toPar = n => n === 0 ? "E" : n > 0 ? "+" + n : String(n);
 
 /* ── store ─────────────────────────────────────────────────── */
+const KEYS = ["gross", "over", "surv", "pair", "hcp", "meta"];
 const Store = {
-  data: { gross:{}, side:{}, hcp:{}, cash:{}, meta:{} }, mode:"local", _subs:[],
+  data: Object.fromEntries(KEYS.map(k => [k, {}])), mode:"local", _subs:[],
   onChange(fn){ this._subs.push(fn); },
   _fire(){ this._subs.forEach(f => { try { f(); } catch(e){ console.error(e); } }); },
-  async init(){
-    if (CONFIG.firebase) { try { await this._initFb(); return; } catch(e){ console.error("Firebase failed, using local:", e); } }
-    this._initLocal();
-  },
-  _initLocal(){
-    this.mode = "local";
-    try { const raw = localStorage.getItem("cup:" + CONFIG.tripKey); if (raw) Object.assign(this.data, JSON.parse(raw)); } catch(e){}
-    setConn("local"); this._fire();
-  },
+  async init(){ if (CONFIG.firebase) { try { await this._initFb(); return; } catch(e){ console.error("Firebase failed, using local:", e); } } this._initLocal(); },
+  _initLocal(){ this.mode = "local"; try { const raw = localStorage.getItem("cup:" + CONFIG.tripKey); if (raw) Object.assign(this.data, JSON.parse(raw)); } catch(e){} setConn("local"); this._fire(); },
   _saveLocal(){ try { localStorage.setItem("cup:" + CONFIG.tripKey, JSON.stringify(this.data)); } catch(e){} },
   async _initFb(){
     const B = "https://www.gstatic.com/firebasejs/10.12.0/";
@@ -665,151 +598,133 @@ const Store = {
     const a = app.initializeApp(CONFIG.firebase);
     try { await auth.signInAnonymously(auth.getAuth(a)); } catch(e){ console.warn("anon auth off:", e.code); }
     const db = dbm.getDatabase(a); this._db = db; this._dbm = dbm; this.mode = "live";
-    dbm.onValue(dbm.ref(db, "trips/" + CONFIG.tripKey), snap => {
-      const v = snap.val() || {};
-      this.data = { gross:v.gross||{}, side:v.side||{}, hcp:v.hcp||{}, cash:v.cash||{}, meta:v.meta||{} };
-      setConn("live"); this._fire();
-    }, err => { console.error(err); setConn("error"); });
+    dbm.onValue(dbm.ref(db, "trips/" + CONFIG.tripKey), snap => { const v = snap.val() || {}; this.data = Object.fromEntries(KEYS.map(k => [k, v[k] || {}])); setConn("live"); this._fire(); },
+      err => { console.error(err); setConn("error"); });
     dbm.onValue(dbm.ref(db, ".info/connected"), s => { if (this.mode === "live") setConn(s.val() ? "live" : "offline"); });
   },
   set(path, val){
-    let n = this.data;
-    for (let i = 0; i < path.length - 1; i++) { if (typeof n[path[i]] !== "object" || n[path[i]] === null) n[path[i]] = {}; n = n[path[i]]; }
-    const last = path[path.length - 1];
-    if (val === null || val === undefined) delete n[last]; else n[last] = val;
-    if (this.mode === "live") this._dbm.set(this._dbm.ref(this._db, "trips/" + CONFIG.tripKey + "/" + path.join("/")), val ?? null).catch(e => console.error("write:", e));
-    else this._saveLocal();
+    let n = this.data; for (let i = 0; i < path.length - 1; i++) { if (typeof n[path[i]] !== "object" || n[path[i]] === null) n[path[i]] = {}; n = n[path[i]]; }
+    const last = path[path.length - 1]; if (val === null || val === undefined) delete n[last]; else n[last] = val;
+    if (this.mode === "live") this._dbm.set(this._dbm.ref(this._db, "trips/" + CONFIG.tripKey + "/" + path.join("/")), val ?? null).catch(e => console.error("write:", e)); else this._saveLocal();
     this._fire();
   },
   get(path, dflt){ let n = this.data; for (const seg of path) { if (n == null || typeof n !== "object") return dflt; n = n[seg]; } return n === undefined ? dflt : n; },
 };
-function setConn(m){
-  const d = $("#connDot"), t = $("#connTxt"); if (!d) return;
-  d.className = "strip-d " + (m === "live" ? "live" : "local");
-  t.textContent = { live:"Live — synced", local:"This device only", offline:"Offline — will sync", error:"Connection problem" }[m] || m;
-}
+function setConn(m){ const d = $("#connDot"), t = $("#connTxt"); if (!d) return; d.className = "strip-d " + (m === "live" ? "live" : "local");
+  t.textContent = { live:"Live — synced", local:"This device only", offline:"Offline — will sync", error:"Connection problem" }[m] || m; }
 
 /* ── who am I ──────────────────────────────────────────────── */
 const Me = {
   role:null,
   load(){ try { this.role = localStorage.getItem("cup:role:" + CONFIG.tripKey); } catch(e){} if (this.role && this.role !== "admin" && !P[this.role]) this.role = null; },
   save(r){ this.role = r; try { r ? localStorage.setItem("cup:role:" + CONFIG.tripKey, r) : localStorage.removeItem("cup:role:" + CONFIG.tripKey); } catch(e){} },
-  canScore(){ return this.role === "admin" || !!P[this.role]; },
-  isAdmin(){ return this.role === "admin"; },
+  canScore(){ return this.role === "admin" || !!P[this.role]; }, isAdmin(){ return this.role === "admin"; },
   team(){ return this.role === "admin" ? "admin" : (P[this.role]?.team || ""); },
   label(){ return this.role === "admin" ? "Commissioner" : P[this.role] ? pshort(this.role) : "Sign in"; },
 };
 
-/* ── handicaps ─────────────────────────────────────────────── */
-function liveHcp(id){ return Number(Store.get(["hcp", id], P[id]?.hcp ?? 0)); }
-function strokesFor(total, si, holes){ let n = 0; if (total >= si) n++; if (total >= si + holes) n++; if (total >= si + 2 * holes) n++; return n; }
-// One "scorer" = one row on the scorecard: a player (own ball) or a side (scramble).
-function scorers(r, m){
-  const half = r.holes <= 9 ? 0.5 : 1, c = courseOf(r);
-  const mk = (key, side, ids, label, hcp) => {
-    const total = Math.round(hcp * half), holes = {};
-    for (let i = 1; i <= r.holes; i++) { const n = strokesFor(total, c.si[i-1] ?? i, r.holes); if (n) holes[i] = n; }
-    return { key, side, ids, label, total, holes };
-  };
-  if (r.scoring === "scramble") {
-    const th = ids => { const h = ids.map(liveHcp).sort((x, y) => x - y); return CONFIG.scramble.low * h[0] + CONFIG.scramble.high * (h[h.length - 1]); };
-    return [mk("a", "a", m.a, m.a.map(pfirst).join(" & "), th(m.a)), mk("b", "b", m.b, m.b.map(pfirst).join(" & "), th(m.b))];
-  }
-  const allow = CONFIG.allowance[r.scoring] ?? 1;
-  return [...m.a.map(id => mk(id, "a", [id], pname(id), liveHcp(id) * allow)), ...m.b.map(id => mk(id, "b", [id], pname(id), liveHcp(id) * allow))];
-}
-const gross = (rid, mid, hole, key) => { const v = Store.get(["gross", mkey(rid, mid), String(hole), key], null); return (v === null || v === "") ? null : Number(v); };
+/* ── pairings (commissioner overrides live in the store) ───── */
+function matchesOf(r){ return r.matches.map(m => { const o = Store.get(["pair", r.id, m.id], null); return o ? { ...m, a:o.a || [], b:o.b || [] } : m; }); }
+const matchOf = (rid, mid) => matchesOf(ROUND[rid]).find(m => m.id === mid);
+const slotsPer = r => r.scoring === "singles" ? 1 : 2;
+const isSet = m => m.a.length && m.b.length;
 
-/* ── stroke-play maths ─────────────────────────────────────── */
-// Per side, per hole: the net that counts (best ball -> lowest net of the pair).
-function sideNet(r, m, sc, hole, side){
-  const rows = sc.filter(s => s.side === side); let best = null, any = 0;
-  rows.forEach(s => { const g = gross(r.id, m.id, hole, s.key); if (g === null) return; any++;
-    const n = g - (s.holes[hole] || 0); if (best === null || n < best) best = n; });
-  const complete = r.scoring === "bestball" ? any === rows.length : any === rows.length; // require all rows in
-  return { net: best, complete, any };
+/* ── handicaps + scorers ───────────────────────────────────── */
+function liveHcp(id){ return Number(Store.get(["hcp", id], P[id]?.hcp ?? 0)); }
+function alloc(total, r){ const c = courseOf(r), h = {}; for (let i = 1; i <= r.holes; i++) { const si = c.si[i-1] ?? i; let n = 0; if (total >= si) n++; if (total >= si + r.holes) n++; if (n) h[i] = n; } return h; }
+const half = r => r.holes <= 9 && CONFIG.nineHoleHalf !== false ? 0.5 : 1;
+function scorers(r, m){
+  if (r.scoring === "scramble") return [{ key:"a", side:"a", ids:m.a, label:m.a.map(pfirst).join(" & ") || TA().short, total:0, holes:{} },
+                                       { key:"b", side:"b", ids:m.b, label:m.b.map(pfirst).join(" & ") || TB().short, total:0, holes:{} }];
+  const ids = [...m.a, ...m.b], low = ids.length ? Math.min(...ids.map(liveHcp)) : 0;
+  return ids.map(id => { const total = Math.round((liveHcp(id) - low) * half(r)); return { key:id, side:teamOf(id), ids:[id], label:pname(id), total, holes:alloc(total, r) }; });
+}
+const gross = (rid, mid, hole, key) => { const v = Store.get(["gross", mkey(rid, mid), String(hole), key], null); return v === null || v === "" ? null : Number(v); };
+
+/* ── hole result: override wins, else computed from scores ── */
+function holeResult(r, m, sc, hole){
+  const ov = Store.get(["over", mkey(r.id, m.id), String(hole)], null); if (ov) return { res:ov, why:"conceded / set by hand", over:true };
+  const nets = side => sc.filter(s => s.side === side).map(s => { const g = gross(r.id, m.id, hole, s.key); return g === null ? null : g - (s.holes[hole] || 0); });
+  const A = nets("a"), B = nets("b"); if (!A.length || !B.length || A.includes(null) || B.includes(null)) return null;
+  A.sort((x, y) => x - y); B.sort((x, y) => x - y);
+  if (A[0] !== B[0]) return { res:A[0] < B[0] ? "a" : "b", why:`net ${Math.min(A[0], B[0])} v ${Math.max(A[0], B[0])}` };
+  if (r.scoring === "bestball2" && A.length > 1 && B.length > 1 && A[1] !== B[1]) return { res:A[1] < B[1] ? "a" : "b", why:`best nets tied ${A[0]} — second man ${Math.min(A[1], B[1])} v ${Math.max(A[1], B[1])}` };
+  return { res:"h", why:`halved — net ${A[0]} each` };
 }
 function matchState(rid, mid){
-  const r = ROUND[rid], m = r.matches.find(x => x.id === mid), c = courseOf(r), sc = scorers(r, m);
-  let thru = 0, aNet = 0, bNet = 0, par = 0, holesDone = [];
-  for (let i = 1; i <= r.holes; i++) {
-    const A = sideNet(r, m, sc, i, "a"), B = sideNet(r, m, sc, i, "b");
-    if (A.complete && B.complete) { thru = i; aNet += A.net; bNet += B.net; par += c.par[i-1]; holesDone.push(i); }
-  }
-  const complete = holesDone.length === r.holes;
-  const diff = aNet - bNet, lead = diff < 0 ? "a" : diff > 0 ? "b" : "h";
-  const pts = { a:0, b:0 };
-  if (complete && r.points === "match") { if (lead === "a") pts.a = m.pts; else if (lead === "b") pts.b = m.pts; else { pts.a = m.pts / 2; pts.b = m.pts / 2; } }
-  const started = holesDone.length > 0 || sc.some(s => [...Array(r.holes)].some((_, i) => gross(rid, mid, i + 1, s.key) !== null));
-  const gap = Math.abs(diff);
-  const text = !started ? "Not started" : lead === "h" ? "LEVEL" : (gap + (gap === 1 ? " SHOT" : " SHOTS"));
-  return { r, m, sc, thru, played:holesDone.length, complete, started, aNet, bNet, aToPar:aNet - par, bToPar:bNet - par, diff, lead, pts, text };
+  const r = ROUND[rid], m = matchOf(rid, mid), sc = scorers(r, m), carry = Number(CONFIG.carry || 0);
+  let up = 0, stack = 0, thru = 0, aH = 0, bH = 0, hH = 0; const per = {};
+  for (let i = 1; i <= r.holes; i++) { const h = holeResult(r, m, sc, i); if (!h) { per[i] = null; continue; }
+    thru = i; const worth = 1 + stack;
+    if (h.res === "h") { hH++; stack = Math.min(stack + 1, carry); per[i] = { ...h, worth:0 }; }
+    else { if (h.res === "a") { aH++; up += worth; } else { bH++; up -= worth; } stack = 0; per[i] = { ...h, worth }; } }
+  const started = thru > 0 || sc.some(s => [...Array(r.holes)].some((_, i) => gross(rid, mid, i + 1, s.key) !== null));
+  const left = r.holes - thru, potential = left + stack, mag = Math.abs(up), lead = up > 0 ? "a" : up < 0 ? "b" : "h";
+  let closed = false, text = "", short = ""; const pts = { a:0, b:0 };
+  if (!started) { text = "Not started"; short = "—"; }
+  else if (mag > potential && left > 0) { closed = true; text = short = `${mag}&${left}`; }
+  else if (left === 0) { closed = true; if (up === 0) { text = "HALVED"; short = "AS"; } else { text = short = `${mag} UP`; } }
+  else { text = up === 0 ? "ALL SQUARE" : `${mag} UP`; short = up === 0 ? "AS" : `${mag} UP`; }
+  if (closed) { if (lead === "a") pts.a = m.pts; else if (lead === "b") pts.b = m.pts; else if (CONFIG.halvedMatch !== "none") { pts.a = m.pts / 2; pts.b = m.pts / 2; } }
+  return { r, m, sc, up, mag, thru, left, stack, lead, closed, started, text, short, pts, per, aH, bH, hH };
 }
-// One player's own round (singles / best ball): gross, net, thru.
-function playerRound(rid, id){
-  const r = ROUND[rid]; if (r.scoring === "scramble") return null;
-  const m = r.matches.find(x => x.a.includes(id) || x.b.includes(id)); if (!m) return null;
-  const s = scorers(r, m).find(x => x.key === id), c = courseOf(r);
-  let g = 0, n = 0, thru = 0, par = 0, birdies = 0, eagles = 0, pars = 0;
-  for (let i = 1; i <= r.holes; i++) { const v = gross(rid, m.id, i, id); if (v === null) continue;
-    thru++; g += v; n += v - (s.holes[i] || 0); par += c.par[i-1];
-    const d = v - c.par[i-1]; if (d <= -2) eagles++; else if (d === -1) birdies++; else if (d === 0) pars++; }
-  return { id, rid, thru, holes:r.holes, complete:thru === r.holes, gross:g, net:n, par, netToPar:n - par, grossToPar:g - par, birdies, eagles, pars, strokes:s.total };
-}
-function rankRound(rid){
-  const r = ROUND[rid], rows = [];
-  r.matches.forEach(m => [...m.a, ...m.b].forEach(id => { const pr = playerRound(rid, id); if (pr) rows.push(pr); }));
-  rows.sort((x, y) => (y.thru - x.thru) || (x.netToPar - y.netToPar));
-  const allDone = rows.length && rows.every(x => x.complete);
-  const table = r.rankPoints || [];
-  // ties share the points of the positions they span
-  const done = rows.filter(x => x.complete).sort((x, y) => x.net - y.net);
-  let i = 0; const ptsBy = {};
-  while (i < done.length) { let j = i; while (j + 1 < done.length && done[j+1].net === done[i].net) j++;
-    let pool = 0; for (let k = i; k <= j; k++) pool += table[k] || 0;
-    for (let k = i; k <= j; k++) { done[k].rank = i + 1; done[k].tied = j > i; ptsBy[done[k].id] = pool / (j - i + 1); } i = j + 1; }
-  const pts = { a:0, b:0 };
-  if (allDone) Object.entries(ptsBy).forEach(([id, v]) => pts[teamOf(id)] += v);
-  return { rows, done, allDone, pts, ptsBy, avail:table.reduce((x, y) => x + y, 0) };
-}
+const surv = (rid, side) => !!Store.get(["surv", rid, side], false);
 function roundPoints(rid){
-  const r = ROUND[rid];
-  if (r.points === "rank") { const k = rankRound(rid); return { a:k.pts.a, b:k.pts.b, avail:k.avail, final:k.allDone }; }
-  let a = 0, b = 0, avail = 0, final = true;
-  r.matches.forEach(m => { avail += m.pts; const s = matchState(rid, m.id); a += s.pts.a; b += s.pts.b; if (!s.complete) final = false; });
-  return { a, b, avail, final };
+  const r = ROUND[rid]; let a = 0, b = 0, avail = 0, final = true, any = false;
+  matchesOf(r).forEach(m => { avail += m.pts; if (!isSet(m)) { final = false; return; } const s = matchState(rid, m.id); a += s.pts.a; b += s.pts.b; if (!s.closed) final = false; if (s.started) any = true; });
+  const sp = Number(CONFIG.survivorPts || 0), sa = surv(rid, "a") ? sp : 0, sb = surv(rid, "b") ? sp : 0;
+  return { a:a + sa, b:b + sb, ma:a, mb:b, sa, sb, avail, final, any };
 }
-function roundStatus(rid){
-  const r = ROUND[rid], p = roundPoints(rid); if (p.final) return "final";
-  return r.matches.some(m => matchState(rid, m.id).started) ? "live" : "upcoming";
-}
+function roundStatus(rid){ const p = roundPoints(rid); return p.final ? "final" : p.any ? "live" : "upcoming"; }
 function cupTotals(){
-  let a = 0, b = 0, avail = 0, done = 0;
-  CONFIG.rounds.forEach(r => { const p = roundPoints(r.id); a += p.a; b += p.b; avail += p.avail; if (p.final) done += p.avail; });
-  return { a, b, avail, done, toWin: avail / 2 + 0.5, left: avail - done };
+  let a = 0, b = 0, avail = 0, matchLeft = 0, survLeftA = 0, survLeftB = 0; const sp = Number(CONFIG.survivorPts || 0);
+  CONFIG.rounds.forEach(r => { const p = roundPoints(r.id); a += p.a; b += p.b; avail += p.avail;
+    if (!p.final) { matchLeft += p.avail - p.ma - p.mb; if (!surv(r.id, "a")) survLeftA += sp; if (!surv(r.id, "b")) survLeftB += sp; } });
+  const aWon = a > b + matchLeft + survLeftB, bWon = b > a + matchLeft + survLeftA, done = matchLeft === 0;
+  const aNeeds = Math.max(0, (b + matchLeft + survLeftB) - a + 0.5), bNeeds = Math.max(0, (a + matchLeft + survLeftA) - b + 0.5);
+  return { a, b, avail, matchLeft, aWon, bWon, done, aNeeds, bNeeds, aCan:aNeeds <= matchLeft + survLeftA, bCan:bNeeds <= matchLeft + survLeftB };
 }
 function nextRound(){ return CONFIG.rounds.find(r => roundStatus(r.id) !== "final") || CONFIG.rounds[CONFIG.rounds.length - 1]; }
+
+/* ── individual stuff (own-ball rounds only) ───────────────── */
+function playerRound(rid, id){
+  const r = ROUND[rid]; if (r.scoring === "scramble") return null;
+  const m = matchesOf(r).find(x => x.a.includes(id) || x.b.includes(id)); if (!m) return null;
+  const c = courseOf(r), full = alloc(Math.round(liveHcp(id) * half(r)), r);
+  let g = 0, n = 0, thru = 0, par = 0, birdies = 0, eagles = 0;
+  for (let i = 1; i <= r.holes; i++) { const v = gross(rid, m.id, i, id); if (v === null) continue; thru++; g += v; n += v - (full[i] || 0); par += c.par[i-1];
+    const d = v - c.par[i-1]; if (d <= -2) eagles++; else if (d === -1) birdies++; }
+  return { id, rid, thru, holes:r.holes, complete:thru === r.holes, gross:g, net:n, par, netToPar:n - par, grossToPar:g - par, birdies, eagles };
+}
 function soloStandings(){
   const rids = CONFIG.solo.rounds.filter(id => ROUND[id]);
-  return CONFIG.players.map(p => {
-    const rounds = rids.map(rid => playerRound(rid, p.id)).filter(Boolean);
-    const played = rounds.filter(x => x.thru > 0);
-    return { id:p.id, rounds, net:played.reduce((s, x) => s + x.netToPar, 0), holes:played.reduce((s, x) => s + x.thru, 0),
-      complete:rounds.length === rids.length && rounds.every(x => x.complete), birdies:played.reduce((s, x) => s + x.birdies, 0), eagles:played.reduce((s, x) => s + x.eagles, 0) };
-  }).filter(x => x.holes > 0).sort((x, y) => (y.holes - x.holes) || (x.net - y.net));
+  return CONFIG.players.map(p => { const rounds = rids.map(rid => playerRound(rid, p.id)).filter(Boolean), played = rounds.filter(x => x.thru > 0);
+    return { id:p.id, rounds, net:played.reduce((s, x) => s + x.netToPar, 0), holes:played.reduce((s, x) => s + x.thru, 0), birdies:played.reduce((s, x) => s + x.birdies, 0), eagles:played.reduce((s, x) => s + x.eagles, 0) }; })
+    .filter(x => x.holes > 0).sort((x, y) => (y.holes - x.holes) || (x.net - y.net));
+}
+function playerStats(){
+  const S = {}; CONFIG.players.forEach(p => S[p.id] = { id:p.id, w:0, l:0, h:0, pts:0, hw:0, hl:0, birdies:0, eagles:0, lowGross:null, lowNet:null });
+  CONFIG.rounds.forEach(r => matchesOf(r).forEach(m => { if (!isSet(m)) return; const s = matchState(r.id, m.id);
+    const tally = (ids, mine, theirs, myPts) => ids.forEach(id => { if (!S[id]) return; S[id].hw += mine; S[id].hl += theirs;
+      if (s.closed) { s.lead === "h" ? S[id].h++ : (s.lead === (teamOf(id)) ? S[id].w++ : S[id].l++); S[id].pts += myPts / ids.length; }
+      const pr = playerRound(r.id, id); if (pr && pr.thru) { S[id].birdies += pr.birdies; S[id].eagles += pr.eagles;
+        if (pr.complete && r.holes === 18) { if (S[id].lowGross === null || pr.gross < S[id].lowGross) S[id].lowGross = pr.gross; if (S[id].lowNet === null || pr.net < S[id].lowNet) S[id].lowNet = pr.net; } } });
+    tally(m.a, s.aH, s.bH, s.pts.a); tally(m.b, s.bH, s.aH, s.pts.b); }));
+  return S;
 }
 </script>
+
 <script>
 /* ═══ RENDER: CUP ═══════════════════════════════════════════ */
 const dayName  = iso => new Date(iso + "T12:00:00").toLocaleDateString(undefined, { weekday:"long", month:"short", day:"numeric" });
 const dayShort = iso => new Date(iso + "T12:00:00").toLocaleDateString(undefined, { weekday:"short", month:"numeric", day:"numeric" });
-const sideNames = ids => ids.map(pshort).map(esc).join("<br>");
+const names = ids => ids.length ? ids.map(pshort).map(esc).join("<br>") : `<span class="muted">TBD</span>`;
 
 function renderCup(){
-  const t = cupTotals(), aPct = t.avail ? t.a / t.avail * 100 : 0, bPct = t.avail ? t.b / t.avail * 100 : 0;
-  const aWon = t.a >= t.toWin, bWon = t.b >= t.toWin, tie = !aWon && !bWon && t.left === 0 && t.a === t.b;
-  const banner = aWon ? `<div class="won-banner">${esc(TA().name)} wins the cup</div>` : bWon ? `<div class="won-banner">${esc(TB().name)} wins the cup</div>` : tie ? `<div class="won-banner">Tied — cup shared</div>` : "";
-  const clinch = (aWon || bWon) ? "" : `<div class="clinch">${esc(TA().short)} needs <b>${fmtPts(Math.max(0, t.toWin - t.a))}</b> &nbsp;·&nbsp; ${esc(TB().short)} needs <b>${fmtPts(Math.max(0, t.toWin - t.b))}</b> &nbsp;·&nbsp; <b>${fmtPts(t.left)}</b> still out there</div>`;
+  const t = cupTotals(), aPct = t.avail ? Math.min(100, t.a / t.avail * 100) : 0, bPct = t.avail ? Math.min(100, t.b / t.avail * 100) : 0;
+  const banner = t.aWon ? `<div class="won-banner">${esc(TA().name)} wins the cup</div>` : t.bWon ? `<div class="won-banner">${esc(TB().name)} wins the cup</div>` : (t.done && t.a === t.b) ? `<div class="won-banner">Tied — cup shared</div>` : "";
+  const need = (n, can) => can ? `needs <b>${fmtPts(n)}</b> to clinch` : `<span class="muted">can't clinch yet</span>`;
+  const clinch = (t.aWon || t.bWon || t.done) ? "" : `<div class="clinch">${esc(TA().short)} ${need(t.aNeeds, t.aCan)} &nbsp;·&nbsp; ${esc(TB().short)} ${need(t.bNeeds, t.bCan)} &nbsp;·&nbsp; <b>${fmtPts(t.matchLeft)}</b> match pts left</div>`;
   $("#v-cup").innerHTML = `
     <div class="bigscore">
       <div class="bs-side"><div class="bs-nm a">${esc(TA().name)}</div><div class="bs-pts ${t.a >= t.b ? "a" : "dim"}">${fmtPts(t.a)}</div><div class="bs-cap">${esc(TA().captain || "")}</div></div>
@@ -817,270 +732,196 @@ function renderCup(){
       <div class="bs-side"><div class="bs-nm b">${esc(TB().name)}</div><div class="bs-pts ${t.b >= t.a ? "b" : "dim"}">${fmtPts(t.b)}</div><div class="bs-cap">${esc(TB().captain || "")}</div></div>
     </div>
     <div class="track"><div class="track-a" style="width:${aPct}%"></div><div class="track-mid"></div><div class="track-b" style="width:${bPct}%"></div></div>
-    <div class="track-lbl"><span>0</span><span>${fmtPts(t.toWin)} to win</span><span>${fmtPts(t.avail)}</span></div>
+    <div class="track-lbl"><span>0</span><span>${fmtPts(t.avail)} match pts + survivor bonuses</span><span>${fmtPts(t.avail)}</span></div>
     ${clinch}${banner}
+    ${renderFormat()}
     <div class="sect"><div class="sect-h">The Rounds</div>${CONFIG.rounds.map(renderRoundBlock).join("")}</div>
     ${renderSolo()}${renderHonours()}`;
 }
-
+function renderFormat(){
+  const rounds = CONFIG.rounds, matchPts = rounds.reduce((s, r) => s + r.matches.reduce((x, m) => x + m.pts, 0), 0), sp = Number(CONFIG.survivorPts || 0), survMax = sp * rounds.length;
+  const perRound = rounds.map(r => `<tr><td>${esc(dayShort(r.date).split(",")[0])}</td><td>${esc(r.format)}</td><td class="ctr muted">${r.matches.length} × ${r.matches[0].pts}</td><td class="num" style="font-weight:700">${r.matches.reduce((x, m) => x + m.pts, 0)}</td></tr>`).join("");
+  const mp = rounds[0]?.matches[0]?.pts ?? 2;
+  const halved = CONFIG.halvedMatch === "none" ? `Finish all square and nobody gets anything.` : `Finish all square and it's ${fmtPts(mp / 2)} point${mp / 2 === 1 ? "" : "s"} each.`;
+  const groupsBy = {}; rounds.forEach(r => { const k = r.matches.length; (groupsBy[k] = groupsBy[k] || []).push(r.format.split(" ·")[0]); });
+  const perRoundTxt = Object.entries(groupsBy).map(([n, fmts]) => `${[...new Set(fmts)].join(" and ")} rounds have ${n} matches (${n * mp} points)`).join("; ");
+  const carry = Number(CONFIG.carry || 0), carryTxt = carry === 0 ? "A tied hole is halved, no carryover." : carry >= 99 ? "Tied holes carry over to the next hole with no cap." : `Tied holes carry over, stacking up to ${carry}.`;
+  const li = t => `<li style="margin:0 0 .4rem">${t}</li>`;
+  return `<details class="card" style="margin-top:1rem"><summary style="padding:.7rem .85rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem;font-family:var(--hd);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:var(--gold)">
+      <span>How the Cup works</span><span class="hint" style="margin-left:auto;font-size:.7rem;color:var(--tx3);letter-spacing:.06em">tap to open</span></summary>
+    <div style="padding:0 .85rem .85rem;font-size:.8rem;line-height:1.55;color:var(--tx2)">
+      <ul style="padding-left:1.1rem;margin:.2rem 0 .7rem">
+        ${li(`<b style="color:var(--tx)">Match play.</b> Every match is played hole by hole. Lower net score wins the hole. ${carryTxt} The side that wins more holes wins the match.`)}
+        ${li(`<b style="color:var(--tx)">Points.</b> Every match is worth ${mp} points. Win the match, ${mp} points to your team. ${halved} ${perRoundTxt.charAt(0).toUpperCase() + perRoundTxt.slice(1)}.`)}
+        ${li(`<b style="color:var(--tx)">${matchPts} match points in total.</b> First team past <b style="color:var(--tx)">${fmtPts(matchPts / 2 + 0.5)}</b> can't be caught; ${fmtPts(matchPts / 2)}–${fmtPts(matchPts / 2)} is a tie on match points.`)}
+        ${sp ? li(`<b style="color:var(--tx)">Survivor ball: +${sp} per team per round.</b> Each team gets one ball for the trip. Keep it in play the whole round and the commissioner ticks the box. Up to ${fmtPts(survMax)} bonus per team across the weekend — it counts toward the total and can decide a tie.`) : ""}
+        ${li(`<b style="color:var(--tx)">Most total points lifts the Cup.</b> Match points plus survivor bonuses. The board above tracks it live and tells you what each side still needs to clinch.`)}
+        ${li(`<b style="color:var(--tx)">Handicaps</b> only apply in own-ball rounds: you play off the lowest man in your group, full difference, hardest holes first. Scrambles are gross.`)}
+        ${li(`<b style="color:var(--tx)">${esc(CONFIG.solo.name)}</b> runs alongside: best total net to par over the own-ball rounds (${CONFIG.solo.rounds.map(id => ROUND[id] ? dayShort(ROUND[id].date).split(",")[0] + " " + ROUND[id].format.split(" ·")[0] : "").filter(Boolean).join(", ")}). Bragging rights only.`)}
+      </ul>
+      <table class="tbl" style="font-size:.76rem"><thead><tr><th>Day</th><th>Format</th><th class="ctr">Matches</th><th class="num">Pts</th></tr></thead><tbody>${perRound}
+        <tr><td colspan="3" style="font-weight:700;color:var(--tx)">Match points</td><td class="num" style="font-weight:700;color:var(--gold)">${matchPts}</td></tr>
+        ${sp ? `<tr><td colspan="3" class="muted">Survivor bonus, max per team</td><td class="num muted">+${fmtPts(survMax)}</td></tr>` : ""}</tbody></table>
+      <div class="tiny muted" style="margin-top:.5rem">Each round's own rules (best ball, scramble, tiebreaks) are on the Live tab under that round.</div>
+    </div></details>`;
+}
 function renderRoundBlock(r){
-  const st = roundStatus(r.id), p = roundPoints(r.id), c = courseOf(r);
+  const st = roundStatus(r.id), p = roundPoints(r.id), c = courseOf(r), admin = Me.isAdmin(), sp = Number(CONFIG.survivorPts || 0);
   const badge = st === "live" ? `<span class="pill pill-live"><span class="dot"></span>Live</span>` : st === "final" ? `<span class="pill pill-final">Final</span>` : `<span class="pill pill-next">${esc(r.tee)}</span>`;
-  let body;
-  if (r.points === "rank") {
-    const k = rankRound(r.id);
-    body = k.rows.length ? `<table class="tbl"><thead><tr><th></th><th>Player</th><th class="num">Thru</th><th class="num">Net</th><th class="num">Pts</th></tr></thead><tbody>` +
-      k.rows.map((x, i) => `<tr class="rankrow"><td class="rk ${x.rank === 1 ? "top" : ""}">${x.rank ? (x.tied ? "T" : "") + x.rank : "—"}</td>
-        <td><span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}</td><td class="num muted">${x.complete ? "F" : x.thru}</td>
-        <td class="num" style="font-weight:700">${toPar(x.netToPar)}</td><td class="num muted">${k.ptsBy[x.id] != null ? fmtPts(k.ptsBy[x.id]) : ""}</td></tr>`).join("") + `</tbody></table>`
-      : `<div class="empty" style="padding:1rem">Nobody out yet</div>`;
-  } else {
-    body = r.matches.map(m => {
-      const s = matchState(r.id, m.id), aW = s.complete && s.lead === "a", bW = s.complete && s.lead === "b";
-      const cls = !s.started ? "mt-res pend" : s.lead === "a" ? "mt-res a" : s.lead === "b" ? "mt-res b" : "mt-res h";
-      const sub = s.complete ? (s.lead === "h" ? "Tied" : `${esc(s.lead === "a" ? TA().short : TB().short)} by ${Math.abs(s.diff)}`) : s.text;
-      return `<div class="mt">
-        <div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p ${s.complete ? (aW ? "win" : "lose") : ""}">${sideNames(m.a)}</div>
-          ${s.started ? `<div class="tiny" style="color:var(--a-lt);font-weight:700">${toPar(s.aToPar)}</div>` : ""}</div>
-        <div class="mt-c"><div class="${cls}">${s.started ? (s.complete ? "FINAL" : "thru " + s.thru) : "—"}</div><div class="mt-thru">${s.started ? sub : esc(r.tee)}</div></div>
-        <div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p ${s.complete ? (bW ? "win" : "lose") : ""}">${sideNames(m.b)}</div>
-          ${s.started ? `<div class="tiny" style="color:var(--b-lt);font-weight:700">${toPar(s.bToPar)}</div>` : ""}</div>
-      </div>`;
-    }).join("");
-  }
-  return `<div class="rnd ${st === "upcoming" ? "up" : ""}">
-    <div class="rnd-h"><div class="rnd-h-l"><div class="rnd-fmt">${esc(r.format)}</div>
+  const body = matchesOf(r).map(m => { if (!isSet(m)) return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p">${names(m.a)}</div></div><div class="mt-c"><div class="mt-res pend">—</div><div class="mt-thru">pairings TBD</div></div><div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p">${names(m.b)}</div></div></div>`;
+    const s = matchState(r.id, m.id), aW = s.closed && s.lead === "a", bW = s.closed && s.lead === "b";
+    const cls = !s.started ? "mt-res pend" : s.lead === "a" ? "mt-res a" : s.lead === "b" ? "mt-res b" : "mt-res h";
+    return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p ${s.closed ? (aW ? "win" : "lose") : ""}">${names(m.a)}</div></div>
+      <div class="mt-c"><div class="${cls}">${esc(s.short)}</div><div class="mt-thru">${s.closed ? "Final" : s.started ? "thru " + s.thru + (s.stack ? " · " + s.stack + " carried" : "") : esc(r.tee)}</div></div>
+      <div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p ${s.closed ? (bW ? "win" : "lose") : ""}">${names(m.b)}</div></div></div>`; }).join("");
+  const survRow = sp ? `<div style="display:flex;justify-content:space-between;padding:.45rem .8rem;border-top:1px solid var(--line);background:var(--bg2)">
+      ${["a", "b"].map(side => `<span class="surv">🏐 Survivor ${admin ? `<button data-surv="${r.id}" data-side="${side}" class="${surv(r.id, side) ? "on" : ""}">${TS(side)} ${surv(r.id, side) ? "+" + sp : "—"}</button>` : `<b style="color:var(--${side}-lt)">${TS(side)} ${surv(r.id, side) ? "+" + sp : "—"}</b>`}</span>`).join("")}</div>` : "";
+  return `<div class="rnd ${st === "upcoming" ? "up" : ""}"><div class="rnd-h"><div class="rnd-h-l"><div class="rnd-fmt">${esc(r.format)}</div>
       <div class="rnd-meta">${dayShort(r.date)} &bull; ${esc(r.tee)} &bull; ${esc(c.name)} &bull; ${r.holes} holes</div></div>
-      <div class="rnd-pts"><div class="rnd-pts-v"><span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span></div><div class="rnd-pts-l">of ${fmtPts(p.avail)}</div></div></div>
-    <div style="padding:.4rem .8rem .5rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">${r.note}</span><span style="margin-left:auto">${badge}</span></div>
-    ${body}</div>`;
+      <div class="rnd-pts"><div class="rnd-pts-v"><span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span></div><div class="rnd-pts-l">of ${fmtPts(p.avail)}${sp ? " +" + sp : ""}</div></div></div>
+    <div style="padding:.4rem .8rem .5rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">${r.note}</span><span style="margin-left:auto">${badge}</span></div>${body}${survRow}</div>`;
 }
-
 function renderSolo(){
-  const rows = soloStandings(), rids = CONFIG.solo.rounds;
-  const head = `<div class="sect"><div class="sect-h">${esc(CONFIG.solo.name)}</div>
-    <div class="tiny muted" style="margin-bottom:.5rem">Total net to par over ${rids.map(id => ROUND[id]?.format + " " + dayShort(ROUND[id]?.date)).join(", ")}.</div>`;
+  const rows = soloStandings(), rids = CONFIG.solo.rounds.filter(id => ROUND[id]);
+  const head = `<div class="sect"><div class="sect-h">${esc(CONFIG.solo.name)}</div><div class="tiny muted" style="margin-bottom:.5rem">Net to par (full handicap) over ${rids.map(id => ROUND[id].format.split(" ·")[0] + " " + dayShort(ROUND[id].date).split(",")[0]).join(", ")}. Match-play scores feed it automatically.</div>`;
   if (!rows.length) return head + `<div class="empty">Standings appear after the first hole is scored</div></div>`;
-  return head + `<div class="card"><table class="tbl"><thead><tr><th></th><th>Player</th>${rids.map(id => `<th class="num">${esc(ROUND[id].format.split(" ")[0])}</th>`).join("")}<th class="num">Holes</th><th class="num">Net</th></tr></thead><tbody>` +
-    rows.map((x, i) => `<tr><td class="rk ${i === 0 ? "top" : ""}">${i + 1}</td><td><span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}</td>
-      ${rids.map(rid => { const pr = x.rounds.find(q => q.rid === rid); return `<td class="num muted">${pr && pr.thru ? toPar(pr.netToPar) + (pr.complete ? "" : "*") : "—"}</td>`; }).join("")}
-      <td class="num muted">${x.holes}</td><td class="num" style="font-weight:700">${toPar(x.net)}</td></tr>`).join("") +
-    `</tbody></table></div><div class="tiny muted" style="margin-top:.35rem;text-align:center">* round in progress</div></div>`;
-}
-
-function playerStats(){
-  const S = {}; CONFIG.players.forEach(p => S[p.id] = { id:p.id, w:0, l:0, h:0, pts:0, birdies:0, eagles:0, lowNet:null, lowGross:null, skins:0, ctp:0, ld:0, cash:0 });
-  CONFIG.rounds.forEach(r => {
-    if (r.points === "match") r.matches.forEach(m => { const s = matchState(r.id, m.id); if (!s.complete) return;
-      m.a.forEach(id => { s.lead === "a" ? S[id].w++ : s.lead === "b" ? S[id].l++ : S[id].h++; S[id].pts += s.pts.a / m.a.length; });
-      m.b.forEach(id => { s.lead === "b" ? S[id].w++ : s.lead === "a" ? S[id].l++ : S[id].h++; S[id].pts += s.pts.b / m.b.length; }); });
-    else { const k = rankRound(r.id); Object.entries(k.ptsBy).forEach(([id, v]) => S[id].pts += v); k.done.forEach(x => { x.rank === 1 ? S[x.id].w++ : S[x.id].l++; }); }
-    if (r.scoring !== "scramble") r.matches.forEach(m => [...m.a, ...m.b].forEach(id => { const pr = playerRound(r.id, id); if (!pr || !pr.thru) return;
-      S[id].birdies += pr.birdies; S[id].eagles += pr.eagles;
-      if (pr.complete && r.holes === 18) { if (S[id].lowNet === null || pr.net < S[id].lowNet) S[id].lowNet = pr.net; if (S[id].lowGross === null || pr.gross < S[id].lowGross) S[id].lowGross = pr.gross; } }));
-    const sk = roundSkins(r.id); Object.entries(sk.byPlayer).forEach(([id, n]) => { if (S[id]) S[id].skins += n; });
-    const sd = CONFIG.side[r.id] || {};
-    (sd.ctp || []).forEach(h => { const w = Store.get(["side", r.id, "ctp", String(h)], null); if (S[w]) S[w].ctp++; });
-    (sd.ld  || []).forEach(h => { const w = Store.get(["side", r.id, "ld",  String(h)], null); if (S[w]) S[w].ld++; });
-  });
-  const { bal } = moneyBook(); Object.keys(S).forEach(id => S[id].cash = bal[id] || 0);
-  return S;
+  return head + `<div class="card"><table class="tbl"><thead><tr><th></th><th>Player</th>${rids.map(id => `<th class="num">${esc(dayShort(ROUND[id].date).split(",")[0])}</th>`).join("")}<th class="num">Holes</th><th class="num">Net</th></tr></thead><tbody>` +
+    rows.map((x, i) => `<tr><td class="rk ${i === 0 ? "top" : ""}">${i + 1}</td><td><span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}</td>${rids.map(rid => { const pr = x.rounds.find(q => q.rid === rid); return `<td class="num muted">${pr && pr.thru ? toPar(pr.netToPar) + (pr.complete ? "" : "*") : "—"}</td>`; }).join("")}<td class="num muted">${x.holes}</td><td class="num" style="font-weight:700">${toPar(x.net)}</td></tr>`).join("") +
+    `</tbody></table></div><div class="tiny muted" style="margin-top:.35rem;text-align:center">* round in progress · a picked-up ball needs a score typed in to count here</div></div>`;
 }
 function renderHonours(){
-  const list = Object.values(playerStats()), side = (CONFIG.tabs || {}).action !== false;
-  if (!list.some(x => x.pts || x.birdies || x.eagles || x.w || x.skins)) return `<div class="sect"><div class="sect-h">Individual Honours</div><div class="empty">Awards appear once rounds finish</div></div>`;
-  const best = (key, label, fmt, min = 1, low = false) => {
-    const ok = list.filter(x => x[key] !== null && (low ? true : x[key] >= min)); if (!ok.length) return "";
+  const list = Object.values(playerStats()); if (!list.some(x => x.pts || x.hw || x.birdies)) return `<div class="sect"><div class="sect-h">Individual Honours</div><div class="empty">Awards appear once holes are scored</div></div>`;
+  list.forEach(x => x.net = x.hw - x.hl);
+  const best = (key, label, fmt, min = 1, low = false) => { const ok = list.filter(x => x[key] !== null && (low || x[key] >= min)); if (!ok.length) return "";
     ok.sort((p, q) => low ? p[key] - q[key] : q[key] - p[key]); const lead = ok.filter(x => x[key] === ok[0][key]);
-    return `<div class="money-row"><div style="min-width:118px;font-family:var(--hd);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.72rem;color:var(--gold)">${label}</div>
-      <div class="money-n" style="font-size:.8rem">${lead.map(x => `<span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}`).join(", ")}</div><div class="money-v" style="font-size:.95rem">${fmt(ok[0][key])}</div></div>`;
-  };
-  const awards = [best("pts", "Top Scorer", v => fmtPts(v) + " pts", 0.01), best("w", "Most Wins", v => v + " W"),
-    best("birdies", "Birdie Machine", v => v), best("eagles", "Eagle", v => v),
-    best("lowNet", "Low Net Round", v => v, 0, true), best("lowGross", "Low Gross Round", v => v, 0, true),
-    side && best("skins", "Skins King", v => v), side && best("ctp", "Dart Thrower", v => v + " CTP"), side && best("ld", "Big Stick", v => v + " LD"), side && best("cash", "Bank", v => "+$" + v.toFixed(0), 0.01)].filter(Boolean).join("");
-  const rows = list.sort((p, q) => q.pts - p.pts || q.w - p.w || q.birdies - p.birdies).map((x, i) => `<tr>
-    <td class="rk ${i === 0 && x.pts > 0 ? "top" : ""}">${i + 1}</td><td><span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}</td>
-    <td class="ctr" style="color:var(--tx2)">${x.w}-${x.l}-${x.h}</td><td class="num" style="font-weight:700">${fmtPts(x.pts)}</td><td class="num muted">${x.birdies || "—"}</td></tr>`).join("");
-  return `<div class="sect"><div class="sect-h">Individual Honours</div><div class="card" style="margin-bottom:.6rem">${awards}</div>
-    <div class="card"><table class="tbl"><thead><tr><th></th><th>Player</th><th class="ctr">W-L-T</th><th class="num">Pts</th><th class="num">Birdies</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="tiny muted" style="margin-top:.4rem;text-align:center">Points from partnered rounds are split between partners.</div></div>`;
+    return `<div class="money-row"><div style="min-width:118px;font-family:var(--hd);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.72rem;color:var(--gold)">${label}</div><div class="money-n" style="font-size:.8rem">${lead.map(x => `<span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}`).join(", ")}</div><div class="money-v" style="font-size:.95rem">${fmt(ok[0][key])}</div></div>`; };
+  const awards = [best("pts", "Top Scorer", v => fmtPts(v) + " pts", 0.01), best("w", "Most Wins", v => v + " W"), best("net", "Hole Bully", v => "+" + v + " holes"),
+    best("birdies", "Birdie Machine", v => v), best("eagles", "Eagle", v => v), best("lowGross", "Low Gross", v => v, 0, true), best("lowNet", "Low Net", v => v, 0, true)].filter(Boolean).join("");
+  const rows = list.sort((p, q) => q.pts - p.pts || q.w - p.w || q.net - p.net).map((x, i) => `<tr><td class="rk ${i === 0 && x.pts > 0 ? "top" : ""}">${i + 1}</td><td><span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}</td><td class="ctr" style="color:var(--tx2)">${x.w}-${x.l}-${x.h}</td><td class="num" style="font-weight:700">${fmtPts(x.pts)}</td><td class="num muted">${x.hw || x.hl ? (x.net > 0 ? "+" : "") + x.net : "—"}</td><td class="num muted">${x.birdies || "—"}</td></tr>`).join("");
+  return `<div class="sect"><div class="sect-h">Individual Honours</div><div class="card" style="margin-bottom:.6rem">${awards}</div><div class="card"><table class="tbl"><thead><tr><th></th><th>Player</th><th class="ctr">W-L-H</th><th class="num">Pts</th><th class="num">Holes ±</th><th class="num">Birdies</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="tiny muted" style="margin-top:.4rem;text-align:center">Points from partnered matches are split between partners.</div></div>`;
 }
-</script>
-<script>
-/* ═══ RENDER: LIVE — groups list + scorecard ════════════════ */
-const UI = { rid:null, mid:null, hole:1, card:false };
-function myMatch(rid){ const r = ROUND[rid]; if (!P[Me.role]) return null; return r.matches.find(m => m.a.includes(Me.role) || m.b.includes(Me.role)) || null; }
-function pickDefaults(){
-  if (!UI.rid || !ROUND[UI.rid]) { UI.rid = nextRound().id; UI.mid = null; }
-  const r = ROUND[UI.rid];
-  if (UI.mid && !r.matches.some(m => m.id === UI.mid)) UI.mid = null;
-}
-function firstOpenHole(rid, mid){
-  const r = ROUND[rid], m = r.matches.find(x => x.id === mid), sc = scorers(r, m);
-  for (let i = 1; i <= r.holes; i++) if (sc.some(s => gross(rid, mid, i, s.key) === null)) return i;
-  return r.holes;
-}
+
+/* ═══ RENDER: LIVE ══════════════════════════════════════════ */
+const UI = { rid:null, mid:null, hole:1, card:false, editPairs:false };
+function myMatch(rid){ if (!P[Me.role]) return null; return matchesOf(ROUND[rid]).find(m => m.a.includes(Me.role) || m.b.includes(Me.role)) || null; }
+function firstOpenHole(rid, mid){ const r = ROUND[rid], m = matchOf(rid, mid), sc = scorers(r, m); for (let i = 1; i <= r.holes; i++) if (!holeResult(r, m, sc, i)) return i; return r.holes; }
 function openCard(rid, mid){ UI.rid = rid; UI.mid = mid; UI.card = true; UI.hole = firstOpenHole(rid, mid); renderLive(); window.scrollTo({ top:0 }); }
 
 function renderLive(){
-  pickDefaults();
-  if (UI.card && UI.mid) return renderCard();
-  const r = ROUND[UI.rid], c = courseOf(r), t = cupTotals(), mine = myMatch(UI.rid);
-  const chips = CONFIG.rounds.map(x => { const st = roundStatus(x.id);
-    return `<button class="lv-chip ${x.id === UI.rid ? "on" : ""}" data-r="${x.id}">${esc(dayShort(x.date).split(" ")[0])} ${esc(x.format)}${st === "live" ? " ●" : st === "final" ? " ✓" : ""}</button>`; }).join("");
-  const mineHtml = mine ? `<div class="mine"><div class="mine-k">Your ${r.points === "rank" ? "group" : "match"} · ${esc(dayShort(r.date))} ${esc(r.tee)}</div>
-      <div class="mine-t">${esc(r.format)} · ${esc(c.name)}</div>
+  if (!UI.rid || !ROUND[UI.rid]) { UI.rid = nextRound().id; UI.mid = null; }
+  const r = ROUND[UI.rid], ms = matchesOf(r);
+  if (UI.card && UI.mid && isSet(matchOf(UI.rid, UI.mid))) return renderCard();
+  UI.card = false;
+  const c = courseOf(r), t = cupTotals(), mine = myMatch(UI.rid), admin = Me.isAdmin();
+  const chips = CONFIG.rounds.map(x => { const st = roundStatus(x.id); return `<button class="lv-chip ${x.id === UI.rid ? "on" : ""}" data-r="${x.id}">${esc(dayShort(x.date).split(",")[0])} ${esc(x.format.split(" ·")[0])}${st === "live" ? " ●" : st === "final" ? " ✓" : ""}</button>`; }).join("");
+  const unset = ms.some(m => !isSet(m));
+  const mineHtml = mine ? `<div class="mine"><div class="mine-k">Your match · ${esc(dayShort(r.date))} ${esc(r.tee)}</div><div class="mine-t">${esc(r.format)} · ${esc(c.name)}</div>
       <div class="mine-d">${mine.a.map(pshort).map(esc).join(" & ")} &nbsp;<span class="muted">v</span>&nbsp; ${mine.b.map(pshort).map(esc).join(" & ")}</div>
       <button class="btn btn-gold btn-full" style="margin-top:.7rem" data-open="${mine.id}">Open scorecard</button></div>`
+    : P[Me.role] && unset ? `<div class="note" style="margin-top:1rem">Pairings for this round haven't been set yet — captains pick after the previous round.</div>`
     : Me.canScore() ? "" : `<div class="note" style="margin-top:1rem">You're watching. Tap <b>Sign in</b> at the top to open your scorecard.</div>`;
-  const groups = r.matches.map(m => { const s = matchState(r.id, m.id);
-    const status = !s.started ? `<small>${esc(r.tee)}</small>` : s.complete ? `${s.lead === "h" ? "Tied" : `<span class="${s.lead}" style="color:var(--${s.lead}-lt)">${esc(s.lead === "a" ? TA().short : TB().short)} by ${Math.abs(s.diff)}</span>`}<small>Final</small>`
-      : `<span style="color:var(--a-lt)">${toPar(s.aToPar)}</span> <span class="muted">·</span> <span style="color:var(--b-lt)">${toPar(s.bToPar)}</span><small>thru ${s.thru}</small>`;
-    return `<div class="grp" data-open="${m.id}" style="cursor:pointer"><div class="grp-n"><b>${esc(m.label)}</b>${m.a.map(pshort).map(esc).join(" & ")} <span class="muted">v</span> ${m.b.map(pshort).map(esc).join(" & ")}</div>
-      <div class="grp-s">${status}</div><div class="grp-go">›</div></div>`; }).join("");
+  const groups = ms.map(m => { if (!isSet(m)) return `<div class="grp"><div class="grp-n"><b>${esc(m.label)}</b><span class="muted">pairings TBD</span></div></div>`;
+    const s = matchState(r.id, m.id);
+    const status = !s.started ? `<small>${esc(r.tee)}</small>` : `<span style="color:var(--${s.lead === "h" ? "tx2" : s.lead + "-lt"})">${s.lead === "h" ? s.short : TS(s.lead) + " " + s.short}</span><small>${s.closed ? "Final" : "thru " + s.thru}</small>`;
+    return `<div class="grp" data-open="${m.id}" style="cursor:pointer"><div class="grp-n"><b>${esc(m.label)}</b>${m.a.map(pshort).map(esc).join(" & ")} <span class="muted">v</span> ${m.b.map(pshort).map(esc).join(" & ")}</div><div class="grp-s">${status}</div><div class="grp-go">›</div></div>`; }).join("");
   $("#v-live").innerHTML = `
     <div class="lv-pick" style="margin-top:.6rem">${chips}</div>
-    <div class="tiny muted" style="display:flex;gap:.6rem;justify-content:center;margin:.1rem 0 .3rem">
-      <span style="color:var(--a-lt);font-weight:700">${esc(TA().short)} ${fmtPts(t.a)}</span><span>cup</span><span style="color:var(--b-lt);font-weight:700">${fmtPts(t.b)} ${esc(TB().short)}</span></div>
+    <div class="tiny muted" style="display:flex;gap:.6rem;justify-content:center;margin:.1rem 0 .3rem"><span style="color:var(--a-lt);font-weight:700">${esc(TA().short)} ${fmtPts(t.a)}</span><span>cup</span><span style="color:var(--b-lt);font-weight:700">${fmtPts(t.b)} ${esc(TB().short)}</span></div>
     ${mineHtml}
-    <div class="sect"><div class="sect-h">${r.points === "rank" ? "Groups" : "Matches"} · ${esc(r.format)}</div><div class="card">${groups}</div>
-      <div class="tiny muted" style="margin-top:.45rem;text-align:center">${r.note}${Me.canScore() ? " · Tap any group to score it" : ""}</div></div>`;
+    <div class="sect"><div class="sect-h">Matches · ${esc(r.format)}</div>
+      ${admin ? `<button class="btn btn-sm ${UI.editPairs ? "btn-gold" : "btn-gh"}" id="editPairs" style="margin-bottom:.5rem">${UI.editPairs ? "Done editing" : (unset ? "Set pairings" : "Edit pairings")}</button>` : ""}
+      ${admin && UI.editPairs ? renderPairEditor(r, ms) : `<div class="card">${groups}</div>`}
+      <div class="tiny muted" style="margin-top:.45rem;text-align:center">${r.note}${Me.canScore() && !UI.editPairs ? " · Tap any match to score it" : ""}</div></div>
+    <div class="sect"><div class="sect-h">Rules · ${esc(r.format)}</div>
+      <div class="card" style="padding:.75rem .85rem .35rem;font-size:.8rem;line-height:1.5;color:var(--tx2)">${ruleText(r)}</div>
+      <div class="tiny muted" style="margin-top:.4rem;text-align:center">${esc(dayName(r.date))} · ${esc(r.tee)} · ${esc(courseOf(r).name)} · ${r.holes} holes · par ${courseOf(r).par.reduce((a, b) => a + b, 0)}</div></div>`;
+}
+function renderPairEditor(r, ms){
+  const n = slotsPer(r), used = {}; ms.forEach(m => [...m.a, ...m.b].forEach(id => used[id] = (used[id] || 0) + 1));
+  const opts = (side, cur) => `<option value="">— pick —</option>` + CONFIG.players.filter(p => p.team === side).map(p => `<option value="${p.id}" ${cur === p.id ? "selected" : ""}>${esc(p.name)}${used[p.id] > 1 ? " ⚠ twice" : ""}</option>`).join("");
+  const col = (m, side) => `<div class="${side}">${[...Array(n)].map((_, i) => `<select data-pair="${m.id}" data-side="${side}" data-i="${i}">${opts(side, m[side][i])}</select>`).join("")}</div>`;
+  const dup = Object.values(used).some(v => v > 1), missing = CONFIG.players.filter(p => !used[p.id]);
+  return ms.map(m => `<div class="pe"><div class="pe-h">${esc(m.label)}</div><div class="pe-g">${col(m, "a")}${col(m, "b")}</div></div>`).join("") +
+    `<div class="tiny" style="color:${dup ? "var(--a-lt)" : "var(--tx3)"};text-align:center;margin-top:.3rem">${dup ? "Someone is in two matches." : missing.length ? "Not yet placed: " + missing.map(p => pshort(p.id)).join(", ") : "Everyone placed ✓"} · saves instantly to every phone</div>`;
 }
 
-function scoreClass(g, par){ if (g === null) return "empty"; const d = g - par; return d <= -2 ? "eagle" : d === -1 ? "birdie" : d === 0 ? "" : d === 1 ? "bogey" : "dbl"; }
+function ruleText(r){
+  const carry = Number(CONFIG.carry || 0);
+  const common = `Match play, hole by hole. Win a hole, you're 1 up. The match ends when a side leads by more than the holes left. Worth <b>${r.matches[0]?.pts ?? 2} points</b>${CONFIG.halvedMatch === "none" ? "; all square after " + r.holes + " and nobody scores." : "; all square after " + r.holes + " and it's " + fmtPts((r.matches[0]?.pts ?? 2) / 2) + " each."}`;
+  const carryTxt = carry === 0 ? "A tied hole is halved and gone — no carryover." : carry >= 99 ? "A tied hole carries to the next one, no cap." : `A tied hole carries to the next one, stacking up to ${carry}.`;
+  const fmt = { bestball:`<b>Best ball.</b> Everyone plays their own ball; each side counts its better <em>net</em> score on the hole. Lower net wins the hole, equal is halved.`,
+    bestball2:`<b>Best ball, second-man tiebreak.</b> Everyone plays their own ball; each side counts its better <em>net</em> score. If the best nets tie, the <em>second</em> players' nets decide the hole. Both tie and it's halved.`,
+    scramble:`<b>Scramble.</b> One team ball — everyone hits, pick the best, play from there. <b>No handicaps.</b> Lower team score wins the hole.`,
+    singles:`<b>Singles.</b> Man on man, own ball, Ryder Cup style. Lower net wins the hole.` }[r.scoring] || "";
+  const hcp = r.scoring === "scramble" ? "" : `<b>Strokes:</b> everyone in the group plays off its lowest handicap — you get the full difference${r.holes <= 9 && CONFIG.nineHoleHalf !== false ? " (halved for 9 holes)" : ""}, on the hardest holes first. The app marks stroke holes with a gold dot and does the net for you.`;
+  const surv = Number(CONFIG.survivorPts) ? `<b>Survivor ball:</b> keep the team ball in play all round and the commissioner ticks it — +${CONFIG.survivorPts} to your team.` : "";
+  return [fmt, common, carryTxt, hcp, surv].filter(Boolean).map(t => `<p style="margin:0 0 .45rem">${t}</p>`).join("");
+}
+const scoreClass = (g, par) => g === null ? "empty" : (d => d <= -2 ? "eagle" : d === -1 ? "birdie" : d === 0 ? "" : d === 1 ? "bogey" : "dbl")(g - par);
 function renderCard(){
-  const r = ROUND[UI.rid], m = r.matches.find(x => x.id === UI.mid), c = courseOf(r), sc = scorers(r, m), s = matchState(r.id, m.id);
-  const h = UI.hole = Math.min(Math.max(1, UI.hole), r.holes), par = c.par[h-1], si = c.si[h-1], can = Me.canScore();
-  const rows = sc.map(x => { const g = gross(r.id, m.id, h, x.key), st = x.holes[h] || 0, net = g === null ? null : g - st;
-    return `<div class="srow ${x.side}">
-      <div class="srow-n"><div class="srow-nm">${esc(x.label)}${"<span class='sd'></span>".repeat(st)}</div>
-        <div class="srow-x">${x.total ? x.total + " strokes" : "scratch"}${st ? ` · gets ${st} here` : ""}${net !== null && st ? ` · net ${net}` : ""}</div></div>
-      <button class="stp" data-stp="-1" data-k="${esc(x.key)}" ${can && g !== null && g > 1 ? "" : "disabled"}>−</button>
-      <div class="sval ${scoreClass(g, par)}" data-tap="${esc(x.key)}">${g === null ? "tap" : g}${g === null ? "" : `<small>${g - par === 0 ? "par" : toPar(g - par)}</small>`}</div>
-      <button class="stp" data-stp="1" data-k="${esc(x.key)}" ${can && (g === null || g < 15) ? "" : "disabled"}>+</button></div>`; }).join("");
-  const A = sideNet(r, m, sc, h, "a"), B = sideNet(r, m, sc, h, "b");
-  let hres = "";
-  if (A.complete && B.complete) hres = r.points === "rank" ? `Hole ${h} in the book` : A.net === B.net ? `Hole ${h} <b>halved</b> — net ${A.net} each`
-    : `Hole ${h} to <b style="color:var(--${A.net < B.net ? "a" : "b"}-lt)">${esc(A.net < B.net ? TA().short : TB().short)}</b> — net ${Math.min(A.net, B.net)} v ${Math.max(A.net, B.net)}`;
-  else if (A.any || B.any) hres = `<span class="muted">Waiting on ${sc.filter(x => gross(r.id, m.id, h, x.key) === null).map(x => esc(x.label.split(" ")[0])).join(", ")}</span>`;
+  const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), c = courseOf(r), sc = scorers(r, m), s = matchState(r.id, m.id);
+  const h = UI.hole = Math.min(Math.max(1, UI.hole), r.holes), par = c.par[h-1], si = c.si[h-1], can = Me.canScore(), hr = s.per[h];
+  const dead = s.closed && !hr && h > s.thru;
+  const rows = sc.map(x => { const g = gross(r.id, m.id, h, x.key), st = x.holes[h] || 0;
+    return `<div class="srow ${x.side}"><div class="srow-n"><div class="srow-nm">${esc(x.label)}${"<span class='sd'></span>".repeat(st)}</div>
+      <div class="srow-x">${r.scoring === "scramble" ? "team ball" : x.total ? `${x.total} strokes` : "scratch in this group"}${st ? ` · gets ${st} here` : ""}${g !== null && st ? ` · net ${g - st}` : ""}</div></div>
+      <button class="stp" data-stp="-1" data-k="${esc(x.key)}" ${can && !dead && g !== null && g > 1 ? "" : "disabled"}>−</button>
+      <div class="sval ${scoreClass(g, par)}" data-tap="${esc(x.key)}">${g === null ? (dead ? "—" : "tap") : g}${g === null ? "" : `<small>${g - par === 0 ? "par" : toPar(g - par)}</small>`}</div>
+      <button class="stp" data-stp="1" data-k="${esc(x.key)}" ${can && !dead && (g === null || g < 15) ? "" : "disabled"}>+</button></div>`; }).join("");
+  const ov = Store.get(["over", mkey(r.id, m.id), String(h)], null);
+  let hres = dead ? `<span class="muted">Match already decided</span>` : hr ? (hr.res === "h" ? `Hole ${h} <b>halved</b> · ${esc(hr.why)}${s.stack && h === s.thru ? ` · <b style="color:var(--gold)">next hole worth ${1 + s.stack}</b>` : ""}` : `Hole ${h} to <b style="color:var(--${hr.res}-lt)">${esc(TS(hr.res))}</b>${hr.worth > 1 ? ` <b style="color:var(--gold)">×${hr.worth}</b>` : ""} · ${esc(hr.why)}`)
+    : `<span class="muted">${sc.some(x => gross(r.id, m.id, h, x.key) !== null) ? "Waiting on " + sc.filter(x => gross(r.id, m.id, h, x.key) === null).map(x => esc(x.label.split(" ")[0])).join(", ") : "Enter scores, or set the result below for a concession"}</span>`;
   const who = Store.get(["meta", mkey(r.id, m.id), String(h)], null);
-
-  const grid = () => { const cols = [...Array(r.holes)].map((_, i) => i + 1);
-    const cell = (x, i) => { const g = gross(r.id, m.id, i, x.key); if (g === null) return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}">·</td>`;
-      const d = g - c.par[i-1], cls = d <= -2 ? "u2" : d === -1 ? "u1" : d === 1 ? "o1" : d >= 2 ? "o2" : "";
-      return `<td class="pick ${cls} ${i === h ? "cur" : ""}" data-jump="${i}">${g}${x.holes[i] ? "<sup class='st'>•</sup>" : ""}</td>`; };
-    const tot = x => { let g = 0, n = 0, k = 0; cols.forEach(i => { const v = gross(r.id, m.id, i, x.key); if (v === null) return; k++; g += v; n += v - (x.holes[i] || 0); }); return k ? `<td class="tot">${g}</td><td class="tot">${n}</td>` : `<td class="tot">—</td><td class="tot">—</td>`; };
-    return `<div class="grid"><table><thead><tr><th>Hole</th>${cols.map(i => `<th class="${i === h ? "cur" : ""}">${i}</th>`).join("")}<th>Gr</th><th>Net</th></tr>
-      <tr><th>Par</th>${cols.map(i => `<th>${c.par[i-1]}</th>`).join("")}<th>${c.par.reduce((a, b) => a + b, 0)}</th><th></th></tr></thead><tbody>
-      ${sc.map(x => `<tr><td>${esc(x.side === "a" ? "🔴 " : "🟢 ")}${esc(x.label.length > 12 ? x.label.split(" ")[0] : x.label)}</td>${cols.map(i => cell(x, i)).join("")}${tot(x)}</tr>`).join("")}</tbody></table></div>`; };
-
-  const vsTop = r.points === "rank"
-    ? `<div class="sc-vs">${["a", "b"].map(side => `<div class="sc-side ${side === "b" ? "r" : ""}">${sc.filter(x => x.side === side).map(x => { const pr = playerRound(r.id, x.key); return `<div class="n">${esc(pfirst(x.key))} <b style="color:var(--${side}-lt)">${pr && pr.thru ? toPar(pr.netToPar) : "—"}</b></div>`; }).join("")}</div>`).join(`<div class="sc-mid">net<b>thru ${s.thru}</b></div>`)}</div>`
-    : `<div class="sc-vs"><div class="sc-side"><div class="n">${m.a.map(pfirst).map(esc).join(" & ")}</div><div class="v a">${s.thru ? toPar(s.aToPar) : "—"}</div></div>
-       <div class="sc-mid">${s.complete ? "final" : "thru " + s.thru}<b>${s.thru ? (s.lead === "h" ? "level" : (s.lead === "a" ? TA().short : TB().short) + " by " + Math.abs(s.diff)) : "—"}</b></div>
-       <div class="sc-side r"><div class="n">${m.b.map(pfirst).map(esc).join(" & ")}</div><div class="v b">${s.thru ? toPar(s.bToPar) : "—"}</div></div></div>`;
-
+  const overBtns = can && !dead ? `<div class="ovr"><button class="wb a ${ov === "a" ? "on" : ""}" data-ov="a">${esc(TA().short)} wins</button><button class="wb h ${ov === "h" ? "on" : ""}" data-ov="h">Halve</button><button class="wb b ${ov === "b" ? "on" : ""}" data-ov="b">${esc(TB().short)} wins</button></div><div class="tiny muted" style="text-align:center;margin-top:.3rem">${ov ? "Result set by hand — tap again to go back to the scores" : "Conceded hole or picked up? Set the result by hand"}</div>` : "";
+  const cols = [...Array(r.holes)].map((_, i) => i + 1);
+  const cell = (x, i) => { const g = gross(r.id, m.id, i, x.key); if (g === null) return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}">·</td>`; const d = g - c.par[i-1];
+    return `<td class="pick ${d <= -2 ? "u2" : d === -1 ? "u1" : d === 1 ? "o1" : d >= 2 ? "o2" : ""} ${i === h ? "cur" : ""}" data-jump="${i}">${g}${x.holes[i] ? "<sup class='st'>•</sup>" : ""}</td>`; };
+  const resRow = cols.map(i => { const p = s.per[i]; return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}" style="font-weight:700;color:${!p ? "var(--tx3)" : p.res === "h" ? "var(--tx2)" : "var(--" + p.res + "-lt)"}">${!p ? "·" : p.res === "h" ? "½" : TS(p.res) + (p.worth > 1 ? p.worth : "")}</td>`; }).join("");
+  const tot = x => { let g = 0, k = 0; cols.forEach(i => { const v = gross(r.id, m.id, i, x.key); if (v !== null) { k++; g += v; } }); return `<td class="tot">${k ? g : "—"}</td>`; };
   $("#v-live").innerHTML = `
-    <div class="sc-top"><div class="row" style="margin-bottom:.35rem"><button class="btn btn-sm" id="cardBack">‹ Groups</button>
-      <span class="tiny muted grow" style="text-align:center">${esc(r.format)} · ${esc(c.name)} · ${esc(m.label)}</span>
-      <button class="btn btn-sm" data-v="cup" id="cardCup">Cup</button></div>${vsTop}</div>
-    <div class="hnav"><button class="hnav-b" data-nav="-1" ${h === 1 ? "disabled" : ""}>‹</button>
-      <div class="hnav-c"><div class="hnav-n"><small>HOLE</small>${h}</div><div class="hnav-i">Par ${par} · SI ${si}</div></div>
-      <button class="hnav-b" data-nav="1" ${h === r.holes ? "disabled" : ""}>›</button></div>
+    <div class="sc-top"><div class="row" style="margin-bottom:.35rem"><button class="btn btn-sm" id="cardBack">‹ Matches</button><span class="tiny muted grow" style="text-align:center">${esc(r.format)} · ${esc(c.name)} · ${esc(m.label)}</span><button class="btn btn-sm" data-v="cup">Cup</button></div>
+      <div class="sc-vs"><div class="sc-side"><div class="n">${m.a.map(pfirst).map(esc).join(" & ")}</div><div class="v a">${s.lead === "a" ? esc(s.short) : s.lead === "h" && s.started ? "AS" : "—"}</div></div>
+        <div class="sc-mid">${s.closed ? "final" : s.started ? "thru " + s.thru : esc(r.tee)}<b>${s.closed ? (s.lead === "h" ? "halved" : TS(s.lead) + " wins") : s.stack ? "carry ×" + (1 + s.stack) : s.started ? (s.lead === "h" ? "level" : TS(s.lead) + " leads") : "—"}</b></div>
+        <div class="sc-side r"><div class="n">${m.b.map(pfirst).map(esc).join(" & ")}</div><div class="v b">${s.lead === "b" ? esc(s.short) : s.lead === "h" && s.started ? "AS" : "—"}</div></div></div></div>
+    <div class="hnav"><button class="hnav-b" data-nav="-1" ${h === 1 ? "disabled" : ""}>‹</button><div class="hnav-c"><div class="hnav-n"><small>HOLE</small>${h}</div><div class="hnav-i">Par ${par} · SI ${si}</div></div><button class="hnav-b" data-nav="1" ${h === r.holes ? "disabled" : ""}>›</button></div>
     ${can ? "" : `<div class="note" style="margin-bottom:.6rem">Read-only — sign in to enter scores.</div>`}
-    ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}
-    ${grid()}
-    <div class="tiny muted" style="text-align:center;margin-top:.6rem">Tap any hole in the card to jump to it · ${sc.some(x => x.total) ? "• = stroke hole" : "no strokes in this group"}</div>
-    ${can && r.points !== "rank" ? "" : ""}`;
+    ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
+    <div class="grid"><table><thead><tr><th>Hole</th>${cols.map(i => `<th>${i}</th>`).join("")}<th>Tot</th></tr><tr><th>Par</th>${cols.map(i => `<th>${c.par[i-1]}</th>`).join("")}<th>${c.par.reduce((a, b) => a + b, 0)}</th></tr></thead>
+      <tbody>${sc.map(x => `<tr><td>${x.side === "a" ? "🔴" : "🟢"} ${esc(x.label.split(" ")[0])}</td>${cols.map(i => cell(x, i)).join("")}${tot(x)}</tr>`).join("")}<tr><td>Result</td>${resRow}<td class="tot">${s.started ? esc(s.short) : "—"}</td></tr></tbody></table></div>
+    <div class="tiny muted" style="text-align:center;margin-top:.6rem">Tap any hole in the card to jump to it${sc.some(x => x.total) ? " · • = stroke hole" : ""}</div>`;
 }
-
 let advanceTimer = null;
+function stamp(r, m, h){ Store.set(["meta", mkey(r.id, m.id), String(h)], Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" })); }
 function setScore(key, val){
-  if (!Me.canScore()) return;
-  const r = ROUND[UI.rid], m = r.matches.find(x => x.id === UI.mid), sc = scorers(r, m), h = UI.hole;
-  const wasComplete = sc.every(x => gross(r.id, m.id, h, x.key) !== null);
-  Store.set(["gross", mkey(r.id, m.id), String(h), key], val);
-  Store.set(["meta", mkey(r.id, m.id), String(h)], val === null ? null : Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }));
-  if (navigator.vibrate) navigator.vibrate(10);
-  const nowComplete = sc.every(x => gross(r.id, m.id, h, x.key) !== null);
-  clearTimeout(advanceTimer);
-  if (!wasComplete && nowComplete && h < r.holes) advanceTimer = setTimeout(() => { if (UI.card && UI.hole === h) { UI.hole = h + 1; renderLive(); window.scrollTo({ top:0 }); } }, 900);
+  if (!Me.canScore()) return; const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), sc = scorers(r, m), h = UI.hole;
+  const before = !!holeResult(r, m, sc, h); Store.set(["gross", mkey(r.id, m.id), String(h), key], val); stamp(r, m, h); if (navigator.vibrate) navigator.vibrate(10);
+  const after = !!holeResult(r, m, sc, h); clearTimeout(advanceTimer);
+  if (!before && after && h < r.holes) advanceTimer = setTimeout(() => { if (UI.card && UI.hole === h) { UI.hole = h + 1; renderLive(); window.scrollTo({ top:0 }); } }, 900);
 }
+function setOverride(res){ if (!Me.canScore()) return; const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), h = UI.hole, cur = Store.get(["over", mkey(r.id, m.id), String(h)], null);
+  Store.set(["over", mkey(r.id, m.id), String(h)], cur === res ? null : res); stamp(r, m, h); }
 </script>
-<script>
-/* ═══ SKINS + SIDE ACTION (hidden until CONFIG.tabs.action is true) ═══ */
-function roundSkins(rid){
-  const r = ROUND[rid]; if (r.scoring === "scramble") return { skins:[], byPlayer:{}, count:0, field:[] };
-  const c = courseOf(r), field = [], strokes = {};
-  r.matches.forEach(m => scorers(r, m).forEach(x => { field.push(x.key); strokes[x.key] = { m:m.id, holes:x.holes }; }));
-  const skins = [], byPlayer = {};
-  for (let i = 1; i <= r.holes; i++) {
-    const nets = field.map(id => { const g = gross(rid, strokes[id].m, i, id); return g === null ? null : { id, net:g - (strokes[id].holes[i] || 0), gross:g }; }).filter(Boolean);
-    if (nets.length < 2) continue;
-    const lo = Math.min(...nets.map(n => n.net)), win = nets.filter(n => n.net === lo);
-    if (win.length === 1) { skins.push({ hole:i, id:win[0].id, net:lo, gross:win[0].gross }); byPlayer[win[0].id] = (byPlayer[win[0].id] || 0) + 1; }
-  }
-  return { skins, byPlayer, count:skins.length, field };
-}
-function renderAct(){
-  const admin = Me.isAdmin();
-  const blocks = CONFIG.rounds.map(r => { const sd = CONFIG.side[r.id] || {}, pot = Number(sd.pot || 0), sk = roundSkins(r.id), per = sk.count ? pot / sk.count : 0, c = courseOf(r);
-    const skinRows = r.scoring === "scramble" ? `<tr><td colspan="4" class="empty" style="padding:1rem">No skins in a scramble</td></tr>` : sk.skins.length ? sk.skins.map(s => `<tr><td class="ctr" style="width:36px;color:var(--tx3);font-weight:700">${s.hole}</td><td><span class="tdot ${teamOf(s.id)}"></span>${esc(pname(s.id))}</td><td class="num muted">${s.gross}${s.net !== s.gross ? " → " + s.net : ""}</td><td class="num" style="color:var(--gold);font-weight:700">$${per.toFixed(0)}</td></tr>`).join("") : `<tr><td colspan="4" class="empty" style="padding:1rem">No skins yet</td></tr>`;
-    const fieldIds = []; r.matches.forEach(m => fieldIds.push(...m.a, ...m.b));
-    const propRow = (label, holes, kind) => (holes || []).map(h => { const win = Store.get(["side", r.id, kind, String(h)], null);
-      return `<div class="money-row"><div style="font-family:var(--hd);font-weight:700;color:var(--gold);min-width:56px;font-size:.8rem;letter-spacing:.06em">${label} ${h}</div>
-        <div class="money-n">${win ? `<span class="tdot ${teamOf(win)}"></span>${esc(pname(win))}` : `<span class="muted tiny">not won yet</span>`}</div>
-        ${admin ? `<select data-prop="${kind}" data-r="${r.id}" data-h="${h}" style="background:var(--bg3);border:1px solid var(--line2);border-radius:6px;color:var(--tx);padding:.25rem;font-size:.75rem;max-width:130px"><option value="">—</option>${fieldIds.map(id => `<option value="${id}" ${id === win ? "selected" : ""}>${esc(pshort(id))}</option>`).join("")}</select>` : ""}</div>`; }).join("");
-    return `<div class="sect"><div class="sect-h">${esc(r.format)} &bull; ${esc(c.name)}</div><div class="card">
-      <div style="padding:.6rem .75rem;background:var(--bg2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">Skins pot</span><span style="font-family:var(--hd);font-weight:700;color:var(--gold)">$${pot}</span><span class="tiny muted" style="margin-left:auto">${sk.count} skin${sk.count === 1 ? "" : "s"}${sk.count ? " &bull; $" + per.toFixed(0) + " each" : ""}</span></div>
-      <table class="tbl"><tbody>${skinRows}</tbody></table></div>
-      ${(sd.ctp?.length || sd.ld?.length) ? `<div class="card">${propRow("CTP", sd.ctp, "ctp")}${propRow("LD", sd.ld, "ld")}</div>` : ""}</div>`; }).join("");
-  $("#v-act").innerHTML = `<div class="note" style="margin-top:1rem"><b>Skins:</b> lowest net on a hole wins it, ties wash (no carryover). Fills in from the scorecards automatically.${admin ? "" : "<br>Sign in as commissioner to record closest-to-pin and long drive."}</div>${blocks}`;
-}
-function moneyBook(){
-  const bal = {}, lines = {}; CONFIG.players.forEach(p => { bal[p.id] = 0; lines[p.id] = []; });
-  const add = (id, amt, why) => { if (bal[id] === undefined) return; bal[id] += amt; lines[id].push({ amt, why }); };
-  if ((CONFIG.tabs || {}).action !== false) CONFIG.rounds.forEach(r => {
-    const sd = CONFIG.side[r.id] || {}, pot = Number(sd.pot || 0), sk = roundSkins(r.id);
-    const fieldIds = []; r.matches.forEach(m => fieldIds.push(...m.a, ...m.b));
-    if (pot && sk.field.length && sk.count) { const buy = pot / sk.field.length; sk.field.forEach(id => add(id, -buy, r.format + " skins buy-in"));
-      const per = pot / sk.count; Object.entries(sk.byPlayer).forEach(([id, n]) => add(id, per * n, `${n} skin${n === 1 ? "" : "s"} — ${r.format}`)); }
-    const prop = (kind, val, label) => (sd[kind] || []).forEach(h => { const w = Store.get(["side", r.id, kind, String(h)], null); if (!w || !val) return;
-      const pool = fieldIds.filter(id => id !== w); pool.forEach(id => add(id, -val / pool.length, `${label} ${h} — ${r.format}`)); add(w, val, `${label} hole ${h} — ${r.format}`); });
-    prop("ctp", Number(sd.ctpVal || 0), "CTP"); prop("ld", Number(sd.ldVal || 0), "LD");
-  });
-  Object.values(Store.get(["cash"], {}) || {}).forEach(v => { if (v && typeof v === "object") add(v.id, Number(v.amt || 0), v.why || "Adjustment"); });
-  return { bal, lines };
-}
-function renderMoney(){
-  const { bal, lines } = moneyBook();
-  const rows = CONFIG.players.slice().sort((x, y) => bal[y.id] - bal[x.id]).map(p => { const v = bal[p.id], cls = Math.abs(v) < 0.005 ? "zero" : v > 0 ? "pos" : "neg", det = lines[p.id].filter(l => Math.abs(l.amt) >= 0.005);
-    return `<details class="card" style="margin-bottom:.4rem"><summary class="money-row" style="list-style:none;cursor:pointer"><span class="tdot ${p.team}"></span><span class="money-n">${esc(p.name)}</span><span class="money-v ${cls}">${v >= 0 ? "+" : "−"}$${Math.abs(v).toFixed(2)}</span></summary>
-      ${det.length ? det.map(l => `<div class="money-row" style="padding-left:1.5rem"><span class="money-n tiny muted">${esc(l.why)}</span><span class="tiny money-v ${l.amt >= 0 ? "pos" : "neg"}" style="font-size:.8rem">${l.amt >= 0 ? "+" : "−"}$${Math.abs(l.amt).toFixed(2)}</span></div>`).join("") : `<div class="money-row"><span class="tiny muted">Nothing yet</span></div>`}</details>`; }).join("");
-  const sum = Object.values(bal).reduce((a, b) => a + b, 0);
-  $("#v-money").innerHTML = `<div class="sect"><div class="sect-h">Settle Up</div><div class="note" style="margin-bottom:.7rem">Green means the trip owes them, red means they owe the trip. Tap a name for the breakdown.</div>${rows}
-    <div class="tiny muted" style="text-align:center;margin-top:.7rem">Book balance ${Math.abs(sum) < 0.01 ? "checks out ✓" : "off by $" + Math.abs(sum).toFixed(2)}</div></div>`;
-}
 
-/* ═══ TRIP: SCHEDULE + WEATHER + ROSTER ═════════════════════ */
+<script>
+/* ═══ TRIP: SCHEDULE + WEATHER + ROSTER + COMMISSIONER ══════ */
 let WX = null, wxBusy = false;
 function tripDates(){ const s = new Set(CONFIG.rounds.map(r => r.date)); Object.keys(CONFIG.schedule || {}).forEach(d => s.add(d)); return [...s].sort(); }
 function parseTee(t){ const m = /(\d+):(\d+)\s*(AM|PM)?/i.exec(t || ""); if (!m) return 9e9; let h = +m[1]; const ap = (m[3] || "").toUpperCase(); if (ap === "PM" && h < 12) h += 12; if (ap === "AM" && h === 12) h = 0; return h * 60 + +m[2]; }
 function wxIcon(c){ if (c === 0) return "☀️"; if (c <= 2) return "🌤️"; if (c === 3) return "☁️"; if (c <= 49) return "🌫️"; if (c <= 59) return "🌦️"; if (c <= 69) return "🌧️"; if (c <= 79) return "🌨️"; if (c <= 84) return "🌧️"; if (c <= 94) return "🌨️"; return "⛈️"; }
 async function loadWeather(){
-  if (WX || wxBusy) return; wxBusy = true;
-  const dates = tripDates(); if ((new Date(dates[0]) - new Date()) / 864e5 > 15) { wxBusy = false; WX = { tooFar:true }; renderTrip(); return; }
+  if (WX || wxBusy) return; wxBusy = true; const dates = tripDates();
+  if ((new Date(dates[0]) - new Date()) / 864e5 > 15) { wxBusy = false; WX = { tooFar:true }; renderTrip(); return; }
   const spots = {}; CONFIG.rounds.forEach(r => { spots[r.date] = spots[r.date] || courseOf(r); }); WX = {};
   await Promise.all(dates.map(async d => { const c = spots[d] || Object.values(CONFIG.courses)[0]; if (!c?.lat) return;
-    try { const j = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation_probability,weathercode,windspeed_10m&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=America%2FDetroit&start_date=${d}&end_date=${d}`)).json(); WX[d] = j.hourly; } catch(e){ console.warn("wx", e); } }));
+    try { const j = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation_probability,weathercode,windspeed_10m&temperature_unit=celsius&windspeed_unit=kmh&timezone=America%2FDetroit&start_date=${d}&end_date=${d}`)).json(); WX[d] = j.hourly; } catch(e){ console.warn("wx", e); } }));
   wxBusy = false; renderTrip();
 }
 function wxStrip(date){
   if (!WX) return `<div class="tiny muted">Loading forecast…</div>`; if (WX.tooFar) return `<div class="tiny muted">Forecast unlocks about two weeks out.</div>`;
   const h = WX[date]; if (!h) return `<div class="tiny muted">No forecast yet.</div>`; const cards = [];
   for (let i = 7; i <= 19; i += 2) { const t = h.time?.[i]; if (!t) continue; const hr = +t.slice(11, 13), lbl = hr === 12 ? "12p" : hr > 12 ? (hr - 12) + "p" : hr + "a";
-    cards.push(`<div class="wx-c"><div class="wx-h">${lbl}</div><div class="wx-i">${wxIcon(h.weathercode[i])}</div><div class="wx-t">${Math.round(h.temperature_2m[i])}°</div><div class="wx-w">${Math.round(h.windspeed_10m[i])} mph · ${h.precipitation_probability[i]}%</div></div>`); }
+    cards.push(`<div class="wx-c"><div class="wx-h">${lbl}</div><div class="wx-i">${wxIcon(h.weathercode[i])}</div><div class="wx-t">${Math.round(h.temperature_2m[i])}°</div><div class="wx-w">${Math.round(h.windspeed_10m[i])} km/h · ${h.precipitation_probability[i]}%</div></div>`); }
   return `<div class="wx">${cards.join("")}</div>`;
 }
 function renderTrip(){
@@ -1088,27 +929,23 @@ function renderTrip(){
   const days = tripDates().map(d => { const items = (CONFIG.schedule[d] || []).map(x => ({ ...x, _t:parseTee(x.t), kind:"" }));
     CONFIG.rounds.filter(r => r.date === d).forEach(r => { const c = courseOf(r); items.push({ t:r.tee, i:"⛳", l:r.format + " tee off", d:c.name + " · " + r.holes + " holes · " + c.club, _t:parseTee(r.tee), kind:"tee" }); });
     items.sort((x, y) => x._t - y._t);
-    return `<div class="day"><div class="day-h"><div class="day-d">${dayName(d)}</div></div>${wxStrip(d)}<div class="card" style="margin-top:.5rem;padding:.2rem .7rem">
-      ${items.map(x => `<div class="slot ${x.kind}"><div class="slot-t">${esc(x.t)}</div><div><div class="slot-l">${x.i || ""} ${esc(x.l)}</div>${x.d ? `<div class="slot-d">${esc(x.d)}</div>` : ""}</div></div>`).join("") || `<div class="empty">Nothing planned yet</div>`}</div></div>`; }).join("");
+    return `<div class="day"><div class="day-h"><div class="day-d">${dayName(d)}</div></div>${wxStrip(d)}<div class="card" style="margin-top:.5rem;padding:.2rem .7rem">${items.map(x => `<div class="slot ${x.kind}"><div class="slot-t">${esc(x.t)}</div><div><div class="slot-l">${x.i || ""} ${esc(x.l)}</div>${x.d ? `<div class="slot-d">${esc(x.d)}</div>` : ""}</div></div>`).join("")}</div></div>`; }).join("");
   const roster = ["a", "b"].map(t => { const T = CONFIG.teams[t];
     const rows = CONFIG.players.filter(p => p.team === t).map(p => { const live = liveHcp(p.id), delta = live - p.hcp;
-      return `<tr><td><span class="tdot ${t}"></span>${esc(p.name)}${p.name === T.captain ? ' <span class="pill pill-next" style="font-size:.55rem">C</span>' : ""}</td><td class="num muted">${p.hcp}</td>
-        <td class="num" style="font-weight:700">${admin ? `<input type="number" step="1" value="${live}" data-hcp="${p.id}" style="width:54px;background:var(--bg3);border:1px solid var(--line2);border-radius:5px;color:var(--tx);text-align:right;padding:.2rem .3rem;font-weight:700">` : live}</td>
-        <td class="num tiny" style="color:${delta > 0 ? "var(--a-lt)" : delta < 0 ? "var(--ok)" : "var(--tx3)"}">${delta === 0 ? "—" : (delta > 0 ? "▲" : "▼") + Math.abs(delta)}</td></tr>`; }).join("");
-    return `<div class="card" style="margin-bottom:.6rem"><div style="padding:.55rem .75rem;background:var(--bg2);border-bottom:1px solid var(--line);font-family:var(--hd);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--${t}-lt);font-size:.85rem">${esc(T.name)}${T.captain ? `<span class="tiny muted" style="font-family:var(--bd);letter-spacing:0;text-transform:none;font-weight:500;margin-left:.4rem">Capt. ${esc(T.captain)}</span>` : ""}</div>
-      <table class="tbl"><thead><tr><th>Player</th><th class="num">Start</th><th class="num">Now</th><th class="num">Trend</th></tr></thead><tbody>${rows}</tbody></table></div>`; }).join("");
-  const cards = Object.values(CONFIG.courses).map(c => `<details class="card" style="margin-bottom:.4rem"><summary style="padding:.6rem .75rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem"><span style="font-weight:600">${esc(c.name)}</span><span class="tiny muted">${esc(c.club)}</span><span style="margin-left:auto;font-family:var(--hd);font-weight:700;color:var(--gold)">Par ${c.par.reduce((a, b) => a + b, 0)}</span></summary>
+      return `<tr><td><span class="tdot ${t}"></span>${esc(p.name)}${delta ? ` <span class="tiny muted">(was ${p.hcp})</span>` : ""}</td>
+        <td class="num" style="font-weight:700">${admin ? `<input type="number" step="1" min="0" value="${live}" data-hcp="${p.id}" style="width:54px;background:var(--bg3);border:1px solid var(--line2);border-radius:5px;color:var(--tx);text-align:right;padding:.2rem .3rem;font-weight:700">` : (live === 0 ? "scratch" : live)}</td></tr>`; }).join("");
+    return `<div class="card" style="margin-bottom:.6rem"><div style="padding:.55rem .75rem;background:var(--bg2);border-bottom:1px solid var(--line);font-family:var(--hd);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--${t}-lt);font-size:.85rem">${esc(T.name)}<span class="tiny muted" style="font-family:var(--bd);letter-spacing:0;text-transform:none;font-weight:500;margin-left:.4rem">Capt. ${esc(T.captain)}</span></div>
+      <table class="tbl"><thead><tr><th>Player</th><th class="num">Strokes</th></tr></thead><tbody>${rows}</tbody></table></div>`; }).join("");
+  const used = new Set(CONFIG.rounds.map(r => r.course));
+  const cards = Object.entries(CONFIG.courses).filter(([k]) => used.has(k)).map(([, c]) => `<details class="card" style="margin-bottom:.4rem"><summary style="padding:.6rem .75rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem"><span style="font-weight:600">${esc(c.name)}</span><span class="tiny muted">${esc(c.club)}</span><span style="margin-left:auto;font-family:var(--hd);font-weight:700;color:var(--gold)">Par ${c.par.reduce((a, b) => a + b, 0)}</span></summary>
     <div style="overflow-x:auto"><table class="tbl" style="font-size:.72rem;min-width:520px"><tbody><tr><th>Hole</th>${c.par.map((_, i) => `<th class="ctr">${i + 1}</th>`).join("")}</tr><tr><td class="muted">Par</td>${c.par.map(p => `<td class="ctr">${p}</td>`).join("")}</tr><tr><td class="muted">SI</td>${c.si.map(p => `<td class="ctr muted">${p}</td>`).join("")}</tr></tbody></table></div></details>`).join("");
+  const comm = admin ? `<div class="sect"><div class="sect-h">Commissioner</div><div class="card" style="padding:.75rem">
+      <div class="tiny muted" style="margin-bottom:.6rem">Pairings are set on the Live tab. Survivor ticks are on the Cup tab. Clearing removes every score for that round on every phone; handicaps and pairings stay. No undo.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.6rem">${CONFIG.rounds.map(r => `<button class="btn btn-sm" data-clear="${r.id}">Clear ${esc(dayShort(r.date).split(",")[0])} ${esc(r.format.split(" ·")[0])}</button>`).join("")}</div>
+      <button class="btn btn-full" id="wipeAll" style="border-color:rgba(224,86,80,.5);color:var(--a-lt)">Wipe every score — fresh start</button></div></div>` : "";
   $("#v-trip").innerHTML = `<div class="sect"><div class="sect-h">Schedule</div>${days}</div>
-    <div class="sect"><div class="sect-h">Roster &amp; Handicaps</div><div class="tiny muted" style="margin-bottom:.5rem">Numbers are strokes vs scratch. Scramble teams play off 35% of the low + 15% of the high. 9-hole rounds use half.${admin ? " You can adjust the “Now” column." : ""}</div>${roster}</div>
-    <div class="sect"><div class="sect-h">Courses</div>${cards}</div>
-    ${admin ? `<div class="sect"><div class="sect-h">Commissioner</div><div class="card" style="padding:.75rem">
-      <div class="tiny muted" style="margin-bottom:.6rem">Clearing removes every score entered for that round on every phone. Handicaps and the schedule are untouched. There is no undo.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.6rem">
-        ${CONFIG.rounds.map(r => `<button class="btn btn-sm" data-clear="${r.id}" ${roundStatus(r.id) === "upcoming" ? "disabled" : ""}>Clear ${esc(dayShort(r.date).split(" ")[0])} ${esc(r.format)}</button>`).join("")}
-      </div>
-      <button class="btn btn-full" id="wipeAll" style="border-color:rgba(224,86,80,.5);color:var(--a-lt)">Wipe every score — fresh start</button>
-    </div></div>` : ""}
+    <div class="sect"><div class="sect-h">Roster &amp; Handicaps</div><div class="tiny muted" style="margin-bottom:.5rem">Strokes vs scratch. In a match you play off the lowest man in your group.${admin ? " Tap a number to change it — it updates every phone." : ""}</div>${roster}</div>
+    <div class="sect"><div class="sect-h">Courses</div>${cards}</div>${comm}
     <div class="sect"><div class="sect-h">Tips</div><div class="note">📱 <b>Add to Home Screen</b> (Share → Add to Home Screen on iPhone, ⋮ → Add to Home screen on Android) so this opens full-screen like an app.<br><br>☀︎ Tap the sun at the top for a bright-daylight colour scheme.<br><br>📶 Spotty signal? Keep scoring — entries queue and sync when you're back in range.</div></div>
     <div class="tiny muted" style="text-align:center;margin:1.5rem 0 0;line-height:1.6">Weather by Open-Meteo · Built for the boys</div>`;
   if (!WX) loadWeather();
@@ -1116,19 +953,13 @@ function renderTrip(){
 
 /* ═══ BOOT + EVENTS ═════════════════════════════════════════ */
 let curView = "cup";
-function renderAll(){
-  renderCup();
-  if (curView === "live") renderLive(); if (curView === "act") renderAct(); if (curView === "money") renderMoney(); if (curView === "trip") renderTrip();
-  const w = $("#whoBtn"); w.textContent = Me.role ? Me.label() : "Sign in"; w.className = "strip-u " + (Me.role ? Me.team() : "");
-}
+function renderAll(){ renderCup(); if (curView === "live") renderLive(); if (curView === "trip") renderTrip();
+  const w = $("#whoBtn"); w.textContent = Me.role ? Me.label() : "Sign in"; w.className = "strip-u " + (Me.role ? Me.team() : ""); }
 function showView(v){ curView = v; $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-" + v)); $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.v === v)); renderAll(); window.scrollTo({ top:0 }); }
-function applyTabs(){ const t = CONFIG.tabs || {}; $$(".tab").forEach(b => { const v = b.dataset.v; if ((v === "act" && t.action === false) || (v === "money" && t.money === false)) b.hidden = true; }); }
 function hero(){
   $("#heroKick").textContent = CONFIG.kicker; $("#heroName").textContent = CONFIG.title; $("#heroSub").textContent = CONFIG.subtitle; document.title = CONFIG.title;
-  const ds = tripDates(), now = new Date(); now.setHours(0, 0, 0, 0);
-  const d0 = new Date(ds[0] + "T00:00:00"), d1 = new Date(ds[ds.length - 1] + "T23:59:59"), n = Math.ceil((d0 - now) / 864e5), cd = $("#heroCd");
-  if (now > d1) { const t = cupTotals(); cd.textContent = t.a === t.b ? "Cup shared" : (t.a > t.b ? TA().name : TB().name) + " · Champions"; }
-  else if (n > 1) cd.textContent = n + " days out"; else if (n === 1) cd.textContent = "Tomorrow"; else cd.innerHTML = `<span class="dot"></span>Game on`;
+  const ds = tripDates(), now = new Date(); now.setHours(0, 0, 0, 0); const d0 = new Date(ds[0] + "T00:00:00"), d1 = new Date(ds[ds.length - 1] + "T23:59:59"), n = Math.ceil((d0 - now) / 864e5), cd = $("#heroCd");
+  if (now > d1) { const t = cupTotals(); cd.textContent = t.a === t.b ? "Cup shared" : (t.a > t.b ? TA().name : TB().name) + " · Champions"; } else if (n > 1) cd.textContent = n + " days out"; else if (n === 1) cd.textContent = "Tomorrow"; else cd.innerHTML = `<span class="dot"></span>Game on`;
 }
 function openLogin(){
   const sel = $("#whoSel"), grp = t => `<optgroup label="${esc(CONFIG.teams[t].name)}">` + CONFIG.players.filter(p => p.team === t).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("") + "</optgroup>";
@@ -1138,49 +969,54 @@ function openLogin(){
   const showPin = () => { $("#pinFld").hidden = !needs(sel.value); $("#loginGo").textContent = needs(sel.value) ? "Sign in" : "That's me"; };
   sel.onchange = showPin; sel.value = P[Me.role] ? Me.role : ""; showPin();
   const err = m => { const e = $("#loginErr"); e.textContent = m; e.classList.add("show"); };
-  const go = () => { const who = sel.value, pc = $("#pcIn").value.trim(); if (!who) return err("Pick your name first.");
-    const want = needs(who); if (want && pc !== String(want)) return err("That code isn't right.");
-    Me.save(who); $("#loginOv").classList.remove("open"); UI.card = false; UI.rid = null; renderAll(); };
+  const go = () => { const who = sel.value, pc = $("#pcIn").value.trim(); if (!who) return err("Pick your name first."); const want = needs(who); if (want && pc !== String(want)) return err("That code isn't right.");
+    Me.save(who); $("#loginOv").classList.remove("open"); UI.card = false; UI.rid = null; UI.editPairs = false; renderAll(); };
   $("#loginGo").onclick = go; $("#pcIn").onkeydown = e => { if (e.key === "Enter") go(); }; $("#loginX").onclick = () => $("#loginOv").classList.remove("open");
+}
+function ask(title, text, opts = {}){
+  return new Promise(res => {
+    $("#askTitle").textContent = title; $("#askText").innerHTML = text; $("#askYes").textContent = opts.yes || "Yes, do it";
+    const fld = $("#askFld"), inp = $("#askIn"); fld.hidden = !opts.typed; inp.value = ""; if (opts.typed) $("#askLbl").textContent = "Type " + opts.typed + " to confirm";
+    $("#askOv").classList.add("open"); const close = v => { $("#askOv").classList.remove("open"); res(v); };
+    $("#askYes").onclick = () => { if (opts.typed && inp.value.trim().toUpperCase() !== opts.typed) { inp.style.borderColor = "var(--a-lt)"; return; } close(true); };
+    $("#askNo").onclick = () => close(false); inp.style.borderColor = ""; if (opts.typed) setTimeout(() => inp.focus(), 50);
+  });
 }
 function setLight(on){ document.documentElement.toggleAttribute("data-light", on); try { localStorage.setItem("cup:light", on ? "1" : ""); } catch(e){} }
 
 document.addEventListener("click", e => {
-  const tab = e.target.closest(".tab,[data-v]"); if (tab && tab.dataset.v) return showView(tab.dataset.v);
+  const tab = e.target.closest("[data-v]"); if (tab) return showView(tab.dataset.v);
   if (e.target.closest("#sunBtn")) return setLight(!document.documentElement.hasAttribute("data-light"));
-  if (e.target.closest("#whoBtn")) { if (!Me.role) return openLogin(); $("#outNm").textContent = Me.label();
-    $("#outSub").textContent = Me.isAdmin() ? "You can edit everything." : "Playing for " + CONFIG.teams[Me.team()].name + ". You can score any group."; $("#outOv").classList.add("open"); return; }
+  if (e.target.closest("#whoBtn")) { if (!Me.role) return openLogin(); $("#outNm").textContent = Me.label(); $("#outSub").textContent = Me.isAdmin() ? "You can edit everything." : "Playing for " + CONFIG.teams[Me.team()].name + ". You can score any match."; $("#outOv").classList.add("open"); return; }
   if (e.target.closest("#outSwitch")) { $("#outOv").classList.remove("open"); return openLogin(); }
-  if (e.target.closest("#outGo")) { Me.save(null); $("#outOv").classList.remove("open"); UI.card = false; return renderAll(); }
+  if (e.target.closest("#outGo")) { Me.save(null); $("#outOv").classList.remove("open"); UI.card = false; UI.editPairs = false; return renderAll(); }
   if (e.target.closest("#outX")) return $("#outOv").classList.remove("open");
-  const rc = e.target.closest("[data-r].lv-chip"); if (rc) { UI.rid = rc.dataset.r; UI.mid = null; UI.card = false; return renderLive(); }
+  const rc = e.target.closest("[data-r].lv-chip"); if (rc) { UI.rid = rc.dataset.r; UI.mid = null; UI.card = false; UI.editPairs = false; return renderLive(); }
+  if (e.target.closest("#editPairs")) { UI.editPairs = !UI.editPairs; return renderLive(); }
   const op = e.target.closest("[data-open]"); if (op) return openCard(UI.rid, op.dataset.open);
   if (e.target.closest("#cardBack")) { UI.card = false; renderLive(); return window.scrollTo({ top:0 }); }
   const nav = e.target.closest("[data-nav]"); if (nav) { UI.hole += +nav.dataset.nav; renderLive(); return window.scrollTo({ top:0 }); }
-  const cl = e.target.closest("[data-clear]"); if (cl && Me.isAdmin()) { const r = ROUND[cl.dataset.clear];
-    if (!confirm(`Clear every score in ${r.format} (${dayShort(r.date)})? This hits every phone and cannot be undone.`)) return;
-    r.matches.forEach(m => { Store.set(["gross", mkey(r.id, m.id)], null); Store.set(["meta", mkey(r.id, m.id)], null); }); Store.set(["side", r.id], null); return; }
-  if (e.target.closest("#wipeAll") && Me.isAdmin()) { const word = prompt("This wipes EVERY score for the whole trip, on every phone. Type RESET to confirm.");
-    if (word !== "RESET") return; ["gross", "meta", "side", "cash"].forEach(k => Store.set([k], null)); UI.card = false; UI.rid = null; alert("Clean slate. Game on."); return; }
   const jp = e.target.closest("[data-jump]"); if (jp) { UI.hole = +jp.dataset.jump; renderLive(); return window.scrollTo({ top:0 }); }
-  const stp = e.target.closest("[data-stp]"); if (stp) { const cur = gross(UI.rid, UI.mid, UI.hole, stp.dataset.k), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1];
-    return setScore(stp.dataset.k, cur === null ? par + (+stp.dataset.stp > 0 ? 0 : 0) : Math.max(1, Math.min(15, cur + +stp.dataset.stp))); }
-  const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1];
-    if (cur === null) return setScore(tap.dataset.tap, par); if (Me.canScore() && confirm("Clear this score?")) return setScore(tap.dataset.tap, null); }
+  const stp = e.target.closest("[data-stp]"); if (stp) { const cur = gross(UI.rid, UI.mid, UI.hole, stp.dataset.k), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; return setScore(stp.dataset.k, cur === null ? par : Math.max(1, Math.min(15, cur + +stp.dataset.stp))); }
+  const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; if (cur === null) return setScore(tap.dataset.tap, par); if (Me.canScore()) ask("Clear this score?", "Removes the score in this box. You can tap to re-enter it.", { yes:"Clear it" }).then(ok => ok && setScore(tap.dataset.tap, null)); return; }
+  const ov = e.target.closest("[data-ov]"); if (ov) return setOverride(ov.dataset.ov);
+  const sv = e.target.closest("[data-surv]"); if (sv && Me.isAdmin()) return Store.set(["surv", sv.dataset.surv, sv.dataset.side], surv(sv.dataset.surv, sv.dataset.side) ? null : true);
+  const cl = e.target.closest("[data-clear]"); if (cl && Me.isAdmin()) { const r = ROUND[cl.dataset.clear];
+    ask(`Clear ${r.format}?`, `Every score entered for <b>${esc(r.format)} (${esc(dayShort(r.date))})</b> disappears from every phone. Pairings and handicaps stay. No undo.`, { yes:"Clear the round" })
+      .then(ok => { if (!ok) return; r.matches.forEach(m => ["gross", "over", "meta"].forEach(k => Store.set([k, mkey(r.id, m.id)], null))); Store.set(["surv", r.id], null); }); return; }
+  if (e.target.closest("#wipeAll") && Me.isAdmin()) { ask("Wipe everything?", "Every score for the whole trip, on every phone. Pairings and handicaps stay.", { typed:"RESET", yes:"Wipe it all" })
+      .then(ok => { if (!ok) return; ["gross", "over", "meta", "surv"].forEach(k => Store.set([k], null)); UI.card = false; UI.rid = null; }); return; }
 });
 document.addEventListener("change", e => {
-  const p = e.target.closest("[data-prop]"); if (p && Me.isAdmin()) return Store.set(["side", p.dataset.r, p.dataset.prop, p.dataset.h], p.value || null);
+  const pr = e.target.closest("[data-pair]"); if (pr && Me.isAdmin()) { const r = ROUND[UI.rid], m = matchOf(UI.rid, pr.dataset.pair), side = pr.dataset.side, arr = [...m[side]]; arr[+pr.dataset.i] = pr.value || undefined;
+    const clean = arr.filter(Boolean).slice(0, slotsPer(r)); const other = side === "a" ? "b" : "a"; return Store.set(["pair", r.id, m.id], { a: side === "a" ? clean : m.a, b: side === "b" ? clean : m.b }); }
   const h = e.target.closest("[data-hcp]"); if (h && Me.isAdmin()) return Store.set(["hcp", h.dataset.hcp], h.value === "" ? null : +h.value);
 });
-// swipe between holes on the scorecard
 let tx0 = null; document.addEventListener("touchstart", e => { tx0 = UI.card && curView === "live" ? e.touches[0].clientX : null; }, { passive:true });
-document.addEventListener("touchend", e => { if (tx0 === null) return; const dx = e.changedTouches[0].clientX - tx0; tx0 = null;
-  if (Math.abs(dx) < 70 || e.target.closest(".grid")) return; const r = ROUND[UI.rid]; UI.hole = Math.min(r.holes, Math.max(1, UI.hole + (dx < 0 ? 1 : -1))); renderLive(); });
+document.addEventListener("touchend", e => { if (tx0 === null) return; const dx = e.changedTouches[0].clientX - tx0; tx0 = null; if (Math.abs(dx) < 70 || e.target.closest(".grid")) return; const r = ROUND[UI.rid]; UI.hole = Math.min(r.holes, Math.max(1, UI.hole + (dx < 0 ? 1 : -1))); renderLive(); });
 
 try { if (localStorage.getItem("cup:light")) setLight(true); } catch(e){}
-Me.load(); applyTabs(); hero();
-Store.onChange(() => { renderAll(); hero(); });
-Store.init();
+Me.load(); hero(); Store.onChange(() => { renderAll(); hero(); }); Store.init();
 </script>
 </body>
 </html>
