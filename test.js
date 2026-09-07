@@ -191,7 +191,7 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
     if (seen.size !== 12 || !ms.every(isSet)) { badRound++; continue; }
     // each match: A wins holes 1-10; expect round 6-0 final, every A player 1 pt, every B player 0
     ms.forEach(m => winHoles("r1", m.id, "a", 1, 10)); const p = roundPoints("r1"); const S = playerStats();
-    if (!(p.a === 6 && p.b === 0 && p.final && A.every(id => S[id].pts === 1 && S[id].w === 1) && B.every(id => S[id].pts === 0 && S[id].l === 1))) badRound++; }
+    if (!(p.ma === 6 && p.mb === 0 && p.final && A.every(id => S[id].pts === 1 && S[id].w === 1) && B.every(id => S[id].pts === 0 && S[id].l === 1))) badRound++; }
   eq(badRound, 0, "H4 every full-round arrangement (" + arrangements + ") pairs all 12 exactly once and scores 6–0 correctly");
   reset(); }
 
