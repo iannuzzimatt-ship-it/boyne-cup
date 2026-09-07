@@ -1,0 +1,178 @@
+#!/usr/bin/env node
+// Boyne Cup engine test harness. Run:  node test.js
+// Loads the real app code from index.html with a fake browser, then hammers the scoring engine.
+"use strict";
+const fs = require("fs"), vm = require("vm");
+const html = fs.readFileSync(__dirname + "/index.html", "utf8");
+let src = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).join("\n");
+src = src.slice(0, src.indexOf("/* ═══ BOOT + EVENTS")); // everything except the DOM boot
+
+// ── fake browser ──────────────────────────────────────────────
+const el = () => new Proxy({ innerHTML:"", textContent:"", hidden:false, style:{}, dataset:{}, classList:{ add(){}, remove(){}, toggle(){}, contains(){ return false; } }, click(){}, focus(){} }, { get:(t, k) => k in t ? t[k] : (typeof k === "string" ? "" : undefined), set:(t, k, v) => (t[k] = v, true) });
+const ctx = { console, Math, Date, JSON, Object, Array, Number, String, Boolean, Set, Map, Promise, RegExp, Error, Infinity, NaN, isNaN, parseInt, parseFloat, setTimeout, clearTimeout, navigator:{}, fetch:() => new Promise(() => {}), 
+  localStorage:{ _d:{}, getItem(k){ return this._d[k] ?? null; }, setItem(k, v){ this._d[k] = String(v); }, removeItem(k){ delete this._d[k]; } },
+  document:{ querySelector:() => el(), querySelectorAll:() => [], addEventListener(){}, documentElement:el() }, window:{ scrollTo(){} } };
+ctx.globalThis = ctx; vm.createContext(ctx);
+const T = { pass:0, fail:0, fails:[] };
+function ok(cond, name, detail){ if (cond) T.pass++; else { T.fail++; T.fails.push(name + (detail !== undefined ? "  →  " + JSON.stringify(detail) : "")); } }
+function eq(a, b, name){ ok(JSON.stringify(a) === JSON.stringify(b), name, { got:a, want:b }); }
+ctx.ok = ok; ctx.eq = eq; ctx.T = T;
+
+const tests = String.raw`
+Store._initLocal();
+const G = (rid, mid, h, k, v) => Store.set(["gross", mkey(rid, mid), String(h), k], v);
+const O = (rid, mid, h, v) => Store.set(["over", mkey(rid, mid), String(h), v === undefined ? null : v].slice(0, 3), v);
+const reset = () => { ["gross","over","meta","surv","pair","hcp"].forEach(k => Store.set([k], null)); Me.save(null); CONFIG.carry = 0; CONFIG.halvedMatch = "split"; };
+const r1 = ROUND.r1, c1 = courseOf(r1), par = (r, h) => courseOf(r).par[h-1];
+const play = (rid, mid, h, scores) => Object.entries(scores).forEach(([k, v]) => G(rid, mid, h, k, v));
+
+/* ── A. STROKES ─────────────────────────────────────────────── */
+reset();
+{ const sc = scorers(r1, matchOf("r1","m1")); const t = Object.fromEntries(sc.map(x => [x.key, x.total]));
+  eq(t, { a1:0, a2:12, b1:12, b2:12+2 }, "A1 best ball: strokes are difference from low man in group (4/16/16/18)");
+  const a2 = sc.find(x => x.key === "a2"); const holes = Object.keys(a2.holes).map(Number).sort((x, y) => x - y);
+  eq(holes.length, 12, "A2 12 strokes → 12 stroke holes"); ok(holes.every(h => c1.si[h-1] <= 12), "A3 stroke holes are exactly SI 1..12");
+  const cam = sc.find(x => x.key === "b2"); ok(Object.values(cam.holes).every(v => v === 1), "A4 14 strokes → one per hole, none doubled"); }
+{ Store.set(["pair","r1","m2"], { a:["a1"], b:["b4"] }); // 4 v 18 singles-style within best ball round
+  const sc = scorers(r1, matchOf("r1","m2")); const g = sc.find(x => x.key === "b4"); eq(g.total, 14, "A5 4 v 18 → 14 strokes");
+  Store.set(["hcp","b4"], 24); const sc2 = scorers(r1, matchOf("r1","m2")); const g2 = sc2.find(x => x.key === "b4"); eq(g2.total, 20, "A6 in-app handicap override respected (24-4=20)");
+  eq(g2.holes[c1.si.indexOf(1) + 1], 2, "A7 20 strokes → SI 1 hole gets 2"); eq(g2.holes[c1.si.indexOf(3) + 1], 1, "A8 20 strokes → SI 3 hole gets 1"); Store.set(["hcp"], null); }
+{ const r9 = { ...r1, id:"r1", holes:9 }; const sc = scorers(r9, { id:"m2", a:["a1"], b:["b2"] }); eq(sc.find(x => x.key === "b2").total, 7, "A9 9-hole round halves the 14-stroke difference → 7");
+  CONFIG.nineHoleHalf = false; const sc2 = scorers(r9, { id:"m2", a:["a1"], b:["b2"] }); eq(sc2.find(x => x.key === "b2").total, 14, "A10 nineHoleHalf=false → full 14"); CONFIG.nineHoleHalf = true; }
+{ Store.set(["pair","r2","m1"], { a:["a1","a2"], b:["b1","b2"] }); const sc = scorers(ROUND.r2, matchOf("r2","m1")); eq(sc.map(x => x.total), [0, 0], "A11 scramble: no strokes"); eq(sc.map(x => x.key), ["a","b"], "A12 scramble rows are the two sides"); }
+reset();
+
+/* ── B. HOLE RESULT ─────────────────────────────────────────── */
+{ const m = matchOf("r1","m1"), sc = scorers(r1, m), p = par(r1, 1); // hole 1: SI 9 → a2(12), b1(12), b2(14) all get a stroke; a1 none
+  play("r1","m1",1, { a1:p, a2:p+1, b1:p+1, b2:p+1 }); eq(holeResult(r1, m, sc, 1).res, "h", "B1 best ball: a1 net par v b1 net par → halved");
+  play("r1","m1",1, { a1:p-1, a2:p+1, b1:p+1, b2:p+1 }); eq(holeResult(r1, m, sc, 1).res, "a", "B2 birdie beats net par");
+  play("r1","m1",1, { a1:p, a2:p+1, b1:p, b2:p+3 }); eq(holeResult(r1, m, sc, 1).res, "b", "B3 opponent's stroke: gross par with stroke → net birdie wins");
+  play("r1","m1",2, { a1:p, a2:p+3 }); eq(holeResult(r1, m, sc, 2), null, "B4 incomplete hole → no result");
+  O("r1","m1",2,"b"); eq(holeResult(r1, m, sc, 2).res, "b", "B5 override wins even with incomplete scores"); ok(holeResult(r1, m, sc, 2).over, "B6 override flagged");
+  reset(); }
+{ // second-man tiebreak: r4 bestball2. pairing a1(4)&a2(16) v b3(9)&b1(16); low man a1 → strokes a2 12, b3 5, b1 12
+  Store.set(["pair","r4","m1"], { a:["a1","a2"], b:["b3","b1"] }); const r4 = ROUND.r4, m = matchOf("r4","m1"), sc = scorers(r4, m), c4 = courseOf(r4);
+  const h = c4.si.indexOf(18) + 1, p = par(r4, h); // easiest hole: nobody strokes
+  play("r4","m1",h, { a1:p, a2:p+2, b3:p, b1:p+1 }); const res = holeResult(r4, m, sc, h); eq(res.res, "b", "B7 2nd-man tiebreak: best nets tie, second man decides"); ok(/second man/.test(res.why), "B8 explanation mentions second man");
+  play("r4","m1",h, { a1:p, a2:p+1, b3:p, b1:p+1 }); eq(holeResult(r4, m, sc, h).res, "h", "B9 both tie → halved");
+  // same scores under plain bestball would halve
+  const plain = { ...r4, scoring:"bestball" }; play("r4","m1",h, { a1:p, a2:p+2, b3:p, b1:p+1 }); eq(holeResult(plain, m, sc, h).res, "h", "B10 plain best ball ignores second man");
+  reset(); }
+
+/* ── C. MATCH STATE ─────────────────────────────────────────── */
+const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++) O(rid, mid, h, side); };
+{ Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] });
+  winHoles("r1","m1","a",1,9); let s = matchState("r1","m1"); eq([s.up, s.thru, s.closed, s.text], [9, 9, false, "9 UP"], "C1 9 up with 9 to play is NOT over (dormie)");
+  O("r1","m1",10,"a"); s = matchState("r1","m1"); eq([s.closed, s.text, s.pts], [true, "10&8", { a:2, b:0 }], "C2 10 up with 8 left → 10&8, 2 points");
+  reset(); Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] });
+  winHoles("r1","m1","a",1,3); winHoles("r1","m1","b",4,6); for (let h = 7; h <= 18; h++) O("r1","m1",h,"h"); s = matchState("r1","m1");
+  eq([s.closed, s.text, s.short, s.pts], [true, "HALVED", "AS", { a:1, b:1 }], "C3 all square after 18 → halved, 1 each");
+  CONFIG.halvedMatch = "none"; s = matchState("r1","m1"); eq(s.pts, { a:0, b:0 }, "C4 halvedMatch=none → nobody scores"); CONFIG.halvedMatch = "split";
+  O("r1","m1",18,"b"); s = matchState("r1","m1"); eq([s.closed, s.text, s.pts], [true, "1 UP", { a:0, b:2 }], "C5 won on the 18th → 1 UP, full points");
+  reset(); Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] });
+  winHoles("r1","m1","a",1,5); winHoles("r1","m1","b",6,8); s = matchState("r1","m1"); eq([s.up, s.thru, s.closed, s.text], [2, 8, false, "2 UP"], "C6 5-3 → 2 UP thru 8");
+  eq([s.aH, s.bH, s.hH], [5, 3, 0], "C7 hole tallies"); ok(s.started && !s.closed, "C8 started, not closed");
+  reset(); }
+{ // carryover
+  Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); O("r1","m1",1,"h"); O("r1","m1",2,"h"); O("r1","m1",3,"h"); O("r1","m1",4,"a");
+  CONFIG.carry = 0; let s = matchState("r1","m1"); eq([s.up, s.per[4].worth], [1, 1], "C9 carry 0: hole worth 1");
+  CONFIG.carry = 2; s = matchState("r1","m1"); eq([s.up, s.per[4].worth, s.stack], [3, 3, 0], "C10 carry cap 2: three halves stack to 2, hole worth 3, stack resets");
+  CONFIG.carry = 99; s = matchState("r1","m1"); eq([s.up, s.per[4].worth], [4, 4], "C11 unlimited carry: worth 4");
+  CONFIG.carry = 2; O("r1","m1",5,"h"); O("r1","m1",6,"h"); s = matchState("r1","m1"); eq(s.stack, 2, "C12 live stack shows 2 carried");
+  // closure must account for stack: 3 up thru 6 with 12 left → not closed; potential = left + stack
+  ok(!s.closed, "C13 not closed with plenty left");
+  reset(); Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); CONFIG.carry = 2; winHoles("r1","m1","a",1,9); O("r1","m1",10,"h"); s = matchState("r1","m1");
+  ok(!s.closed && s.up === 9 && s.left === 8 && s.stack === 1, "C14 9 up, 8 left, 1 carried: potential 9 → not closed (B could still tie)");
+  O("r1","m1",11,"h"); s = matchState("r1","m1"); ok(!s.closed && s.stack === 2 && s.left === 7, "C15 9 up, 7 left + stack 2 = 9 potential → still not closed");
+  O("r1","m1",12,"h"); s = matchState("r1","m1"); ok(s.closed && s.text === "9&6", "C16 stack capped at 2: 9 up, 6 left + 2 = 8 < 9 → closed 9&6");
+  CONFIG.carry = 0; reset(); }
+
+/* ── D. ROUNDS, CUP, SURVIVOR, PAIRINGS ─────────────────────── */
+{ let p = roundPoints("r2"); eq([p.avail, p.final, p.any, p.a, p.b], [6, false, false, 0, 0], "D1 unset pairings: 6 available, not final, nothing scored");
+  eq(roundStatus("r2"), "upcoming", "D2 status upcoming"); eq(matchesOf(ROUND.r2).map(isSet), [0,0,0].map(() => false), "D3 all three r2 matches unset");
+  Me.save("a1"); eq(myMatch("r2"), null, "D4 no 'your match' before pairings");
+  Store.set(["pair","r2","m2"], { a:["a1","a3"], b:["b5","b6"] }); const mine = myMatch("r2"); eq(mine && mine.id, "m2", "D5 pairing set → 'your match' found");
+  eq(canEdit("r2","m2"), true, "D6 participant can edit"); Me.save("a2"); eq(canEdit("r2","m2"), false, "D7 non-participant cannot"); Me.save("admin"); eq(canEdit("r2","m2"), true, "D8 commissioner can");
+  Me.save(null); eq(canEdit("r2","m2"), false, "D9 signed out cannot"); ok(/sign in/i.test(editNote("r2","m2")), "D10 signed-out note");
+  Me.save("a2"); ok(/only the players/.test(editNote("r2","m2")), "D11 non-participant note"); Me.save(null);
+  // scramble scores live on side keys: survive a re-pairing
+  G("r2","m2",1,"a",4); G("r2","m2",1,"b",5); Store.set(["pair","r2","m2"], { a:["a2","a4"], b:["b1","b2"] }); eq(matchState("r2","m2").aH, 1, "D12 scramble scores persist across re-pairing (they belong to the side)");
+  // own-ball scores are keyed by player: re-pairing hides them
+  Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); play("r1","m1",1, { a1:4, a2:5, b1:5, b2:6 }); ok(matchState("r1","m1").started, "D13 r1 m1 started");
+  Store.set(["pair","r1","m1"], { a:["a3","a4"], b:["b1","b2"] }); { const s = matchState("r1","m1"); ok(s.thru === 0 && s.aH === 0, "D14 after swapping side A, hole 1 is incomplete again (old A entries hidden; B's remain)"); ok(gross("r1","m1",1,"a1") === 4, "D14b …but the old entry is still stored, not deleted"); }
+  reset(); }
+{ Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); Store.set(["pair","r1","m2"], { a:["a3","a4"], b:["b3","b4"] }); Store.set(["pair","r1","m3"], { a:["a5","a6"], b:["b5","b6"] });
+  winHoles("r1","m1","a",1,10); winHoles("r1","m2","b",1,10); for (let h = 1; h <= 18; h++) O("r1","m3",h,"h");
+  let p = roundPoints("r1"); eq([p.a, p.b, p.final], [3, 3, true], "D15 round: 2 + 1 (halved) each side, final"); eq(roundStatus("r1"), "final", "D16 round status final");
+  Store.set(["surv","r1","a"], true); p = roundPoints("r1"); eq([p.a, p.sa, p.b], [3.5, 0.5, 3], "D17 survivor adds 0.5 to A only");
+  const t = cupTotals(); eq([t.a, t.b, t.avail, t.matchLeft], [3.5, 3, 36, 30], "D18 cup totals: 30 match points still out");
+  ok(!t.aWon && !t.bWon && !t.done, "D19 nobody clinched"); ok(t.aNeeds > 0 && t.bNeeds > 0, "D20 both still need points");
+  eq(surv("r1","a") && !surv("r1","b"), true, "D21 survivor flags"); Me.save("a3"); eq([canSurv("a"), canSurv("b")], [true, false], "D22 player can tick own team's survivor only"); Me.save("admin"); eq([canSurv("a"), canSurv("b")], [true, true], "D23 commissioner both");
+  reset(); }
+{ // clinch maths: give A 19 match points from rounds 1-4 (r1 6, r2 6, r3 6 of 12, r4... ) simpler: A wins every match in r1,r2,r3 (6+6+12=24) → A has 24, B max = 12 remaining + survivor 2.5 → 14.5 → A clinched
+  ["r1","r2","r4","r5"].forEach(rid => ROUND[rid].matches.forEach((m, i) => Store.set(["pair", rid, m.id], { a:["a"+(2*i+1), "a"+(2*i+2)], b:["b"+(2*i+1), "b"+(2*i+2)] })));
+  ROUND.r3.matches.forEach((m, i) => Store.set(["pair","r3",m.id], { a:["a"+(i+1)], b:["b"+(i+1)] }));
+  ["r1","r2","r3"].forEach(rid => ROUND[rid].matches.forEach(m => winHoles(rid, m.id, "a", 1, 10)));
+  let t = cupTotals(); eq([t.a, t.b, t.matchLeft], [24, 0, 12], "D24 A 24, 12 match pts left"); ok(t.aWon, "D25 A has clinched (B max 12 + 2.5 survivor < 24)"); ok(!t.bWon, "D26 B has not");
+  // B wins everything left incl. survivors: 12 + 2.5 = 14.5 < 24 still A
+  ["r4","r5"].forEach(rid => ROUND[rid].matches.forEach(m => winHoles(rid, m.id, "b", 1, 10))); CONFIG.rounds.forEach(r => Store.set(["surv", r.id, "b"], true));
+  t = cupTotals(); eq([t.a, t.b, t.done], [24, 12 + 2.5, true], "D27 all done: A 24, B 14.5"); ok(t.aWon && !t.bWon, "D28 A wins");
+  reset(); }
+{ // tie scenario: 18-18 on match points, survivor decides
+  CONFIG.rounds.forEach(r => ROUND[r.id].matches.forEach((m, i) => Store.set(["pair", r.id, m.id], r.scoring === "singles" ? { a:["a"+(i+1)], b:["b"+(i+1)] } : { a:["a"+(2*i+1), "a"+(2*i+2)], b:["b"+(2*i+1), "b"+(2*i+2)] })));
+  ["r1","r2"].forEach(rid => ROUND[rid].matches.forEach(m => winHoles(rid, m.id, "a", 1, 10))); ["r4","r5"].forEach(rid => ROUND[rid].matches.forEach(m => winHoles(rid, m.id, "b", 1, 10)));
+  ROUND.r3.matches.forEach((m, i) => winHoles("r3", m.id, i < 3 ? "a" : "b", 1, 10));
+  let t = cupTotals(); eq([t.a, t.b, t.done, t.aWon, t.bWon], [18, 18, true, false, false], "D29 18-18, done, nobody won → shared");
+  Store.set(["surv","r5","b"], true); t = cupTotals(); ok(t.bWon && t.b === 18.5, "D30 a single survivor bonus breaks the tie");
+  reset(); }
+
+/* ── E. HONOURS ─────────────────────────────────────────────── */
+{ Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); Store.set(["pair","r1","m2"], { a:["a3","a4"], b:["b3","b4"] });
+  const c = c1; for (let h = 1; h <= 18; h++) { const p = par(r1, h);
+    // m1: B wins 1-2, A wins 3-8 and 11-18, halves 9-10 → A comeback from 2 down, B flop; a1 snowman on 5, blowups on 1,2,5; a2 birdies on multiples of 4
+    let a1 = p + (h <= 2 ? 3 : h === 5 ? 4 : 0), a2 = p + (h <= 2 ? 2 : h % 4 === 0 ? -1 : 0), b1 = p + (h <= 2 ? 0 : 2), b2 = p + (h <= 2 ? 1 : 2);
+    if (h === 9 || h === 10) { a1 = p; a2 = p; b1 = p; b2 = p; } play("r1","m1",h, { a1, a2, b1, b2 }); }
+  for (let h = 1; h <= 16; h++) { const p = par(r1, h); play("r1","m2",h, { a3:p+1, a4:p+2, b3:p, b4:p+1 }); }
+  const S = playerStats(); const s1 = matchState("r1","m1"), s2 = matchState("r1","m2");
+  ok(s1.closed && s1.lead === "a", "E1 m1 A wins"); ok(s2.closed && s2.lead === "b" && s2.text === "11&2", "E2 m2 B wins 11&2");
+  eq([S.a1.comeback, S.b1.flop, S.a1.snow, S.a1.blow], [1, 1, 1, 3], "E3 comeback / flop / snowman / blow-ups");
+  eq([S.a2.birdies, S.a1.closer, S.a1.hh], [4, 3, 2], "E4 birdies / closer (last 3) / halved");
+  eq([S.a1.pts, S.a2.pts, S.b3.pts, S.a3.pts], [1, 1, 1, 0], "E5 points split between partners");
+  eq([S.a1.w, S.a1.l, S.b1.l, S.b3.w], [1, 0, 1, 1], "E6 W/L tallies"); ok(S.a1.hot >= 6, "E7 hot hand streak ≥ 6"); ok(S.b3.pars === 16 && S.b3.parStreak === 16, "E8 par streak");
+  ok(S.a3.ppm === 0 && S.b3.ppm === 1, "E9 points per match (anchor metric)"); ok(S.a2.sandbag < 0, "E10 sandbagger: a2 net well under par");
+  ok(S.a3.hardN > 0 && S.a3.easyN > 0, "E11 hard/easy thirds populated"); eq(S.a3.easy, 6, "E12 easy-third gross to par = 6 holes × +1");
+  // render smoke tests (no exceptions)
+  let okRender = true; try { renderCup(); renderHonours(); renderFormat(); UI.rid = "r1"; UI.mid = "m1"; UI.card = false; renderLive(); UI.card = true; UI.hole = 5; renderLive(); renderField(r1, "m1"); Me.save("admin"); UI.editPairs = true; renderLive(); } catch(e){ okRender = false; console.error(e); }
+  ok(okRender, "E13 all renderers run without throwing"); Me.save(null); UI.editPairs = false;
+  reset(); }
+
+/* ── F. LOCK ────────────────────────────────────────────────── */
+{ Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); Me.save("a1"); winHoles("r1","m1","a",1,10);
+  eq(canEdit("r1","m1"), false, "F1 participant locked out once match decided"); ok(/locked/.test(editNote("r1","m1")), "F2 locked note"); Me.save("admin"); eq(canEdit("r1","m1"), true, "F3 commissioner may amend");
+  O("r1","m1",3,"b"); eq(matchState("r1","m1").closed, false, "F4 commissioner amendment reopens the match (8-1 thru 10, 8 left)"); Me.save("a1"); eq(canEdit("r1","m1"), true, "F5 …and players can score again");
+  reset(); }
+
+/* ── G. FUZZ ────────────────────────────────────────────────── */
+{ let seed = 42; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  let bad = 0, closedCount = 0, halvedCount = 0; const N = 1500;
+  for (let n = 0; n < N; n++) { reset(); CONFIG.carry = [0, 2, 99][Math.floor(rnd() * 3)]; CONFIG.halvedMatch = rnd() < 0.5 ? "split" : "none";
+    const rid = ["r1","r2","r3","r4"][Math.floor(rnd() * 4)], r = ROUND[rid], mid = r.matches[0].id; Store.set(["pair", rid, mid], r.scoring === "singles" ? { a:["a1"], b:["b2"] } : { a:["a1","a2"], b:["b1","b2"] });
+    const played = Math.floor(rnd() * (r.holes + 1)); let manual = { up:0, stack:0 };
+    for (let h = 1; h <= played; h++) { const x = rnd(), res = x < 0.4 ? "a" : x < 0.8 ? "b" : "h"; O(rid, mid, h, res);
+      const s = matchState(rid, mid); if (s.per[h - 1] === undefined || (h > 1 && s.per[h-1] === null)) {} }
+    const s = matchState(rid, mid), m = matchOf(rid, mid);
+    // invariants
+    const total = s.pts.a + s.pts.b; const okPts = !s.closed ? total === 0 : (s.lead === "h" ? (CONFIG.halvedMatch === "none" ? total === 0 : total === m.pts) : total === m.pts);
+    const potential = s.left + s.stack; const okClose = s.closed ? (s.left === 0 || s.mag > potential) : (s.mag <= potential);
+    const okUp = Math.sign(s.up) === (s.lead === "a" ? 1 : s.lead === "b" ? -1 : 0);
+    const okThru = s.thru === played; const okShort = !s.started || /^(AS|\d+ UP|\d+&\d+)$/.test(s.short);
+    if (!(okPts && okClose && okUp && okThru && okShort)) { bad++; if (bad <= 3) console.log("fuzz fail", { rid, carry:CONFIG.carry, hm:CONFIG.halvedMatch, played, s:{ up:s.up, thru:s.thru, left:s.left, stack:s.stack, closed:s.closed, short:s.short, pts:s.pts } }); }
+    if (s.closed) closedCount++; if (s.closed && s.lead === "h") halvedCount++; }
+  ok(bad === 0, "G1 fuzz: " + N + " random matches satisfy all invariants (points, closure, sign, thru, label)", { bad });
+  ok(closedCount > N / 10 && halvedCount > 0, "G2 fuzz covered closed and halved matches", { closedCount, halvedCount });
+  reset(); }
+`;
+vm.runInContext(src + "\n" + tests, ctx, { filename:"engine+tests.js" });
+console.log(`\n${T.pass} passed, ${T.fail} failed`);
+T.fails.forEach(f => console.log("  ✗ " + f));
+process.exit(T.fail ? 1 : 0);

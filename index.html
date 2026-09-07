@@ -627,7 +627,7 @@ const Me = {
 function matchesOf(r){ return r.matches.map(m => { const o = Store.get(["pair", r.id, m.id], null); return o ? { ...m, a:o.a || [], b:o.b || [] } : m; }); }
 const matchOf = (rid, mid) => matchesOf(ROUND[rid]).find(m => m.id === mid);
 const slotsPer = r => r.scoring === "singles" ? 1 : 2;
-const isSet = m => m.a.length && m.b.length;
+const isSet = m => m.a.length > 0 && m.b.length > 0;
 
 /* ── handicaps + scorers ───────────────────────────────────── */
 function liveHcp(id){ return Number(Store.get(["hcp", id], P[id]?.hcp ?? 0)); }

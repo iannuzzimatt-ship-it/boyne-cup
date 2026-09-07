@@ -80,6 +80,8 @@ and add a line `databaseURL: "that url",` inside the block.
 **Live link: https://iannuzzimatt-ship-it.github.io/boyne-cup/**  (repo: github.com/iannuzzimatt-ship-it/boyne-cup)
 QR code: `Boyne Cup QR.png` in the Boyne folder.
 
+**Tests:** `node test.js` (in this folder) loads the real engine and runs ~90 checks — strokes, hole results, match play closure, carryover, halved matches, survivor, clinch maths, pairings, honours, plus 1,500 random matches. Run before every push.
+
 **Deploys are automatic now:** this folder is linked to the GitHub repo. Claude commits and pushes after each change; the site updates within about a minute. No more manual uploads. Steps below kept for reference.
 
 This is what your friend did. You get a link like
