@@ -496,15 +496,15 @@ const CONFIG = {
 
   /* ── 4. THE COURSES (from the real scorecards, men's stroke index) ── */
   courses: {
-    arthur:  { name:"Arthur Hills", club:"The Highlands", lat:45.4680, lon:-84.9346,
+    arthur:  { name:"Arthur Hills", club:"The Highlands", lat:45.4680, lon:-84.9346, map:"https://www.google.com/maps/dir/?api=1&destination=The+Highlands+at+Harbor+Springs,+600+Highland+Dr,+Harbor+Springs,+MI+49740",
       par:[4,4,5,4,4,5,3,4,3, 4,5,4,5,3,4,3,4,5], si:[9,17,5,7,1,13,15,3,11, 18,4,8,14,12,2,16,6,10] },
-    moor:    { name:"The Moor", club:"The Highlands", lat:45.4680, lon:-84.9346,
+    moor:    { name:"The Moor", club:"The Highlands", lat:45.4680, lon:-84.9346, map:"https://www.google.com/maps/dir/?api=1&destination=The+Highlands+at+Harbor+Springs,+600+Highland+Dr,+Harbor+Springs,+MI+49740",
       par:[4,4,5,3,4,3,4,5,4, 4,3,4,4,5,4,4,3,5], si:[5,15,17,9,1,7,11,13,3, 4,14,10,8,18,2,6,16,12] },
-    preserveLinks:{ name:"Preserve / Links", club:"Bay Harbor", lat:45.3623, lon:-85.0606, // use if Friday PM becomes 18
+    preserveLinks:{ name:"Preserve / Links", club:"Bay Harbor", lat:45.3623, lon:-85.0606, map:"https://www.google.com/maps/dir/?api=1&destination=Bay+Harbor+Golf+Club,+5800+Coastal+Ridge+Dr,+Bay+Harbor,+MI+49770",
       par:[4,4,4,5,3,5,4,4,3, 4,4,4,3,4,5,3,4,5], si:[11,13,3,7,9,1,15,17,5, 12,14,4,8,10,2,16,18,6] },
-    heather: { name:"The Heather", club:"The Highlands", lat:45.4680, lon:-84.9346,
+    heather: { name:"The Heather", club:"The Highlands", lat:45.4680, lon:-84.9346, map:"https://www.google.com/maps/dir/?api=1&destination=The+Highlands+at+Harbor+Springs,+600+Highland+Dr,+Harbor+Springs,+MI+49740",
       par:[4,4,4,3,5,3,4,4,5, 4,5,3,4,4,5,3,4,4], si:[15,5,13,11,1,17,7,3,9, 6,18,16,8,10,2,14,12,4] },
-    ross:    { name:"Donald Ross Memorial", club:"The Highlands", lat:45.4680, lon:-84.9346,
+    ross:    { name:"Donald Ross Memorial", club:"The Highlands", lat:45.4680, lon:-84.9346, map:"https://www.google.com/maps/dir/?api=1&destination=The+Highlands+at+Harbor+Springs,+600+Highland+Dr,+Harbor+Springs,+MI+49740",
       par:[4,4,3,4,5,4,4,3,5, 4,4,3,5,4,4,5,3,4], si:[11,13,5,9,1,7,17,15,3, 4,16,18,2,8,10,14,12,6] },
   },
 
@@ -547,10 +547,28 @@ const CONFIG = {
 
   /* ── 7. THE SCHEDULE ─────────────────────────────────────────── */
   schedule: {
-    "2026-09-17":[ { t:"9:00 AM", i:"🚗", l:"Depart", d:"Add your drive time" }, { t:"11:45 AM", i:"⛳", l:"Arrive Highlands", d:"Range + putting green" },
-                   { t:"7:00 PM", i:"🍽", l:"Dinner" }, { t:"Evening", i:"🎲", l:"Captains set Friday AM pairings" } ],
-    "2026-09-18":[ { t:"7:45 AM", i:"☕", l:"Breakfast" }, { t:"~2:00 PM", i:"🥪", l:"Lunch + drive", d:"Highlands to Bay Harbor, ~30 min" }, { t:"7:30 PM", i:"🍽", l:"Dinner" } ],
-    "2026-09-19":[ { t:"9:00 AM", i:"☕", l:"Breakfast" }, { t:"~2:30 PM", i:"🥪", l:"Lunch" }, { t:"8:00 PM", i:"🥂", l:"Final dinner", d:"Cup presented" } ],
+    // t = time, i = emoji, l = label, d = detail, map = Google Maps directions link (tap to open)
+    // Thursday: 6.5 hr drive + two short stops → leave 4:30 to be on the range by 11:45 for a 12:50 tee.
+    "2026-09-17":[
+      { t:"4:30 AM",  i:"🚗", l:"Wheels up",                d:"6.5 hrs of driving + stops · aim to arrive 11:45" },
+      { t:"~7:00 AM", i:"☕", l:"Stop 1 · coffee & breakfast", d:"20 min · fuel up here" },
+      { t:"~9:45 AM", i:"🚻", l:"Stop 2 · quick break",       d:"10 min · last chance before the course" },
+      { t:"11:45 AM", i:"⛳", l:"Arrive The Highlands",       d:"Check in · range · putting green", map:"https://www.google.com/maps/dir/?api=1&destination=The+Highlands+at+Harbor+Springs,+600+Highland+Dr,+Harbor+Springs,+MI+49740" },
+      { t:"~5:30 PM", i:"🍺", l:"19th hole",                  d:"Post-round drinks at the clubhouse" },
+      { t:"7:30 PM",  i:"🍽", l:"Dinner",                     d:"Add the spot" },
+      { t:"Evening",  i:"🎲", l:"Captains set Friday AM pairings", d:"Enter them in the app" },
+    ],
+    "2026-09-18":[
+      { t:"7:30 AM",  i:"☕", l:"Breakfast" },
+      { t:"~1:45 PM", i:"🥪", l:"Lunch, then drive to Bay Harbor", d:"~30 min · Highlands → Bay Harbor", map:"https://www.google.com/maps/dir/?api=1&destination=Bay+Harbor+Golf+Club,+5800+Coastal+Ridge+Dr,+Bay+Harbor,+MI+49770" },
+      { t:"7:30 PM",  i:"🎰", l:"Odawa Casino",                d:"Dinner, then win it back · Petoskey · ~15 min from Bay Harbor, ~25 from Highlands", map:"https://www.google.com/maps/dir/?api=1&destination=Odawa+Casino+Resort,+1760+Lears+Rd,+Petoskey,+MI+49770" },
+      { t:"Late",     i:"🎲", l:"Captains set Saturday AM pairings", d:"Before anyone's too far gone" },
+    ],
+    "2026-09-19":[
+      { t:"8:30 AM",  i:"☕", l:"Breakfast" },
+      { t:"~2:45 PM", i:"🥪", l:"Lunch at the turn",           d:"Between the two rounds · captains set PM pairings" },
+      { t:"8:00 PM",  i:"🥂", l:"Final dinner",                d:"Cup presented · Individual Title · honours read out" },
+    ],
   },
 
   /* ── 8. COMMISSIONER CODE ────────────────────────────────────── */
@@ -1011,9 +1029,11 @@ function wxStrip(date){
 function renderTrip(){
   const admin = Me.isAdmin();
   const days = tripDates().map(d => { const items = (CONFIG.schedule[d] || []).map(x => ({ ...x, _t:parseTee(x.t), kind:"" }));
-    CONFIG.rounds.filter(r => r.date === d).forEach(r => { const c = courseOf(r); items.push({ t:r.tee, i:"⛳", l:r.format + " tee off", d:c.name + " · " + r.holes + " holes · " + c.club, _t:parseTee(r.tee), kind:"tee" }); });
+    CONFIG.rounds.filter(r => r.date === d).forEach(r => { const c = courseOf(r); items.push({ t:r.tee, i:"⛳", l:r.format + " tee off", d:c.name + " · " + r.holes + " holes · " + c.club, map:c.map, _t:parseTee(r.tee), kind:"tee" }); });
     items.sort((x, y) => x._t - y._t);
-    return `<div class="day"><div class="day-h"><div class="day-d">${dayName(d)}</div></div>${wxStrip(d)}<div class="card" style="margin-top:.5rem;padding:.2rem .7rem">${items.map(x => `<div class="slot ${x.kind}"><div class="slot-t">${esc(x.t)}</div><div><div class="slot-l">${x.i || ""} ${esc(x.l)}</div>${x.d ? `<div class="slot-d">${esc(x.d)}</div>` : ""}</div></div>`).join("")}</div></div>`; }).join("");
+    const slot = x => `<div class="slot ${x.kind}"><div class="slot-t">${esc(x.t)}</div><div style="min-width:0"><div class="slot-l">${x.i || ""} ${esc(x.l)}</div>${x.d ? `<div class="slot-d">${esc(x.d)}</div>` : ""}
+      ${x.map ? `<a href="${esc(x.map)}" target="_blank" rel="noopener" class="pill pill-next" style="display:inline-block;margin-top:.3rem;text-decoration:none">📍 Directions</a>` : ""}</div></div>`;
+    return `<div class="day"><div class="day-h"><div class="day-d">${dayName(d)}</div></div>${wxStrip(d)}<div class="card" style="margin-top:.5rem;padding:.2rem .7rem">${items.map(slot).join("")}</div></div>`; }).join("");
   const roster = ["a", "b"].map(t => { const T = CONFIG.teams[t];
     const rows = CONFIG.players.filter(p => p.team === t).map(p => { const live = liveHcp(p.id), delta = live - p.hcp;
       return `<tr><td><span class="tdot ${t}"></span>${esc(p.name)}${delta ? ` <span class="tiny muted">(was ${p.hcp})</span>` : ""}</td>
