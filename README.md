@@ -78,7 +78,9 @@ and add a line `databaseURL: "that url",` inside the block.
 ## Part 3 — Put it on the internet ✅ DONE 2026-09-07
 
 **Live link: https://iannuzzimatt-ship-it.github.io/boyne-cup/**  (repo: github.com/iannuzzimatt-ship-it/boyne-cup)
-QR code: `Boyne Cup QR.png` in the Boyne folder. Steps kept for reference.
+QR code: `Boyne Cup QR.png` in the Boyne folder.
+
+**Deploys are automatic now:** this folder is linked to the GitHub repo. Claude commits and pushes after each change; the site updates within about a minute. No more manual uploads. Steps below kept for reference.
 
 This is what your friend did. You get a link like
 `https://YOURNAME.github.io/boyne-cup/` that anyone can open.
