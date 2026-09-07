@@ -1022,10 +1022,10 @@ function renderCard(){
                 : `<tr>${name}${seg(i => cell(x, i), 1, r.holes)}${T(t.k ? t.g : "—")}<td class="tot" style="color:var(--gold)">${t.k ? t.n : "—"}</td></tr>`; };
   const resCell = i => { const p = s.per[i]; const bg = !p ? "" : p.res === "h" ? "background:var(--bg3)" : `background:var(--${p.res});color:#fff`;
     return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}" style="font-weight:700;${bg}">${!p ? "" : p.res === "h" ? "½" : TS(p.res) + (p.worth > 1 ? "×" + p.worth : "")}</td>`; };
-  const H = (label, fn, out, inn, tot, cls = "") => nine ? `<tr class="${cls}"><th>${label}</th>${seg(fn, 1, 9)}<th class="tot">${out}</th>${seg(fn, 10, 18)}<th class="tot">${inn}</th><th class="tot">${tot}</th><th class="tot"></th></tr>`
-                                                    : `<tr class="${cls}"><th>${label}</th>${seg(fn, 1, r.holes)}<th class="tot">${tot}</th><th class="tot"></th></tr>`;
+  const H = (label, fn, out, inn, tot, cls = "", last = "") => nine ? `<tr class="${cls}"><th>${label}</th>${seg(fn, 1, 9)}<th class="tot">${out}</th>${seg(fn, 10, 18)}<th class="tot">${inn}</th><th class="tot">${tot}</th><th class="tot" style="color:var(--gold)">${last}</th></tr>`
+                                                    : `<tr class="${cls}"><th>${label}</th>${seg(fn, 1, r.holes)}<th class="tot">${tot}</th><th class="tot" style="color:var(--gold)">${last}</th></tr>`;
   const grid = `<div class="grid sc"><table><thead>
-      ${H("Hole", i => `<th class="hn ${i === h ? "cur" : ""}">${i}</th>`, "Out", "In", "Gross", "hd-hole")}
+      ${H("Hole", i => `<th class="hn ${i === h ? "cur" : ""}">${i}</th>`, "Out", "In", "Gross", "hd-hole", "Net")}
       ${yd ? H(esc(tb), i => `<th class="yd">${yd[i-1]}</th>`, ydSum(1, 9), ydSum(10, 18), ydSum(1, r.holes), "hd-yd") : ""}
       ${H("Par", i => `<th class="pr">${c.par[i-1]}</th>`, parSum(1, 9), parSum(10, 18), parSum(1, r.holes), "hd-par")}
       ${H("SI", i => `<th class="si">${c.si[i-1]}</th>`, "", "", "", "hd-si")}</thead>
