@@ -669,6 +669,12 @@ function matchState(rid, mid){
   return { r, m, sc, up, mag, thru, left, stack, lead, closed, started, text, short, pts, per, aH, bH, hH };
 }
 const surv = (rid, side) => !!Store.get(["surv", rid, side], false);
+const canSurv = side => Me.isAdmin() || Me.team() === side;
+function survRow(rid, compact){
+  const sp = Number(CONFIG.survivorPts || 0); if (!sp) return "";
+  const cell = side => `<span class="surv">${compact ? "" : "🏐 Survivor "}${canSurv(side) ? `<button data-surv="${rid}" data-side="${side}" class="${surv(rid, side) ? "on" : ""}" title="Tick if ${TS(side)} kept the survivor ball this round">${TS(side)} ${surv(rid, side) ? "kept it +" + sp : "survivor?"}</button>` : `<b style="color:var(--${side}-lt)">${TS(side)} ${surv(rid, side) ? "kept it +" + sp : "—"}</b>`}</span>`;
+  return `<div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.45rem .8rem;border-top:1px solid var(--line);background:var(--bg2)">${cell("a")}${compact ? `<span class="tiny muted">🏐 survivor ball</span>` : ""}${cell("b")}</div>`;
+}
 function roundPoints(rid){
   const r = ROUND[rid]; let a = 0, b = 0, avail = 0, final = true, any = false;
   matchesOf(r).forEach(m => { avail += m.pts; if (!isSet(m)) { final = false; return; } const s = matchState(rid, m.id); a += s.pts.a; b += s.pts.b; if (!s.closed) final = false; if (s.started) any = true; });
@@ -754,7 +760,7 @@ function renderFormat(){
         ${li(`<b style="color:var(--tx)">Match play.</b> Every match is played hole by hole. Lower net score wins the hole. ${carryTxt} The side that wins more holes wins the match.`)}
         ${li(`<b style="color:var(--tx)">Points.</b> Every match is worth ${mp} points. Win the match, ${mp} points to your team. ${halved} ${perRoundTxt.charAt(0).toUpperCase() + perRoundTxt.slice(1)}.`)}
         ${li(`<b style="color:var(--tx)">${matchPts} match points in total.</b> First team past <b style="color:var(--tx)">${fmtPts(matchPts / 2 + 0.5)}</b> can't be caught; ${fmtPts(matchPts / 2)}–${fmtPts(matchPts / 2)} is a tie on match points.`)}
-        ${sp ? li(`<b style="color:var(--tx)">Survivor ball: +${sp} per team per round.</b> Each team gets one ball for the trip. Keep it in play the whole round and the commissioner ticks the box. Up to ${fmtPts(survMax)} bonus per team across the weekend — it counts toward the total and can decide a tie.`) : ""}
+        ${sp ? li(`<b style="color:var(--tx)">Survivor ball: +${sp} per team per round.</b> Each team gets one ball for the trip. Keep it in play the whole round and tick the box (anyone on the team can). Up to ${fmtPts(survMax)} bonus per team across the weekend — it counts toward the total and can decide a tie.`) : ""}
         ${li(`<b style="color:var(--tx)">Most total points lifts the Cup.</b> Match points plus survivor bonuses. The board above tracks it live and tells you what each side still needs to clinch.`)}
         ${li(`<b style="color:var(--tx)">Handicaps</b> only apply in own-ball rounds: you play off the lowest man in your group, full difference, hardest holes first. Scrambles are gross.`)}
         ${li(`<b style="color:var(--tx)">${esc(CONFIG.solo.name)}</b> runs alongside: best total net to par over the own-ball rounds (${CONFIG.solo.rounds.map(id => ROUND[id] ? dayShort(ROUND[id].date).split(",")[0] + " " + ROUND[id].format.split(" ·")[0] : "").filter(Boolean).join(", ")}). Bragging rights only.`)}
@@ -774,12 +780,11 @@ function renderRoundBlock(r){
     return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p ${s.closed ? (aW ? "win" : "lose") : ""}">${names(m.a)}</div></div>
       <div class="mt-c"><div class="${cls}">${esc(s.short)}</div><div class="mt-thru">${s.closed ? "Final" : s.started ? "thru " + s.thru + (s.stack ? " · " + s.stack + " carried" : "") : esc(r.tee)}</div></div>
       <div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p ${s.closed ? (bW ? "win" : "lose") : ""}">${names(m.b)}</div></div></div>`; }).join("");
-  const survRow = sp ? `<div style="display:flex;justify-content:space-between;padding:.45rem .8rem;border-top:1px solid var(--line);background:var(--bg2)">
-      ${["a", "b"].map(side => `<span class="surv">🏐 Survivor ${admin ? `<button data-surv="${r.id}" data-side="${side}" class="${surv(r.id, side) ? "on" : ""}">${TS(side)} ${surv(r.id, side) ? "+" + sp : "—"}</button>` : `<b style="color:var(--${side}-lt)">${TS(side)} ${surv(r.id, side) ? "+" + sp : "—"}</b>`}</span>`).join("")}</div>` : "";
+  const survHtml = survRow(r.id, false);
   return `<div class="rnd ${st === "upcoming" ? "up" : ""}"><div class="rnd-h"><div class="rnd-h-l"><div class="rnd-fmt">${esc(r.format)}</div>
       <div class="rnd-meta">${dayShort(r.date)} &bull; ${esc(r.tee)} &bull; ${esc(c.name)} &bull; ${r.holes} holes</div></div>
       <div class="rnd-pts"><div class="rnd-pts-v"><span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span></div><div class="rnd-pts-l">of ${fmtPts(p.avail)}${sp ? " +" + sp : ""}</div></div></div>
-    <div style="padding:.4rem .8rem .5rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">${r.note}</span><span style="margin-left:auto">${badge}</span></div>${body}${survRow}</div>`;
+    <div style="padding:.4rem .8rem .5rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">${r.note}</span><span style="margin-left:auto">${badge}</span></div>${body}${survHtml}</div>`;
 }
 function renderSolo(){
   const rows = soloStandings(), rids = CONFIG.solo.rounds.filter(id => ROUND[id]);
@@ -855,7 +860,7 @@ function ruleText(r){
     scramble:`<b>Scramble.</b> One team ball — everyone hits, pick the best, play from there. <b>No handicaps.</b> Lower team score wins the hole.`,
     singles:`<b>Singles.</b> Man on man, own ball, Ryder Cup style. Lower net wins the hole.` }[r.scoring] || "";
   const hcp = r.scoring === "scramble" ? "" : `<b>Strokes:</b> everyone in the group plays off its lowest handicap — you get the full difference${r.holes <= 9 && CONFIG.nineHoleHalf !== false ? " (halved for 9 holes)" : ""}, on the hardest holes first. The app marks stroke holes with a gold dot and does the net for you.`;
-  const surv = Number(CONFIG.survivorPts) ? `<b>Survivor ball:</b> keep the team ball in play all round and the commissioner ticks it — +${CONFIG.survivorPts} to your team.` : "";
+  const surv = Number(CONFIG.survivorPts) ? `<b>Survivor ball:</b> keep the team ball in play all round and anyone on the team ticks it on the Cup tab or under your scorecard — +${CONFIG.survivorPts} to your team.` : "";
   return [fmt, common, carryTxt, hcp, surv].filter(Boolean).map(t => `<p style="margin:0 0 .45rem">${t}</p>`).join("");
 }
 const scoreClass = (g, par) => g === null ? "empty" : (d => d <= -2 ? "eagle" : d === -1 ? "birdie" : d === 0 ? "" : d === 1 ? "bogey" : "dbl")(g - par);
@@ -889,7 +894,24 @@ function renderCard(){
     ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
     <div class="grid"><table><thead><tr><th>Hole</th>${cols.map(i => `<th>${i}</th>`).join("")}<th>Tot</th></tr><tr><th>Par</th>${cols.map(i => `<th>${c.par[i-1]}</th>`).join("")}<th>${c.par.reduce((a, b) => a + b, 0)}</th></tr></thead>
       <tbody>${sc.map(x => `<tr><td>${x.side === "a" ? "🔴" : "🟢"} ${esc(x.label.split(" ")[0])}</td>${cols.map(i => cell(x, i)).join("")}${tot(x)}</tr>`).join("")}<tr><td>Result</td>${resRow}<td class="tot">${s.started ? esc(s.short) : "—"}</td></tr></tbody></table></div>
-    <div class="tiny muted" style="text-align:center;margin-top:.6rem">Tap any hole in the card to jump to it${sc.some(x => x.total) ? " · • = stroke hole" : ""}</div>`;
+    <div class="tiny muted" style="text-align:center;margin-top:.6rem">Tap any hole in the card to jump to it${sc.some(x => x.total) ? " · • = stroke hole" : ""}</div>
+    ${renderField(r, m.id)}`;
+}
+function renderField(r, excludeMid){
+  const p = roundPoints(r.id), others = matchesOf(r).filter(m => m.id !== excludeMid);
+  const cols = [...Array(r.holes)].map((_, i) => i + 1);
+  const cards = others.map(m => { if (!isSet(m)) return `<div class="grp"><div class="grp-n"><b>${esc(m.label)}</b><span class="muted">pairings TBD</span></div></div>`;
+    const s = matchState(r.id, m.id), col = s.lead === "h" ? "var(--tx2)" : `var(--${s.lead}-lt)`;
+    const status = !s.started ? `<span class="muted">${esc(r.tee)}</span>` : `<span style="color:${col}">${s.lead === "h" ? s.short : TS(s.lead) + " " + s.short}</span><small>${s.closed ? "Final" : "thru " + s.thru}</small>`;
+    const res = cols.map(i => { const x = s.per[i]; return `<td style="color:${!x ? "var(--tx3)" : x.res === "h" ? "var(--tx2)" : "var(--" + x.res + "-lt)"};font-weight:700">${!x ? "·" : x.res === "h" ? "½" : TS(x.res) + (x.worth > 1 ? x.worth : "")}</td>`; }).join("");
+    return `<div class="grp" data-open="${m.id}" style="cursor:pointer;flex-wrap:wrap"><div class="grp-n" style="flex:1 1 60%"><b>${esc(m.label)}</b>${m.a.map(pshort).map(esc).join(" & ")} <span class="muted">v</span> ${m.b.map(pshort).map(esc).join(" & ")}</div><div class="grp-s">${status}</div><div class="grp-go">›</div>
+      ${s.started ? `<div class="grid" style="flex:1 1 100%;margin:.4rem 0 0;border:none;background:transparent"><table style="font-size:.64rem"><tbody><tr><td style="min-width:0;padding-left:0;background:transparent;color:var(--tx3)">Holes</td>${cols.map(i => `<td style="color:var(--tx3)">${i}</td>`).join("")}</tr><tr><td style="min-width:0;padding-left:0;background:transparent;color:var(--tx3)">Result</td>${res}</tr></tbody></table></div>` : ""}</div>`; }).join("");
+  return `<div class="sect"><div class="sect-h">Rest of the field · ${esc(r.format.split(" ·")[0])}</div>
+    <div class="card"><div style="display:flex;align-items:center;gap:.6rem;padding:.55rem .8rem;background:var(--bg2);border-bottom:1px solid var(--line)">
+      <span class="tiny muted">Round</span><span style="font-family:var(--hd);font-weight:700;font-size:1.05rem"><span style="color:var(--a-lt)">${fmtPts(p.a)}</span> <span class="muted">–</span> <span style="color:var(--b-lt)">${fmtPts(p.b)}</span></span><span class="tiny muted">of ${fmtPts(p.avail)}</span>
+      <span class="tiny muted" style="margin-left:auto">Cup <b style="color:var(--a-lt)">${fmtPts(cupTotals().a)}</b> – <b style="color:var(--b-lt)">${fmtPts(cupTotals().b)}</b></span></div>
+      ${cards || `<div class="empty" style="padding:1rem">No other matches this round</div>`}${survRow(r.id, true)}</div>
+    <div class="tiny muted" style="margin-top:.4rem;text-align:center">Tap a match to open its card · live</div></div>`;
 }
 let advanceTimer = null;
 function stamp(r, m, h){ Store.set(["meta", mkey(r.id, m.id), String(h)], Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" })); }
@@ -940,7 +962,7 @@ function renderTrip(){
   const cards = Object.entries(CONFIG.courses).filter(([k]) => used.has(k)).map(([, c]) => `<details class="card" style="margin-bottom:.4rem"><summary style="padding:.6rem .75rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem"><span style="font-weight:600">${esc(c.name)}</span><span class="tiny muted">${esc(c.club)}</span><span style="margin-left:auto;font-family:var(--hd);font-weight:700;color:var(--gold)">Par ${c.par.reduce((a, b) => a + b, 0)}</span></summary>
     <div style="overflow-x:auto"><table class="tbl" style="font-size:.72rem;min-width:520px"><tbody><tr><th>Hole</th>${c.par.map((_, i) => `<th class="ctr">${i + 1}</th>`).join("")}</tr><tr><td class="muted">Par</td>${c.par.map(p => `<td class="ctr">${p}</td>`).join("")}</tr><tr><td class="muted">SI</td>${c.si.map(p => `<td class="ctr muted">${p}</td>`).join("")}</tr></tbody></table></div></details>`).join("");
   const comm = admin ? `<div class="sect"><div class="sect-h">Commissioner</div><div class="card" style="padding:.75rem">
-      <div class="tiny muted" style="margin-bottom:.6rem">Pairings are set on the Live tab. Survivor ticks are on the Cup tab. Clearing removes every score for that round on every phone; handicaps and pairings stay. No undo.</div>
+      <div class="tiny muted" style="margin-bottom:.6rem">Pairings are set on the Live tab. Survivor ball is self-reported by each team; you can override it on the Cup tab. Clearing removes every score for that round on every phone; handicaps and pairings stay. No undo.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.6rem">${CONFIG.rounds.map(r => `<button class="btn btn-sm" data-clear="${r.id}">Clear ${esc(dayShort(r.date).split(",")[0])} ${esc(r.format.split(" ·")[0])}</button>`).join("")}</div>
       <button class="btn btn-full" id="wipeAll" style="border-color:rgba(224,86,80,.5);color:var(--a-lt)">Wipe every score — fresh start</button></div></div>` : "";
   $("#v-trip").innerHTML = `<div class="sect"><div class="sect-h">Schedule</div>${days}</div>
@@ -1000,7 +1022,7 @@ document.addEventListener("click", e => {
   const stp = e.target.closest("[data-stp]"); if (stp) { const cur = gross(UI.rid, UI.mid, UI.hole, stp.dataset.k), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; return setScore(stp.dataset.k, cur === null ? par : Math.max(1, Math.min(15, cur + +stp.dataset.stp))); }
   const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; if (cur === null) return setScore(tap.dataset.tap, par); if (Me.canScore()) ask("Clear this score?", "Removes the score in this box. You can tap to re-enter it.", { yes:"Clear it" }).then(ok => ok && setScore(tap.dataset.tap, null)); return; }
   const ov = e.target.closest("[data-ov]"); if (ov) return setOverride(ov.dataset.ov);
-  const sv = e.target.closest("[data-surv]"); if (sv && Me.isAdmin()) return Store.set(["surv", sv.dataset.surv, sv.dataset.side], surv(sv.dataset.surv, sv.dataset.side) ? null : true);
+  const sv = e.target.closest("[data-surv]"); if (sv && canSurv(sv.dataset.side)) return Store.set(["surv", sv.dataset.surv, sv.dataset.side], surv(sv.dataset.surv, sv.dataset.side) ? null : true);
   const cl = e.target.closest("[data-clear]"); if (cl && Me.isAdmin()) { const r = ROUND[cl.dataset.clear];
     ask(`Clear ${r.format}?`, `Every score entered for <b>${esc(r.format)} (${esc(dayShort(r.date))})</b> disappears from every phone. Pairings and handicaps stay. No undo.`, { yes:"Clear the round" })
       .then(ok => { if (!ok) return; r.matches.forEach(m => ["gross", "over", "meta"].forEach(k => Store.set([k, mkey(r.id, m.id)], null))); Store.set(["surv", r.id], null); }); return; }
