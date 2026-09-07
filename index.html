@@ -670,6 +670,10 @@ function matchState(rid, mid){
 }
 const surv = (rid, side) => !!Store.get(["surv", rid, side], false);
 const canSurv = side => Me.isAdmin() || Me.team() === side;
+// Who may edit a match: the commissioner always; its players only while it's still live.
+function canEdit(rid, mid){ if (Me.isAdmin()) return true; const m = matchOf(rid, mid); if (!m || !(m.a.includes(Me.role) || m.b.includes(Me.role))) return false; return !matchState(rid, mid).closed; }
+function editNote(rid, mid){ if (canEdit(rid, mid)) return ""; if (!Me.canScore()) return "Read-only — sign in to enter scores."; const m = matchOf(rid, mid);
+  if (!(m.a.includes(Me.role) || m.b.includes(Me.role))) return "Read-only — only the players in this match can score it."; return "Match complete and locked. Ask the commissioner if something needs fixing."; }
 function survRow(rid, compact){
   const sp = Number(CONFIG.survivorPts || 0); if (!sp) return "";
   const cell = side => `<span class="surv">${compact ? "" : "🏐 Survivor "}${canSurv(side) ? `<button data-surv="${rid}" data-side="${side}" class="${surv(rid, side) ? "on" : ""}" title="Tick if ${TS(side)} kept the survivor ball this round">${TS(side)} ${surv(rid, side) ? "kept it +" + sp : "survivor?"}</button>` : `<b style="color:var(--${side}-lt)">${TS(side)} ${surv(rid, side) ? "kept it +" + sp : "—"}</b>`}</span>`;
@@ -761,6 +765,7 @@ function renderFormat(){
         ${li(`<b style="color:var(--tx)">Points.</b> Every match is worth ${mp} points. Win the match, ${mp} points to your team. ${halved} ${perRoundTxt.charAt(0).toUpperCase() + perRoundTxt.slice(1)}.`)}
         ${li(`<b style="color:var(--tx)">${matchPts} match points in total.</b> First team past <b style="color:var(--tx)">${fmtPts(matchPts / 2 + 0.5)}</b> can't be caught; ${fmtPts(matchPts / 2)}–${fmtPts(matchPts / 2)} is a tie on match points.`)}
         ${sp ? li(`<b style="color:var(--tx)">Survivor ball: +${sp} per team per round.</b> Each team gets one ball for the trip. Keep it in play the whole round and tick the box (anyone on the team can). Up to ${fmtPts(survMax)} bonus per team across the weekend — it counts toward the total and can decide a tie.`) : ""}
+        ${li(`<b style="color:var(--tx)">Nothing to submit.</b> Hole results feed the match, the match feeds the round, the round feeds the Cup — instantly. Only the players in a match can score it, and a decided match locks; the commissioner can amend anything.`)}
         ${li(`<b style="color:var(--tx)">Most total points lifts the Cup.</b> Match points plus survivor bonuses. The board above tracks it live and tells you what each side still needs to clinch.`)}
         ${li(`<b style="color:var(--tx)">Handicaps</b> only apply in own-ball rounds: you play off the lowest man in your group, full difference, hardest holes first. Scrambles are gross.`)}
         ${li(`<b style="color:var(--tx)">${esc(CONFIG.solo.name)}</b> runs alongside: best total net to par over the own-ball rounds (${CONFIG.solo.rounds.map(id => ROUND[id] ? dayShort(ROUND[id].date).split(",")[0] + " " + ROUND[id].format.split(" ·")[0] : "").filter(Boolean).join(", ")}). Bragging rights only.`)}
@@ -837,7 +842,7 @@ function renderLive(){
     <div class="sect"><div class="sect-h">Matches · ${esc(r.format)}</div>
       ${admin ? `<button class="btn btn-sm ${UI.editPairs ? "btn-gold" : "btn-gh"}" id="editPairs" style="margin-bottom:.5rem">${UI.editPairs ? "Done editing" : (unset ? "Set pairings" : "Edit pairings")}</button>` : ""}
       ${admin && UI.editPairs ? renderPairEditor(r, ms) : `<div class="card">${groups}</div>`}
-      <div class="tiny muted" style="margin-top:.45rem;text-align:center">${r.note}${Me.canScore() && !UI.editPairs ? " · Tap any match to score it" : ""}</div></div>
+      <div class="tiny muted" style="margin-top:.45rem;text-align:center">${r.note}${Me.canScore() && !UI.editPairs ? " · Tap your match to score it, any match to watch" : ""}</div></div>
     <div class="sect"><div class="sect-h">Rules · ${esc(r.format)}</div>
       <div class="card" style="padding:.75rem .85rem .35rem;font-size:.8rem;line-height:1.5;color:var(--tx2)">${ruleText(r)}</div>
       <div class="tiny muted" style="margin-top:.4rem;text-align:center">${esc(dayName(r.date))} · ${esc(r.tee)} · ${esc(courseOf(r).name)} · ${r.holes} holes · par ${courseOf(r).par.reduce((a, b) => a + b, 0)}</div></div>`;
@@ -866,7 +871,7 @@ function ruleText(r){
 const scoreClass = (g, par) => g === null ? "empty" : (d => d <= -2 ? "eagle" : d === -1 ? "birdie" : d === 0 ? "" : d === 1 ? "bogey" : "dbl")(g - par);
 function renderCard(){
   const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), c = courseOf(r), sc = scorers(r, m), s = matchState(r.id, m.id);
-  const h = UI.hole = Math.min(Math.max(1, UI.hole), r.holes), par = c.par[h-1], si = c.si[h-1], can = Me.canScore(), hr = s.per[h];
+  const h = UI.hole = Math.min(Math.max(1, UI.hole), r.holes), par = c.par[h-1], si = c.si[h-1], can = canEdit(r.id, m.id), hr = s.per[h], note = editNote(r.id, m.id);
   const dead = s.closed && !hr && h > s.thru;
   const rows = sc.map(x => { const g = gross(r.id, m.id, h, x.key), st = x.holes[h] || 0;
     return `<div class="srow ${x.side}"><div class="srow-n"><div class="srow-nm">${esc(x.label)}${"<span class='sd'></span>".repeat(st)}</div>
@@ -890,7 +895,7 @@ function renderCard(){
         <div class="sc-mid">${s.closed ? "final" : s.started ? "thru " + s.thru : esc(r.tee)}<b>${s.closed ? (s.lead === "h" ? "halved" : TS(s.lead) + " wins") : s.stack ? "carry ×" + (1 + s.stack) : s.started ? (s.lead === "h" ? "level" : TS(s.lead) + " leads") : "—"}</b></div>
         <div class="sc-side r"><div class="n">${m.b.map(pfirst).map(esc).join(" & ")}</div><div class="v b">${s.lead === "b" ? esc(s.short) : s.lead === "h" && s.started ? "AS" : "—"}</div></div></div></div>
     <div class="hnav"><button class="hnav-b" data-nav="-1" ${h === 1 ? "disabled" : ""}>‹</button><div class="hnav-c"><div class="hnav-n"><small>HOLE</small>${h}</div><div class="hnav-i">Par ${par} · SI ${si}</div></div><button class="hnav-b" data-nav="1" ${h === r.holes ? "disabled" : ""}>›</button></div>
-    ${can ? "" : `<div class="note" style="margin-bottom:.6rem">Read-only — sign in to enter scores.</div>`}
+    ${note ? `<div class="note" style="margin-bottom:.6rem">${s.closed && s.started ? `<b>Final — ${s.lead === "h" ? "halved" : TS(s.lead) + " wins " + esc(s.short)}.</b> ` : ""}${note}</div>` : ""}
     ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
     <div class="grid"><table><thead><tr><th>Hole</th>${cols.map(i => `<th>${i}</th>`).join("")}<th>Tot</th></tr><tr><th>Par</th>${cols.map(i => `<th>${c.par[i-1]}</th>`).join("")}<th>${c.par.reduce((a, b) => a + b, 0)}</th></tr></thead>
       <tbody>${sc.map(x => `<tr><td>${x.side === "a" ? "🔴" : "🟢"} ${esc(x.label.split(" ")[0])}</td>${cols.map(i => cell(x, i)).join("")}${tot(x)}</tr>`).join("")}<tr><td>Result</td>${resRow}<td class="tot">${s.started ? esc(s.short) : "—"}</td></tr></tbody></table></div>
@@ -916,12 +921,12 @@ function renderField(r, excludeMid){
 let advanceTimer = null;
 function stamp(r, m, h){ Store.set(["meta", mkey(r.id, m.id), String(h)], Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" })); }
 function setScore(key, val){
-  if (!Me.canScore()) return; const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), sc = scorers(r, m), h = UI.hole;
+  if (!canEdit(UI.rid, UI.mid)) return; const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), sc = scorers(r, m), h = UI.hole;
   const before = !!holeResult(r, m, sc, h); Store.set(["gross", mkey(r.id, m.id), String(h), key], val); stamp(r, m, h); if (navigator.vibrate) navigator.vibrate(10);
   const after = !!holeResult(r, m, sc, h); clearTimeout(advanceTimer);
   if (!before && after && h < r.holes) advanceTimer = setTimeout(() => { if (UI.card && UI.hole === h) { UI.hole = h + 1; renderLive(); window.scrollTo({ top:0 }); } }, 900);
 }
-function setOverride(res){ if (!Me.canScore()) return; const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), h = UI.hole, cur = Store.get(["over", mkey(r.id, m.id), String(h)], null);
+function setOverride(res){ if (!canEdit(UI.rid, UI.mid)) return; const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), h = UI.hole, cur = Store.get(["over", mkey(r.id, m.id), String(h)], null);
   Store.set(["over", mkey(r.id, m.id), String(h)], cur === res ? null : res); stamp(r, m, h); }
 </script>
 
@@ -1020,7 +1025,7 @@ document.addEventListener("click", e => {
   const nav = e.target.closest("[data-nav]"); if (nav) { UI.hole += +nav.dataset.nav; renderLive(); return window.scrollTo({ top:0 }); }
   const jp = e.target.closest("[data-jump]"); if (jp) { UI.hole = +jp.dataset.jump; renderLive(); return window.scrollTo({ top:0 }); }
   const stp = e.target.closest("[data-stp]"); if (stp) { const cur = gross(UI.rid, UI.mid, UI.hole, stp.dataset.k), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; return setScore(stp.dataset.k, cur === null ? par : Math.max(1, Math.min(15, cur + +stp.dataset.stp))); }
-  const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; if (cur === null) return setScore(tap.dataset.tap, par); if (Me.canScore()) ask("Clear this score?", "Removes the score in this box. You can tap to re-enter it.", { yes:"Clear it" }).then(ok => ok && setScore(tap.dataset.tap, null)); return; }
+  const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; if (cur === null) return setScore(tap.dataset.tap, par); if (canEdit(UI.rid, UI.mid)) ask("Clear this score?", "Removes the score in this box. You can tap to re-enter it.", { yes:"Clear it" }).then(ok => ok && setScore(tap.dataset.tap, null)); return; }
   const ov = e.target.closest("[data-ov]"); if (ov) return setOverride(ov.dataset.ov);
   const sv = e.target.closest("[data-surv]"); if (sv && canSurv(sv.dataset.side)) return Store.set(["surv", sv.dataset.surv, sv.dataset.side], surv(sv.dataset.surv, sv.dataset.side) ? null : true);
   const cl = e.target.closest("[data-clear]"); if (cl && Me.isAdmin()) { const r = ROUND[cl.dataset.clear];
