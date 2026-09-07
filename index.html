@@ -733,7 +733,7 @@ function survCtl(rid, mid, side, compact){
   const m = matchOf(rid, mid), who = m[side].map(pfirst).join(" & ");
   const status = st === true ? `<span style="color:var(--gold);font-weight:700">✓ kept it +${sp}</span>` : st === false ? `<span style="color:var(--a-lt);font-weight:700">✗ lost it</span>` : `<span class="muted">?</span>`;
   if (!can) return `<div class="tiny" style="display:flex;gap:.4rem;align-items:center"><b style="color:var(--${side}-lt);min-width:1.2rem">${T}</b><span class="grow" style="color:var(--tx2)">${esc(who)}</span>${status}</div>`;
-  const btn = (v, lbl, on) => `<button data-surv="${rid}" data-mid="${mid}" data-side="${side}" data-v="${v}" class="btn btn-sm ${on && v ? "btn-gold" : ""}" style="padding:.3rem .55rem;${on && !v ? "border-color:var(--a-lt);color:var(--a-lt)" : ""}">${lbl}</button>`;
+  const btn = (v, lbl, on) => `<button data-surv="${rid}" data-mid="${mid}" data-side="${side}" data-ans="${v}" class="btn btn-sm ${on && v ? "btn-gold" : ""}" style="padding:.3rem .55rem;${on && !v ? "border-color:var(--a-lt);color:var(--a-lt)" : ""}">${lbl}</button>`;
   return `<div class="tiny" style="display:flex;gap:.4rem;align-items:center"><b style="color:var(--${side}-lt);min-width:1.2rem">${T}</b><span class="grow" style="color:var(--tx2)">${esc(who)}</span>${btn(true, st === true ? "✓ Kept it" : "Kept it", st === true)}${btn(false, st === false ? "✗ Lost it" : "Lost it", st === false)}</div>`;
 }
 function survCard(rid, mid){
@@ -1175,7 +1175,7 @@ document.addEventListener("click", e => {
   const stp = e.target.closest("[data-stp]"); if (stp) { const cur = gross(UI.rid, UI.mid, UI.hole, stp.dataset.k), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; return setScore(stp.dataset.k, cur === null ? par : Math.max(1, Math.min(15, cur + +stp.dataset.stp))); }
   const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; if (cur === null) return setScore(tap.dataset.tap, par); if (canEdit(UI.rid, UI.mid)) ask("Clear this score?", "Removes the score in this box. You can tap to re-enter it.", { yes:"Clear it" }).then(ok => ok && setScore(tap.dataset.tap, null)); return; }
   const ov = e.target.closest("[data-ov]"); if (ov) return setOverride(ov.dataset.ov);
-  const sv = e.target.closest("[data-surv]"); if (sv && canSurv(sv.dataset.side)) { const v = sv.dataset.v === "true", { surv:rid, mid, side } = sv.dataset; return Store.set(["surv", rid, mid, side], survState(rid, mid, side) === v ? null : v); }
+  const sv = e.target.closest("[data-surv]"); if (sv && canSurv(sv.dataset.side)) { const v = sv.dataset.ans === "true", { surv:rid, mid, side } = sv.dataset; return Store.set(["surv", rid, mid, side], survState(rid, mid, side) === v ? null : v); }
   const cl = e.target.closest("[data-clear]"); if (cl && Me.isAdmin()) { const r = ROUND[cl.dataset.clear];
     ask(`Clear ${r.format}?`, `Every score entered for <b>${esc(r.format)} (${esc(dayShort(r.date))})</b> disappears from every phone. Pairings and handicaps stay. No undo.`, { yes:"Clear the round" })
       .then(ok => { if (!ok) return; r.matches.forEach(m => ["gross", "over", "meta"].forEach(k => Store.set([k, mkey(r.id, m.id)], null))); Store.set(["surv", r.id], null); }); return; }
