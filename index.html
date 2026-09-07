@@ -866,9 +866,9 @@ function renderCup(){
     <div class="track-lbl"><span>0</span><span>${fmtPts(t.avail)} match points + survivor bonuses</span><span>${fmtPts(t.avail)}</span></div>
     ${clinch}${banner}
     ${renderLiveNow()}
-    ${renderFormat()}
     <div class="sect"><div class="sect-h">The Rounds</div>${renderTiles()}${renderRoundBlock(ROUND[UI.cupRound && ROUND[UI.cupRound] ? UI.cupRound : nextRound().id])}</div>
-    ${renderSweep()}${renderSolo()}${renderHonours()}`;
+    ${renderSweep()}${renderSolo()}${renderHonours()}
+    <div class="sect"><div class="sect-h">The Format</div>${renderFormat().replace('class="card" style="margin-top:1rem"', 'class="card"')}</div>`;
 }
 function renderFormat(){
   const rounds = CONFIG.rounds, matchPts = rounds.reduce((s, r) => s + r.matches.reduce((x, m) => x + m.pts, 0), 0), sp = Number(CONFIG.survivorPts || 0), survMax = rounds.reduce((n, r) => n + (survApplies(r) ? r.matches.length * sp : 0), 0) + Number(CONFIG.survivorSweep || 0) * new Set(rounds.map(r => r.date)).size;
