@@ -379,7 +379,20 @@ summary::-webkit-details-marker{display:none}
 .grid td.tot{font-weight:700;background:var(--bg2)}
 .grid tr:last-child td{border-bottom:none}
 .grid td.pick{cursor:pointer}
-.grid .u1{color:var(--ok)} .grid .u2{color:var(--gold);font-weight:700} .grid .o1{color:var(--tx2)} .grid .o2{color:var(--a-lt)}
+.mk{display:inline-flex;align-items:center;justify-content:center;min-width:1.45rem;height:1.45rem;line-height:1;border-radius:2px}
+.mk.m-birdie{border:1.5px solid currentColor;border-radius:50%}
+.mk.m-eagle{border:1.5px solid currentColor;border-radius:50%;outline:1.5px solid currentColor;outline-offset:1.5px}
+.mk.m-bogey{border:1.5px solid currentColor}
+.mk.m-dbl{border:1.5px solid currentColor;outline:1.5px solid currentColor;outline-offset:1.5px}
+.grid.sc td{padding:.42rem .3rem}
+.grid.sc thead th{padding:.3rem .3rem;border-bottom:1px solid var(--line)}
+.grid.sc .hd-hole th{background:var(--card2);color:var(--tx);font-weight:700;font-size:.7rem}
+.grid.sc .hd-hole th.hn.cur{color:var(--gold)}
+.grid.sc .hd-yd th{color:var(--tx2);font-weight:500;font-size:.6rem}
+.grid.sc .hd-par th{color:var(--tx);font-weight:700;font-size:.68rem;background:var(--bg2)}
+.grid.sc .hd-si th{color:var(--tx3);font-weight:500;font-size:.58rem}
+.grid.sc thead th.tot,.grid.sc td.tot{background:var(--bg2);border-left:1px solid var(--line2)}
+.grid.sc thead .hd-hole th:first-child,.grid.sc thead .hd-yd th:first-child,.grid.sc thead .hd-par th:first-child,.grid.sc thead .hd-si th:first-child{text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
 .grid .st{color:var(--gold)}
 .entered{font-size:.62rem;color:var(--tx3);text-align:center;margin-top:.5rem}
 .rankrow td{padding:.5rem .55rem}
@@ -501,42 +514,44 @@ const CONFIG = {
   /* ── 4. THE COURSES (from the real scorecards, men's stroke index) ── */
   courses: {
     arthur:  { name:"Arthur Hills", club:"The Highlands", lat:45.4680, lon:-84.9346, map:"https://www.google.com/maps/dir/?api=1&destination=The+Highlands+at+Harbor+Springs,+600+Highland+Dr,+Harbor+Springs,+MI+49740",
-      par:[4,4,5,4,4,5,3,4,3, 4,5,4,5,3,4,3,4,5], si:[9,17,5,7,1,13,15,3,11, 18,4,8,14,12,2,16,6,10] },
+      par:[4,4,5,4,4,5,3,4,3, 4,5,4,5,3,4,3,4,5], si:[9,17,5,7,1,13,15,3,11, 18,4,8,14,12,2,16,6,10], tees:{Brown:[406,359,541,417,481,585,172,427,202,354,575,397,570,186,440,203,420,577], Purple:[395,341,529,386,456,547,156,397,178,325,545,375,539,176,427,188,405,554], Orange:[355,311,494,367,417,487,136,361,166,285,531,331,516,160,401,151,385,498], Blue:[355,311,467,367,365,456,136,361,154,285,494,331,516,154,375,151,351,498], Green:[326,269,467,292,365,456,122,297,154,232,494,274,431,154,375,125,351,431], Silver:[263,226,356,243,312,409,112,251,113,206,448,251,355,136,326,91,310,403]} },
     moor:    { name:"The Moor", club:"The Highlands", lat:45.4680, lon:-84.9346, map:"https://www.google.com/maps/dir/?api=1&destination=The+Highlands+at+Harbor+Springs,+600+Highland+Dr,+Harbor+Springs,+MI+49740",
-      par:[4,4,5,3,4,3,4,5,4, 4,3,4,4,5,4,4,3,5], si:[5,15,17,9,1,7,11,13,3, 4,14,10,8,18,2,6,16,12] },
+      par:[4,4,5,3,4,3,4,5,4, 4,3,4,4,5,4,4,3,5], si:[5,15,17,9,1,7,11,13,3, 4,14,10,8,18,2,6,16,12], tees:{Brown:[350,391,539,208,442,203,377,520,408,399,185,393,403,533,410,404,160,525], Purple:[350,360,503,208,426,196,360,499,397,390,185,362,392,522,394,379,160,514], Orange:[337,335,473,189,402,174,333,476,387,383,161,328,378,503,374,356,145,502], Blue:[337,335,473,169,367,145,333,476,366,347,161,328,362,503,338,356,145,502], Green:[313,297,446,169,367,145,312,432,366,347,148,308,362,491,338,321,129,473], Yellow:[264,267,385,148,332,119,288,408,289,320,121,294,297,462,299,302,97,407], Silver:[222,224,323,124,279,100,242,343,243,269,98,247,249,388,251,251,97,350]} },
     preserveLinks:{ name:"Preserve / Links", club:"Bay Harbor", lat:45.3623, lon:-85.0606, map:"https://www.google.com/maps/dir/?api=1&destination=Bay+Harbor+Golf+Club,+5800+Coastal+Ridge+Dr,+Bay+Harbor,+MI+49770",
-      par:[4,4,4,5,3,5,4,4,3, 4,4,4,3,4,5,3,4,5], si:[11,13,3,7,9,1,15,17,5, 12,14,4,8,10,2,16,18,6] },
+      par:[4,4,4,5,3,5,4,4,3, 4,4,4,3,4,4,5,3,5], si:[5,17,15,1,9,7,3,13,11, 4,16,14,2,12,18,8,10,6], tees:{Brown:[391,341,423,577,191,493,404,372,186,442,437,380,178,351,418,500,225,518], Purple:[352,322,403,542,169,467,381,343,171,405,420,368,151,332,388,490,206,490], Orange:[352,322,403,542,169,467,381,343,171,375,383,368,151,332,352,490,175,490], Blue:[316,293,363,502,145,404,303,291,144,375,383,346,127,319,352,482,175,456], Green:[262,250,318,402,133,349,267,244,119,323,323,309,105,275,310,448,122,404], Silver:[233,209,241,329,93,349,267,238,95,251,281,281,105,222,236,392,108,315]} },
     heather: { name:"The Heather", club:"The Highlands", lat:45.4680, lon:-84.9346, map:"https://www.google.com/maps/dir/?api=1&destination=The+Highlands+at+Harbor+Springs,+600+Highland+Dr,+Harbor+Springs,+MI+49740",
-      par:[4,4,4,3,5,3,4,4,5, 4,5,3,4,4,5,3,4,4], si:[15,5,13,11,1,17,7,3,9, 6,18,16,8,10,2,14,12,4] },
+      par:[4,4,4,3,5,3,4,4,5, 4,5,3,4,4,5,3,4,4], si:[15,5,13,11,1,17,7,3,9, 6,18,16,8,10,2,14,12,4], tees:{Brown:[383,397,403,202,560,161,386,450,617,416,550,174,419,418,506,196,403,482], Purple:[373,376,373,182,539,151,371,387,561,384,510,170,414,385,482,181,374,434], Orange:[342,362,341,162,467,139,353,363,521,379,496,153,386,354,466,162,346,415], Blue:[342,322,341,133,467,139,353,363,521,350,496,130,364,339,466,149,346,392], Green:[328,322,325,133,424,129,333,338,482,350,448,130,364,339,447,149,310,392], Yellow:[311,302,287,112,370,96,288,281,401,329,382,78,252,293,359,137,270,297], Silver:[270,260,247,96,318,96,256,242,350,283,334,78,217,252,309,118,232,255]} },
     ross:    { name:"Donald Ross Memorial", club:"The Highlands", lat:45.4680, lon:-84.9346, map:"https://www.google.com/maps/dir/?api=1&destination=The+Highlands+at+Harbor+Springs,+600+Highland+Dr,+Harbor+Springs,+MI+49740",
-      par:[4,4,3,4,5,4,4,3,5, 4,4,3,5,4,4,5,3,4], si:[11,13,5,9,1,7,17,15,3, 4,16,18,2,8,10,14,12,6] },
+      par:[4,4,3,4,5,4,4,3,5, 4,4,3,5,4,4,5,3,4], si:[11,13,5,9,1,7,17,15,3, 4,16,18,2,8,10,14,12,6], tees:{Brown:[383,336,196,434,617,402,336,181,497,435,339,159,510,435,415,568,184,438], Purple:[364,326,185,422,593,376,328,181,484,420,330,159,502,410,400,533,184,407], Orange:[351,317,174,399,561,365,311,167,467,408,309,147,458,394,384,513,167,375], Blue:[351,317,146,377,476,365,311,167,467,347,309,147,458,325,368,513,167,375], Green:[338,309,146,377,476,348,293,143,379,347,298,128,411,325,352,494,157,350], Silver:[290,260,113,318,364,324,253,118,351,310,282,106,372,305,290,432,140,264]} },
   },
 
   /* ── 5. THE ROUNDS ───────────────────────────────────────────── */
+  // teeBox: which tees the round is played from (Brown/Purple/Orange/Blue/Green/Silver, + Yellow on Moor & Heather).
+  //   The commissioner can change it in the app on the day; the scorecard shows that tee's yardages.
   // scoring: "bestball" | "bestball2" (second-man tiebreak) | "scramble" | "singles"
   // Every match is match play, hole by hole, worth `pts` to the winner.
   // Pairings here are the STARTING ones; the commissioner changes them in the app.
   rounds: [
-    { id:"r1", date:"2026-09-17", tee:"12:50 PM", course:"arthur", holes:18, format:"Best Ball", scoring:"bestball",
+    { id:"r1", date:"2026-09-17", tee:"12:50 PM", course:"arthur", holes:18, teeBox:"Blue", format:"Best Ball", scoring:"bestball",
       note:"Match play &bull; better net ball &bull; strokes off the low man in the group", matches:[
       { id:"m1", label:"Match 1", pts:2, a:["a1","a2"], b:["b1","b2"] },   // Giancarlo & Matt v Jackson & Cam
       { id:"m2", label:"Match 2", pts:2, a:["a3","a4"], b:["b3","b4"] },   // Chun & Skakie v Billy & Gentilli
       { id:"m3", label:"Match 3", pts:2, a:["a5","a6"], b:["b5","b6"] },   // Drake & Kevin v Jimmy & Ryan
     ]},
-    { id:"r2", date:"2026-09-18", tee:"9:00 AM", course:"moor", holes:18, format:"Scramble", scoring:"scramble",
+    { id:"r2", date:"2026-09-18", tee:"9:00 AM", course:"moor", holes:18, teeBox:"Blue", format:"Scramble", scoring:"scramble",
       note:"Match play &bull; one team ball &bull; no handicaps", matches:[
       { id:"m1", label:"Match 1", pts:2, a:[], b:[] }, { id:"m2", label:"Match 2", pts:2, a:[], b:[] }, { id:"m3", label:"Match 3", pts:2, a:[], b:[] },
     ]},
-    { id:"r3", date:"2026-09-18", tee:"3:10 PM", course:"preserveLinks", holes:18, format:"Singles", scoring:"singles",
+    { id:"r3", date:"2026-09-18", tee:"3:10 PM", course:"preserveLinks", holes:18, teeBox:"Blue", format:"Singles", scoring:"singles",
       note:"Ryder Cup singles &bull; man on man &bull; 2 pts a match", matches:[
       { id:"m1", label:"Match 1", pts:2, a:[], b:[] }, { id:"m2", label:"Match 2", pts:2, a:[], b:[] }, { id:"m3", label:"Match 3", pts:2, a:[], b:[] },
       { id:"m4", label:"Match 4", pts:2, a:[], b:[] }, { id:"m5", label:"Match 5", pts:2, a:[], b:[] }, { id:"m6", label:"Match 6", pts:2, a:[], b:[] },
     ]},
-    { id:"r4", date:"2026-09-19", tee:"10:20 AM", course:"heather", holes:18, format:"Best Ball · 2nd-Man Tiebreak", scoring:"bestball2",
+    { id:"r4", date:"2026-09-19", tee:"10:20 AM", course:"heather", holes:18, teeBox:"Blue", format:"Best Ball · 2nd-Man Tiebreak", scoring:"bestball2",
       note:"Match play &bull; best nets tie? second man decides &bull; both tie = halved", matches:[
       { id:"m1", label:"Match 1", pts:2, a:[], b:[] }, { id:"m2", label:"Match 2", pts:2, a:[], b:[] }, { id:"m3", label:"Match 3", pts:2, a:[], b:[] },
     ]},
-    { id:"r5", date:"2026-09-19", tee:"4:00 PM", course:"ross", holes:18, format:"Scramble", scoring:"scramble",
+    { id:"r5", date:"2026-09-19", tee:"4:00 PM", course:"ross", holes:18, teeBox:"Blue", format:"Scramble", scoring:"scramble",
       note:"Match play &bull; one team ball &bull; no handicaps &bull; the closer", matches:[
       { id:"m1", label:"Match 1", pts:2, a:[], b:[] }, { id:"m2", label:"Match 2", pts:2, a:[], b:[] }, { id:"m3", label:"Match 3", pts:2, a:[], b:[] },
     ]},
@@ -608,7 +623,7 @@ const fmtPts = n => Number.isInteger(n) ? String(n) : String(Math.round(n * 100)
 const toPar = n => n === 0 ? "E" : n > 0 ? "+" + n : String(n);
 
 /* ── store ─────────────────────────────────────────────────── */
-const KEYS = ["gross", "over", "surv", "pair", "hcp", "meta"];
+const KEYS = ["gross", "over", "surv", "pair", "hcp", "meta", "teebox"];
 const Store = {
   data: Object.fromEntries(KEYS.map(k => [k, {}])), mode:"local", _subs:[],
   onChange(fn){ this._subs.push(fn); },
@@ -651,6 +666,8 @@ const Me = {
 function matchesOf(r){ return r.matches.map(m => { const o = Store.get(["pair", r.id, m.id], null); return o ? { ...m, a:o.a || [], b:o.b || [] } : m; }); }
 const matchOf = (rid, mid) => matchesOf(ROUND[rid]).find(m => m.id === mid);
 const slotsPer = r => r.scoring === "singles" ? 1 : 2;
+const teeBox = r => { const c = courseOf(r), t = Store.get(["teebox", r.id], null) || r.teeBox; return c.tees && c.tees[t] ? t : (c.tees ? Object.keys(c.tees)[0] : null); };
+const yards = r => { const c = courseOf(r), t = teeBox(r); return t ? c.tees[t] : null; };
 const isSet = m => m.a.length > 0 && m.b.length > 0;
 
 /* ── handicaps + scorers ───────────────────────────────────── */
@@ -913,7 +930,9 @@ function renderLive(){
     <div class="tiny muted" style="display:flex;gap:.6rem;justify-content:center;margin:.1rem 0 .3rem"><span style="color:var(--a-lt);font-weight:700">${esc(TA().short)} ${fmtPts(t.a)}</span><span>cup</span><span style="color:var(--b-lt);font-weight:700">${fmtPts(t.b)} ${esc(TB().short)}</span></div>
     ${mineHtml}
     <div class="sect"><div class="sect-h">Matches · ${esc(r.format)}</div>
-      ${admin ? `<button class="btn btn-sm ${UI.editPairs ? "btn-gold" : "btn-gh"}" id="editPairs" style="margin-bottom:.5rem">${UI.editPairs ? "Done editing" : (unset ? "Set pairings" : "Edit pairings")}</button>` : ""}
+      ${admin ? `<div class="row" style="margin-bottom:.5rem"><button class="btn btn-sm ${UI.editPairs ? "btn-gold" : "btn-gh"}" id="editPairs">${UI.editPairs ? "Done editing" : (unset ? "Set pairings" : "Edit pairings")}</button>
+        ${c.tees ? `<label class="tiny muted" style="margin-left:auto">Tees <select data-teebox="${r.id}" style="background:var(--bg3);border:1px solid var(--line2);border-radius:6px;color:var(--tx);padding:.3rem .4rem;font-size:.75rem">${Object.keys(c.tees).map(t => `<option ${t === teeBox(r) ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>` : ""}</div>`
+        : (c.tees ? `<div class="tiny muted" style="margin-bottom:.5rem">${esc(teeBox(r))} tees · ${yards(r).reduce((x, y) => x + y, 0).toLocaleString()} yds</div>` : "")}
       ${admin && UI.editPairs ? renderPairEditor(r, ms) : `<div class="card">${groups}</div>`}
       <div class="tiny muted" style="margin-top:.45rem;text-align:center">${r.note}${Me.canScore() && !UI.editPairs ? " · Tap your match to score it, any match to watch" : ""}</div></div>
     <div class="sect"><div class="sect-h">Rules · ${esc(r.format)}</div>
@@ -958,29 +977,36 @@ function renderCard(){
     : `<span class="muted">${sc.some(x => gross(r.id, m.id, h, x.key) !== null) ? "Waiting on " + sc.filter(x => gross(r.id, m.id, h, x.key) === null).map(x => esc(x.label.split(" ")[0])).join(", ") : "Enter scores, or set the result below for a concession"}</span>`;
   const who = Store.get(["meta", mkey(r.id, m.id), String(h)], null);
   const overBtns = can && !dead ? `<div class="ovr"><button class="wb a ${ov === "a" ? "on" : ""}" data-ov="a">${esc(TA().short)} wins</button><button class="wb h ${ov === "h" ? "on" : ""}" data-ov="h">Halve</button><button class="wb b ${ov === "b" ? "on" : ""}" data-ov="b">${esc(TB().short)} wins</button></div><div class="tiny muted" style="text-align:center;margin-top:.3rem">${ov ? "Result set by hand — tap again to go back to the scores" : "Conceded hole or picked up? Set the result by hand"}</div>` : "";
-  const cols = [...Array(r.holes)].map((_, i) => i + 1), nine = r.holes >= 18;
-  const cell = (x, i) => { const g = gross(r.id, m.id, i, x.key); if (g === null) return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}" style="color:var(--tx3)">·</td>`; const d = g - c.par[i-1];
-    return `<td class="pick ${d <= -2 ? "u2" : d === -1 ? "u1" : d === 1 ? "o1" : d >= 2 ? "o2" : ""} ${i === h ? "cur" : ""}" data-jump="${i}">${g}${x.holes[i] ? "<sup class='st'>•</sup>" : ""}</td>`; };
+  const cols = [...Array(r.holes)].map((_, i) => i + 1), nine = r.holes >= 18, yd = yards(r), tb = teeBox(r);
+  const mark = (g, par) => { const d = g - par; return d <= -2 ? "m-eagle" : d === -1 ? "m-birdie" : d === 1 ? "m-bogey" : d >= 2 ? "m-dbl" : ""; };
+  const cell = (x, i) => { const g = gross(r.id, m.id, i, x.key); if (g === null) return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}" style="color:var(--tx3)">·</td>`;
+    return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}"><span class="mk ${mark(g, c.par[i-1])}">${g}</span>${x.holes[i] ? "<sup class='st'>•</sup>" : ""}</td>`; };
   const sum = (x, from, to) => { let g = 0, n = 0, k = 0; for (let i = from; i <= to; i++) { const v = gross(r.id, m.id, i, x.key); if (v !== null) { k++; g += v; n += v - (x.holes[i] || 0); } } return { g, n, k }; };
-  const tots = x => { const o = sum(x, 1, 9), inn = sum(x, 10, 18), t = sum(x, 1, r.holes);
-    return (nine ? `<td class="tot">${o.k ? o.g : "—"}</td><td class="tot">${inn.k ? inn.g : "—"}</td>` : "") + `<td class="tot">${t.k ? t.g : "—"}</td><td class="tot" style="color:var(--gold)">${t.k ? t.n : "—"}</td>`; };
+  const T = v => `<td class="tot">${v}</td>`;
+  const seg = (fn, from, to) => cols.slice(from - 1, to).map(fn).join("");
+  const parSum = (from, to) => c.par.slice(from - 1, to).reduce((x, y) => x + y, 0), ydSum = (from, to) => yd ? yd.slice(from - 1, to).reduce((x, y) => x + y, 0) : "";
+  const playerRow = x => { const o = sum(x, 1, 9), inn = sum(x, 10, 18), t = sum(x, 1, r.holes);
+    const name = `<td style="min-width:${r.scoring === "scramble" ? 122 : 100}px;max-width:${r.scoring === "scramble" ? 122 : 100}px;white-space:normal;line-height:1.2">${x.side === "a" ? "🔴" : "🟢"} ${esc(r.scoring === "scramble" ? x.label : pshort(x.key))}${x.total ? ` <span class="tiny" style="color:var(--gold)">+${x.total}</span>` : ""}</td>`;
+    return nine ? `<tr>${name}${seg(i => cell(x, i), 1, 9)}${T(o.k ? o.g : "—")}${seg(i => cell(x, i), 10, 18)}${T(inn.k ? inn.g : "—")}${T(t.k ? t.g : "—")}<td class="tot" style="color:var(--gold)">${t.k ? t.n : "—"}</td></tr>`
+                : `<tr>${name}${seg(i => cell(x, i), 1, r.holes)}${T(t.k ? t.g : "—")}<td class="tot" style="color:var(--gold)">${t.k ? t.n : "—"}</td></tr>`; };
   const resCell = i => { const p = s.per[i]; const bg = !p ? "" : p.res === "h" ? "background:var(--bg3)" : `background:var(--${p.res});color:#fff`;
     return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}" style="font-weight:700;${bg}">${!p ? "" : p.res === "h" ? "½" : TS(p.res) + (p.worth > 1 ? "×" + p.worth : "")}</td>`; };
-  const parSum = (from, to) => c.par.slice(from - 1, to).reduce((x, y) => x + y, 0);
-  const nameW = r.scoring === "scramble" ? 122 : 100;
-  const nameCell = x => `<td style="min-width:${nameW}px;max-width:${nameW}px;white-space:normal;line-height:1.2">${x.side === "a" ? "🔴" : "🟢"} ${esc(r.scoring === "scramble" ? x.label : pshort(x.key))}${x.total ? ` <span class="tiny" style="color:var(--gold)">+${x.total}</span>` : ""}</td>`;
-  const grid = `<div class="grid"><table><thead><tr><th>Hole</th>${cols.map(i => `<th class="${i === h ? "cur" : ""}">${i}</th>`).join("")}${nine ? "<th>Out</th><th>In</th>" : ""}<th>Gross</th><th style="color:var(--gold)">Net</th></tr>
-      <tr><th>Par</th>${cols.map(i => `<th>${c.par[i-1]}</th>`).join("")}${nine ? `<th>${parSum(1, 9)}</th><th>${parSum(10, 18)}</th>` : ""}<th>${parSum(1, r.holes)}</th><th></th></tr>
-      <tr><th style="font-weight:500">SI</th>${cols.map(i => `<th style="font-weight:500;color:var(--tx3)">${c.si[i-1]}</th>`).join("")}<th colspan="${nine ? 4 : 2}"></th></tr></thead>
-      <tbody>${sc.map(x => `<tr>${nameCell(x)}${cols.map(i => cell(x, i)).join("")}${tots(x)}</tr>`).join("")}
-      <tr><td style="font-weight:700">Hole to</td>${cols.map(resCell).join("")}<td class="tot" colspan="${nine ? 4 : 2}">${s.started ? (s.lead === "h" ? "AS" : TS(s.lead) + " " + esc(s.short)) : "—"}</td></tr></tbody></table></div>
-    <div class="tiny muted" style="margin-top:.45rem;line-height:1.6">Gross scores per hole · <span style="color:var(--ok)">green</span> birdie · <span style="color:var(--gold)">gold</span> eagle · grey bogey · <span style="color:var(--a-lt)">red</span> double or worse · <span style="color:var(--gold)">•</span> = gets a stroke on that hole · <b>+n</b> by a name = strokes in this match · <b>Hole to</b> = who won it after strokes · <b>Net</b> = gross minus strokes · tap any hole to jump to it</div>`;
+  const H = (label, fn, out, inn, tot, cls = "") => nine ? `<tr class="${cls}"><th>${label}</th>${seg(fn, 1, 9)}<th class="tot">${out}</th>${seg(fn, 10, 18)}<th class="tot">${inn}</th><th class="tot">${tot}</th><th class="tot"></th></tr>`
+                                                    : `<tr class="${cls}"><th>${label}</th>${seg(fn, 1, r.holes)}<th class="tot">${tot}</th><th class="tot"></th></tr>`;
+  const grid = `<div class="grid sc"><table><thead>
+      ${H("Hole", i => `<th class="hn ${i === h ? "cur" : ""}">${i}</th>`, "Out", "In", "Gross", "hd-hole")}
+      ${yd ? H(esc(tb), i => `<th class="yd">${yd[i-1]}</th>`, ydSum(1, 9), ydSum(10, 18), ydSum(1, r.holes), "hd-yd") : ""}
+      ${H("Par", i => `<th class="pr">${c.par[i-1]}</th>`, parSum(1, 9), parSum(10, 18), parSum(1, r.holes), "hd-par")}
+      ${H("SI", i => `<th class="si">${c.si[i-1]}</th>`, "", "", "", "hd-si")}</thead>
+      <tbody>${sc.map(playerRow).join("")}
+      <tr><td style="font-weight:700">Hole to</td>${nine ? seg(resCell, 1, 9) + T("") + seg(resCell, 10, 18) + T("") : seg(resCell, 1, r.holes)}<td class="tot" colspan="2">${s.started ? (s.lead === "h" ? "AS" : TS(s.lead) + " " + esc(s.short)) : "—"}</td></tr></tbody></table></div>
+    <div class="tiny muted" style="margin-top:.4rem">${tb ? `${esc(tb)} tees · ${ydSum(1, r.holes).toLocaleString()} yds · ` : ""}<span style="color:var(--gold)">•</span> stroke hole · <b>+n</b> strokes in this match</div>`;
   $("#v-live").innerHTML = `
     <div class="sc-top"><div class="row" style="margin-bottom:.35rem"><button class="btn btn-sm" id="cardBack">‹ Matches</button><span class="tiny muted grow" style="text-align:center">${esc(r.format)} · ${esc(c.name)} · ${esc(m.label)}</span><button class="btn btn-sm" data-v="cup">Cup</button></div>
       <div class="sc-vs"><div class="sc-side"><div class="n">${m.a.map(pfirst).map(esc).join(" & ")}</div><div class="v a">${s.lead === "a" ? esc(s.short) : s.lead === "h" && s.started ? "AS" : "—"}</div></div>
         <div class="sc-mid">${s.closed ? "final" : s.started ? "thru " + s.thru : esc(r.tee)}<b>${s.closed ? (s.lead === "h" ? "halved" : TS(s.lead) + " wins") : s.stack ? "carry ×" + (1 + s.stack) : s.started ? (s.lead === "h" ? "level" : TS(s.lead) + " leads") : "—"}</b></div>
         <div class="sc-side r"><div class="n">${m.b.map(pfirst).map(esc).join(" & ")}</div><div class="v b">${s.lead === "b" ? esc(s.short) : s.lead === "h" && s.started ? "AS" : "—"}</div></div></div></div>
-    <div class="hnav"><button class="hnav-b" data-nav="-1" ${h === 1 ? "disabled" : ""}>‹</button><div class="hnav-c"><div class="hnav-n"><small>HOLE</small>${h}</div><div class="hnav-i">Par ${par} · SI ${si}</div></div><button class="hnav-b" data-nav="1" ${h === r.holes ? "disabled" : ""}>›</button></div>
+    <div class="hnav"><button class="hnav-b" data-nav="-1" ${h === 1 ? "disabled" : ""}>‹</button><div class="hnav-c"><div class="hnav-n"><small>HOLE</small>${h}</div><div class="hnav-i">Par ${par} · SI ${si}${yards(r) ? " · " + yards(r)[h-1] + " yds" : ""}</div></div><button class="hnav-b" data-nav="1" ${h === r.holes ? "disabled" : ""}>›</button></div>
     ${note ? `<div class="note" style="margin-bottom:.6rem">${s.closed && s.started ? `<b>Final — ${s.lead === "h" ? "halved" : TS(s.lead) + " wins " + esc(s.short)}.</b> ` : ""}${note}</div>` : ""}
     ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
     ${grid}
@@ -1130,6 +1156,7 @@ document.addEventListener("change", e => {
   const pr = e.target.closest("[data-pair]"); if (pr && Me.isAdmin()) { const r = ROUND[UI.rid], m = matchOf(UI.rid, pr.dataset.pair), side = pr.dataset.side, arr = [...m[side]]; arr[+pr.dataset.i] = pr.value || undefined;
     const clean = arr.filter(Boolean).slice(0, slotsPer(r)); const other = side === "a" ? "b" : "a"; return Store.set(["pair", r.id, m.id], { a: side === "a" ? clean : m.a, b: side === "b" ? clean : m.b }); }
   const h = e.target.closest("[data-hcp]"); if (h && Me.isAdmin()) return Store.set(["hcp", h.dataset.hcp], h.value === "" ? null : +h.value);
+  const tbx = e.target.closest("[data-teebox]"); if (tbx && Me.isAdmin()) return Store.set(["teebox", tbx.dataset.teebox], tbx.value);
 });
 let tx0 = null; document.addEventListener("touchstart", e => { tx0 = UI.card && curView === "live" ? e.touches[0].clientX : null; }, { passive:true });
 document.addEventListener("touchend", e => { if (tx0 === null) return; const dx = e.changedTouches[0].clientX - tx0; tx0 = null; if (Math.abs(dx) < 70 || e.target.closest(".grid")) return; const r = ROUND[UI.rid]; UI.hole = Math.min(r.holes, Math.max(1, UI.hole + (dx < 0 ? 1 : -1))); renderLive(); });
