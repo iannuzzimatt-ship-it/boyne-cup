@@ -958,11 +958,23 @@ function renderCard(){
     : `<span class="muted">${sc.some(x => gross(r.id, m.id, h, x.key) !== null) ? "Waiting on " + sc.filter(x => gross(r.id, m.id, h, x.key) === null).map(x => esc(x.label.split(" ")[0])).join(", ") : "Enter scores, or set the result below for a concession"}</span>`;
   const who = Store.get(["meta", mkey(r.id, m.id), String(h)], null);
   const overBtns = can && !dead ? `<div class="ovr"><button class="wb a ${ov === "a" ? "on" : ""}" data-ov="a">${esc(TA().short)} wins</button><button class="wb h ${ov === "h" ? "on" : ""}" data-ov="h">Halve</button><button class="wb b ${ov === "b" ? "on" : ""}" data-ov="b">${esc(TB().short)} wins</button></div><div class="tiny muted" style="text-align:center;margin-top:.3rem">${ov ? "Result set by hand — tap again to go back to the scores" : "Conceded hole or picked up? Set the result by hand"}</div>` : "";
-  const cols = [...Array(r.holes)].map((_, i) => i + 1);
-  const cell = (x, i) => { const g = gross(r.id, m.id, i, x.key); if (g === null) return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}">·</td>`; const d = g - c.par[i-1];
+  const cols = [...Array(r.holes)].map((_, i) => i + 1), nine = r.holes >= 18;
+  const cell = (x, i) => { const g = gross(r.id, m.id, i, x.key); if (g === null) return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}" style="color:var(--tx3)">·</td>`; const d = g - c.par[i-1];
     return `<td class="pick ${d <= -2 ? "u2" : d === -1 ? "u1" : d === 1 ? "o1" : d >= 2 ? "o2" : ""} ${i === h ? "cur" : ""}" data-jump="${i}">${g}${x.holes[i] ? "<sup class='st'>•</sup>" : ""}</td>`; };
-  const resRow = cols.map(i => { const p = s.per[i]; return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}" style="font-weight:700;color:${!p ? "var(--tx3)" : p.res === "h" ? "var(--tx2)" : "var(--" + p.res + "-lt)"}">${!p ? "·" : p.res === "h" ? "½" : TS(p.res) + (p.worth > 1 ? p.worth : "")}</td>`; }).join("");
-  const tot = x => { let g = 0, k = 0; cols.forEach(i => { const v = gross(r.id, m.id, i, x.key); if (v !== null) { k++; g += v; } }); return `<td class="tot">${k ? g : "—"}</td>`; };
+  const sum = (x, from, to) => { let g = 0, n = 0, k = 0; for (let i = from; i <= to; i++) { const v = gross(r.id, m.id, i, x.key); if (v !== null) { k++; g += v; n += v - (x.holes[i] || 0); } } return { g, n, k }; };
+  const tots = x => { const o = sum(x, 1, 9), inn = sum(x, 10, 18), t = sum(x, 1, r.holes);
+    return (nine ? `<td class="tot">${o.k ? o.g : "—"}</td><td class="tot">${inn.k ? inn.g : "—"}</td>` : "") + `<td class="tot">${t.k ? t.g : "—"}</td><td class="tot" style="color:var(--gold)">${t.k ? t.n : "—"}</td>`; };
+  const resCell = i => { const p = s.per[i]; const bg = !p ? "" : p.res === "h" ? "background:var(--bg3)" : `background:var(--${p.res});color:#fff`;
+    return `<td class="pick ${i === h ? "cur" : ""}" data-jump="${i}" style="font-weight:700;${bg}">${!p ? "" : p.res === "h" ? "½" : TS(p.res) + (p.worth > 1 ? "×" + p.worth : "")}</td>`; };
+  const parSum = (from, to) => c.par.slice(from - 1, to).reduce((x, y) => x + y, 0);
+  const nameW = r.scoring === "scramble" ? 122 : 100;
+  const nameCell = x => `<td style="min-width:${nameW}px;max-width:${nameW}px;white-space:normal;line-height:1.2">${x.side === "a" ? "🔴" : "🟢"} ${esc(r.scoring === "scramble" ? x.label : pshort(x.key))}${x.total ? ` <span class="tiny" style="color:var(--gold)">+${x.total}</span>` : ""}</td>`;
+  const grid = `<div class="grid"><table><thead><tr><th>Hole</th>${cols.map(i => `<th class="${i === h ? "cur" : ""}">${i}</th>`).join("")}${nine ? "<th>Out</th><th>In</th>" : ""}<th>Gross</th><th style="color:var(--gold)">Net</th></tr>
+      <tr><th>Par</th>${cols.map(i => `<th>${c.par[i-1]}</th>`).join("")}${nine ? `<th>${parSum(1, 9)}</th><th>${parSum(10, 18)}</th>` : ""}<th>${parSum(1, r.holes)}</th><th></th></tr>
+      <tr><th style="font-weight:500">SI</th>${cols.map(i => `<th style="font-weight:500;color:var(--tx3)">${c.si[i-1]}</th>`).join("")}<th colspan="${nine ? 4 : 2}"></th></tr></thead>
+      <tbody>${sc.map(x => `<tr>${nameCell(x)}${cols.map(i => cell(x, i)).join("")}${tots(x)}</tr>`).join("")}
+      <tr><td style="font-weight:700">Hole to</td>${cols.map(resCell).join("")}<td class="tot" colspan="${nine ? 4 : 2}">${s.started ? (s.lead === "h" ? "AS" : TS(s.lead) + " " + esc(s.short)) : "—"}</td></tr></tbody></table></div>
+    <div class="tiny muted" style="margin-top:.45rem;line-height:1.6">Gross scores per hole · <span style="color:var(--ok)">green</span> birdie · <span style="color:var(--gold)">gold</span> eagle · grey bogey · <span style="color:var(--a-lt)">red</span> double or worse · <span style="color:var(--gold)">•</span> = gets a stroke on that hole · <b>+n</b> by a name = strokes in this match · <b>Hole to</b> = who won it after strokes · <b>Net</b> = gross minus strokes · tap any hole to jump to it</div>`;
   $("#v-live").innerHTML = `
     <div class="sc-top"><div class="row" style="margin-bottom:.35rem"><button class="btn btn-sm" id="cardBack">‹ Matches</button><span class="tiny muted grow" style="text-align:center">${esc(r.format)} · ${esc(c.name)} · ${esc(m.label)}</span><button class="btn btn-sm" data-v="cup">Cup</button></div>
       <div class="sc-vs"><div class="sc-side"><div class="n">${m.a.map(pfirst).map(esc).join(" & ")}</div><div class="v a">${s.lead === "a" ? esc(s.short) : s.lead === "h" && s.started ? "AS" : "—"}</div></div>
@@ -971,9 +983,7 @@ function renderCard(){
     <div class="hnav"><button class="hnav-b" data-nav="-1" ${h === 1 ? "disabled" : ""}>‹</button><div class="hnav-c"><div class="hnav-n"><small>HOLE</small>${h}</div><div class="hnav-i">Par ${par} · SI ${si}</div></div><button class="hnav-b" data-nav="1" ${h === r.holes ? "disabled" : ""}>›</button></div>
     ${note ? `<div class="note" style="margin-bottom:.6rem">${s.closed && s.started ? `<b>Final — ${s.lead === "h" ? "halved" : TS(s.lead) + " wins " + esc(s.short)}.</b> ` : ""}${note}</div>` : ""}
     ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
-    <div class="grid"><table><thead><tr><th>Hole</th>${cols.map(i => `<th>${i}</th>`).join("")}<th>Tot</th></tr><tr><th>Par</th>${cols.map(i => `<th>${c.par[i-1]}</th>`).join("")}<th>${c.par.reduce((a, b) => a + b, 0)}</th></tr></thead>
-      <tbody>${sc.map(x => `<tr><td>${x.side === "a" ? "🔴" : "🟢"} ${esc(x.label.split(" ")[0])}</td>${cols.map(i => cell(x, i)).join("")}${tot(x)}</tr>`).join("")}<tr><td>Result</td>${resRow}<td class="tot">${s.started ? esc(s.short) : "—"}</td></tr></tbody></table></div>
-    <div class="tiny muted" style="text-align:center;margin-top:.6rem">Tap any hole in the card to jump to it${sc.some(x => x.total) ? " · • = stroke hole" : ""}</div>
+    ${grid}
     ${survCard(r.id)}
     ${renderField(r, m.id)}`;
 }
