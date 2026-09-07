@@ -561,8 +561,8 @@ const CONFIG = {
   carry:        0,         // tied holes carry over? 0 = no (halved, move on) · 2 = stack caps at 2 · 99 = unlimited
   halvedMatch:  "split",   // a match that finishes all square: "split" = 1 pt each · "none" = nobody scores
   nineHoleHalf: true,      // 9-hole rounds: strokes are half the difference (standard)
-  survivorOneBall: true,   // true = one ball for the whole trip (lose it, it's gone) · false = a fresh ball every round
-  survivorPts:  0.5,       // bonus per team per round for keeping the survivor ball (commissioner ticks it)
+  survivorPts:  0.5,       // bonus per PAIRING that keeps its survivor ball for the whole round (every round, singles too)
+  survivorSweep: 3,        // extra team bonus when every pairing on the team keeps its ball for every round that day for keeping the survivor ball (commissioner ticks it)
   solo: { name:"Individual Title", rounds:["r1","r3","r4"] },   // best net over the own-ball rounds
 
   /* ── 7. THE SCHEDULE ─────────────────────────────────────────── */
@@ -710,54 +710,66 @@ function matchState(rid, mid){
   if (closed) { if (lead === "a") pts.a = m.pts; else if (lead === "b") pts.b = m.pts; else if (CONFIG.halvedMatch !== "none") { pts.a = m.pts / 2; pts.b = m.pts / 2; } }
   return { r, m, sc, up, mag, thru, left, stack, lead, closed, started, text, short, pts, per, aH, bH, hH };
 }
-// Survivor ball. Each round a team reports true (still got it → bonus) or false (lost it). With survivorOneBall,
-// a loss carries forward: every later round is automatically lost and the team is no longer asked.
-const survState = (rid, side) => { const v = Store.get(["surv", rid, side], null); return v === true || v === false ? v : null; };
-const survLostIn = (rid, side) => { if (CONFIG.survivorOneBall === false) return null; for (const r of CONFIG.rounds) { if (r.id === rid) return null; if (survApplies(r) && survState(r.id, side) === false) return r.id; } return null; };
+// Survivor ball: every pairing (a side of a match) gets a fresh ball each round and reports true (kept it → bonus)
+// or false (lost it). A round isn't final until every pairing has answered. If every pairing on a team keeps its
+// ball in every round of a day, the team earns the day sweep bonus.
 const survApplies = r => Number(CONFIG.survivorPts || 0) > 0 && r.survivor !== false;
-const surv = (rid, side) => survApplies(ROUND[rid]) && survState(rid, side) === true && !survLostIn(rid, side);
-const survPending = (rid, side) => survApplies(ROUND[rid]) && !survLostIn(rid, side) && survState(rid, side) === null;
+const survState = (rid, mid, side) => { const v = Store.get(["surv", rid, mid, side], null); return v === true || v === false ? v : null; };
+const survPending = (rid, mid, side) => survApplies(ROUND[rid]) && isSet(matchOf(rid, mid)) && survState(rid, mid, side) === null;
+function dayBonus(){ // per date: { a:{pts, pending, lost}, b:{...} }
+  const out = {}, sw = Number(CONFIG.survivorSweep || 0);
+  CONFIG.rounds.forEach(r => { const d = out[r.date] = out[r.date] || { a:{ kept:0, lost:0, pending:0, n:0 }, b:{ kept:0, lost:0, pending:0, n:0 } }; if (!survApplies(r)) return;
+    matchesOf(r).forEach(m => { if (!isSet(m)) { d.a.pending++; d.b.pending++; d.a.n++; d.b.n++; return; } ["a","b"].forEach(side => { const st = survState(r.id, m.id, side); d[side].n++; if (st === true) d[side].kept++; else if (st === false) d[side].lost++; else d[side].pending++; }); }); });
+  Object.values(out).forEach(d => ["a","b"].forEach(side => { const x = d[side]; x.swept = x.n > 0 && x.kept === x.n; x.possible = x.n > 0 && x.lost === 0 && !x.swept; x.pts = x.swept ? sw : 0; }));
+  return out;
+}
 const canSurv = side => Me.isAdmin() || Me.team() === side;
 // Who may edit a match: the commissioner always; its players only while it's still live.
 function canEdit(rid, mid){ if (Me.isAdmin()) return true; const m = matchOf(rid, mid); if (!m || !(m.a.includes(Me.role) || m.b.includes(Me.role))) return false; return !matchState(rid, mid).closed; }
 function editNote(rid, mid){ if (canEdit(rid, mid)) return ""; if (!Me.canScore()) return "Read-only — sign in to enter scores."; const m = matchOf(rid, mid);
   if (!(m.a.includes(Me.role) || m.b.includes(Me.role))) return "Read-only — only the players in this match can score it."; return "Match complete and locked. Ask the commissioner if something needs fixing."; }
-function survCtl(rid, side){
-  const sp = Number(CONFIG.survivorPts || 0), st = survState(rid, side), lost = survLostIn(rid, side), can = canSurv(side), T = esc(CONFIG.teams[side].short);
-  const head = `<div style="font-family:var(--hd);font-size:.7rem;font-weight:700;letter-spacing:.12em;color:var(--${side}-lt)">${T}</div>`;
-  let body;
-  if (lost) body = `<div class="tiny" style="color:var(--tx3);text-align:center">lost it ${esc(dayShort(ROUND[lost].date).split(",")[0])} — gone for the weekend</div>`;
-  else if (!can) body = `<div class="tiny" style="text-align:center;color:${st === true ? "var(--gold)" : st === false ? "var(--a-lt)" : "var(--tx3)"}">${st === true ? "✓ still got it +" + sp : st === false ? "✗ lost it" : "not reported yet"}</div>`;
-  else body = `<div style="display:flex;gap:.35rem"><button data-surv="${rid}" data-side="${side}" data-v="true" class="btn btn-sm ${st === true ? "btn-gold" : ""}" style="flex:1">${st === true ? "✓ Still got it" : "Still got it"}</button>
-    <button data-surv="${rid}" data-side="${side}" data-v="false" class="btn btn-sm" style="flex:1;${st === false ? "border-color:var(--a-lt);color:var(--a-lt)" : ""}">${st === false ? "✗ Lost it" : "Lost it"}</button></div>`;
-  return `<div style="flex:1;display:flex;flex-direction:column;gap:.35rem;padding:.55rem .5rem;border-radius:9px;background:var(--bg3);border:1px solid ${st === true && !lost ? "rgba(216,169,74,.5)" : "var(--line)"}">${head}${body}</div>`;
+function survCtl(rid, mid, side, compact){
+  const sp = Number(CONFIG.survivorPts || 0), st = survState(rid, mid, side), can = canSurv(side), T = esc(CONFIG.teams[side].short);
+  const m = matchOf(rid, mid), who = m[side].map(pfirst).join(" & ");
+  const status = st === true ? `<span style="color:var(--gold);font-weight:700">✓ kept it +${sp}</span>` : st === false ? `<span style="color:var(--a-lt);font-weight:700">✗ lost it</span>` : `<span class="muted">?</span>`;
+  if (!can) return `<div class="tiny" style="display:flex;gap:.4rem;align-items:center"><b style="color:var(--${side}-lt);min-width:1.2rem">${T}</b><span class="grow" style="color:var(--tx2)">${esc(who)}</span>${status}</div>`;
+  const btn = (v, lbl, on) => `<button data-surv="${rid}" data-mid="${mid}" data-side="${side}" data-v="${v}" class="btn btn-sm ${on && v ? "btn-gold" : ""}" style="padding:.3rem .55rem;${on && !v ? "border-color:var(--a-lt);color:var(--a-lt)" : ""}">${lbl}</button>`;
+  return `<div class="tiny" style="display:flex;gap:.4rem;align-items:center"><b style="color:var(--${side}-lt);min-width:1.2rem">${T}</b><span class="grow" style="color:var(--tx2)">${esc(who)}</span>${btn(true, st === true ? "✓ Kept it" : "Kept it", st === true)}${btn(false, st === false ? "✗ Lost it" : "Lost it", st === false)}</div>`;
 }
-function survCard(rid){
-  const r = ROUND[rid]; if (!survApplies(r)) return ""; const sp = Number(CONFIG.survivorPts || 0);
-  return `<div class="card" style="margin-top:.8rem;padding:.65rem .75rem"><div class="row" style="margin-bottom:.5rem"><span style="font-family:var(--hd);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;color:var(--gold)">Survivor ball</span>
-    <span class="tiny muted grow" style="text-align:right">+${sp} if it makes it round · both teams must answer to close the round</span></div>
-    <div style="display:flex;gap:.5rem">${survCtl(rid, "a")}${survCtl(rid, "b")}</div></div>`;
+function survCard(rid, mid){
+  const r = ROUND[rid]; if (!survApplies(r) || !isSet(matchOf(rid, mid))) return ""; const sp = Number(CONFIG.survivorPts || 0);
+  return `<div class="card" style="margin-top:.8rem;padding:.65rem .75rem"><div class="row" style="margin-bottom:.5rem"><span style="font-family:var(--hd);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;color:var(--gold)">Survivor ball · this match</span>
+    <span class="tiny muted grow" style="text-align:right">+${sp} per pairing that keeps it all round</span></div>
+    <div style="display:grid;gap:.45rem">${survCtl(rid, mid, "a")}${survCtl(rid, mid, "b")}</div></div>`;
 }
 function survRow(rid){
-  if (!survApplies(ROUND[rid])) return "";
-  return `<div style="padding:.5rem .8rem;border-top:1px solid var(--line);background:var(--bg2)"><div class="tiny muted" style="margin-bottom:.35rem">Survivor ball</div><div style="display:flex;gap:.5rem">${survCtl(rid, "a")}${survCtl(rid, "b")}</div></div>`;
+  const r = ROUND[rid]; if (!survApplies(r)) return ""; const ms = matchesOf(r).filter(isSet); if (!ms.length) return "";
+  return `<div style="padding:.5rem .8rem;border-top:1px solid var(--line);background:var(--bg2);display:grid;gap:.4rem"><div class="tiny muted">Survivor ball · +${CONFIG.survivorPts} per pairing</div>
+    ${ms.map(m => `<div style="display:grid;gap:.25rem;padding:.3rem 0;border-top:1px dashed var(--line)"><div class="tiny" style="font-family:var(--hd);letter-spacing:.1em;color:var(--tx3)">${esc(m.label)}</div>${survCtl(rid, m.id, "a")}${survCtl(rid, m.id, "b")}</div>`).join("")}</div>`;
+}
+function renderSweep(){
+  const sw = Number(CONFIG.survivorSweep || 0); if (!sw || !CONFIG.rounds.some(survApplies)) return "";
+  const days = dayBonus();
+  const rows = Object.entries(days).map(([d, x]) => `<tr><td>${esc(dayName(d))}</td>${["a","b"].map(side => { const v = x[side]; const txt = v.swept ? `<b style="color:var(--gold)">Swept +${sw}</b>` : v.lost ? `<span style="color:var(--a-lt)">Lost ${v.lost} of ${v.n}</span>` : v.n ? `<span class="muted">${v.kept} of ${v.n} kept${v.pending ? " · " + v.pending + " to report" : ""}</span>` : `<span class="muted">—</span>`; return `<td class="ctr">${txt}</td>`; }).join("")}</tr>`).join("");
+  return `<div class="sect"><div class="sect-h">Survivor Sweep</div><div class="tiny muted" style="margin-bottom:.5rem">Every pairing on the team keeps its ball in every round of the day → +${sw} to the team.</div>
+    <div class="card"><table class="tbl"><thead><tr><th>Day</th><th class="ctr" style="color:var(--a-lt)">${esc(TA().short)}</th><th class="ctr" style="color:var(--b-lt)">${esc(TB().short)}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 function roundPoints(rid){
   const r = ROUND[rid]; let a = 0, b = 0, avail = 0, final = true, any = false;
   matchesOf(r).forEach(m => { avail += m.pts; if (!isSet(m)) { final = false; return; } const s = matchState(rid, m.id); a += s.pts.a; b += s.pts.b; if (!s.closed) final = false; if (s.started) any = true; });
-  const sp = Number(CONFIG.survivorPts || 0), sa = surv(rid, "a") ? sp : 0, sb = surv(rid, "b") ? sp : 0;
-  const matchesDone = final, pendA = survPending(rid, "a"), pendB = survPending(rid, "b");
-  if (matchesDone && (pendA || pendB)) final = false;
+  const sp = Number(CONFIG.survivorPts || 0); let sa = 0, sb = 0, pendA = 0, pendB = 0;
+  if (survApplies(r)) matchesOf(r).forEach(m => { if (!isSet(m)) return; const A = survState(rid, m.id, "a"), B = survState(rid, m.id, "b"); if (A === true) sa += sp; if (B === true) sb += sp; if (A === null) pendA++; if (B === null) pendB++; });
+  const matchesDone = final; if (matchesDone && (pendA || pendB)) final = false;
   return { a:a + sa, b:b + sb, ma:a, mb:b, sa, sb, avail, final, matchesDone, pendA, pendB, any };
 }
 function roundStatus(rid){ const p = roundPoints(rid); return p.final ? "final" : p.matchesDone ? "awaiting" : p.any ? "live" : "upcoming"; }
 function cupTotals(){
-  let a = 0, b = 0, avail = 0, matchLeft = 0, survLeftA = 0, survLeftB = 0; const sp = Number(CONFIG.survivorPts || 0);
-  CONFIG.rounds.forEach(r => { const p = roundPoints(r.id); a += p.a; b += p.b; avail += p.avail;
-    matchLeft += p.avail - p.ma - p.mb; if (survPending(r.id, "a")) survLeftA += sp; if (survPending(r.id, "b")) survLeftB += sp; });
+  let a = 0, b = 0, avail = 0, matchLeft = 0, survLeftA = 0, survLeftB = 0; const sp = Number(CONFIG.survivorPts || 0), sw = Number(CONFIG.survivorSweep || 0);
+  CONFIG.rounds.forEach(r => { const p = roundPoints(r.id); a += p.a; b += p.b; avail += p.avail; matchLeft += p.avail - p.ma - p.mb; survLeftA += p.pendA * sp; survLeftB += p.pendB * sp; });
+  const days = dayBonus(); Object.values(days).forEach(d => { a += d.a.pts; b += d.b.pts; if (d.a.possible) survLeftA += sw; if (d.b.possible) survLeftB += sw; });
   const aWon = a > b + matchLeft + survLeftB, bWon = b > a + matchLeft + survLeftA, done = matchLeft === 0;
   const aNeeds = Math.max(0, (b + matchLeft + survLeftB) - a + 0.5), bNeeds = Math.max(0, (a + matchLeft + survLeftA) - b + 0.5);
-  return { a, b, avail, matchLeft, aWon, bWon, done, aNeeds, bNeeds, aCan:aNeeds <= matchLeft + survLeftA, bCan:bNeeds <= matchLeft + survLeftB };
+  return { a, b, avail, matchLeft, days, aWon, bWon, done, aNeeds, bNeeds, aCan:aNeeds <= matchLeft + survLeftA, bCan:bNeeds <= matchLeft + survLeftB };
 }
 function nextRound(){ return CONFIG.rounds.find(r => !roundPoints(r.id).matchesDone) || CONFIG.rounds[CONFIG.rounds.length - 1]; }
 
@@ -829,10 +841,10 @@ function renderCup(){
     ${clinch}${banner}
     ${renderFormat()}
     <div class="sect"><div class="sect-h">The Rounds</div>${CONFIG.rounds.map(renderRoundBlock).join("")}</div>
-    ${renderSolo()}${renderHonours()}`;
+    ${renderSweep()}${renderSolo()}${renderHonours()}`;
 }
 function renderFormat(){
-  const rounds = CONFIG.rounds, matchPts = rounds.reduce((s, r) => s + r.matches.reduce((x, m) => x + m.pts, 0), 0), sp = Number(CONFIG.survivorPts || 0), survMax = sp * rounds.length;
+  const rounds = CONFIG.rounds, matchPts = rounds.reduce((s, r) => s + r.matches.reduce((x, m) => x + m.pts, 0), 0), sp = Number(CONFIG.survivorPts || 0), survMax = rounds.reduce((n, r) => n + (survApplies(r) ? r.matches.length * sp : 0), 0) + Number(CONFIG.survivorSweep || 0) * new Set(rounds.map(r => r.date)).size;
   const perRound = rounds.map(r => `<tr><td>${esc(dayShort(r.date).split(",")[0])}</td><td>${esc(r.format)}</td><td class="ctr muted">${r.matches.length} × ${r.matches[0].pts}</td><td class="num" style="font-weight:700">${r.matches.reduce((x, m) => x + m.pts, 0)}</td></tr>`).join("");
   const mp = rounds[0]?.matches[0]?.pts ?? 2;
   const halved = CONFIG.halvedMatch === "none" ? `Finish all square and nobody gets anything.` : `Finish all square and it's ${fmtPts(mp / 2)} point${mp / 2 === 1 ? "" : "s"} each.`;
@@ -847,7 +859,7 @@ function renderFormat(){
         ${li(`<b style="color:var(--tx)">Match play.</b> Every match is played hole by hole. Lower net score wins the hole. ${carryTxt} The side that wins more holes wins the match.`)}
         ${li(`<b style="color:var(--tx)">Points.</b> Every match is worth ${mp} points. Win the match, ${mp} points to your team. ${halved} ${perRoundTxt.charAt(0).toUpperCase() + perRoundTxt.slice(1)}.`)}
         ${li(`<b style="color:var(--tx)">${matchPts} match points in total.</b> First team past <b style="color:var(--tx)">${fmtPts(matchPts / 2 + 0.5)}</b> can't be caught; ${fmtPts(matchPts / 2)}–${fmtPts(matchPts / 2)} is a tie on match points.`)}
-        ${sp ? li(`<b style="color:var(--tx)">Survivor ball: +${sp} for each round the ball survives.</b> ${CONFIG.survivorOneBall !== false ? "Each team gets <em>one</em> ball for the whole trip — lose it Friday and it's gone for the weekend." : "Each team gets a ball each round."} After every round each team taps <em>Still got it</em> or <em>Lost it</em>; the round isn't closed until both have. Up to ${fmtPts(survMax)} per team, counts toward the total, and can decide a tie.`) : ""}
+        ${sp ? li(`<b style="color:var(--tx)">Survivor ball: +${sp} per pairing per round.</b> Every pairing (and every singles player) gets a fresh survivor ball each round; partners alternate holes with it. Keep it in play the whole round and the team banks ${sp}; lose it, nothing. Each pairing taps <em>Kept it</em> or <em>Lost it</em> after the round — the round isn't closed until all have. <b>Day sweep:</b> every pairing on a team keeps its ball in every round of the day → an extra +${Number(CONFIG.survivorSweep || 0)} to the team. All of it counts toward the total.`) : ""}
         ${li(`<b style="color:var(--tx)">Nothing to submit.</b> Hole results feed the match, the match feeds the round, the round feeds the Cup — instantly. Only the players in a match can score it, and a decided match locks; the commissioner can amend anything.`)}
         ${li(`<b style="color:var(--tx)">Most total points lifts the Cup.</b> Match points plus survivor bonuses. The board above tracks it live and tells you what each side still needs to clinch.`)}
         ${li(`<b style="color:var(--tx)">Handicaps</b> only matter in the own-ball rounds (best ball, singles). Strokes are set inside each match: the lowest handicap in the match plays off zero, everyone else gets the full difference, on the hardest holes first. Scrambles are gross. You always type gross scores — the app does the net.`)}
@@ -855,13 +867,13 @@ function renderFormat(){
       </ul>
       <table class="tbl" style="font-size:.76rem"><thead><tr><th>Day</th><th>Format</th><th class="ctr">Matches</th><th class="num">Pts</th></tr></thead><tbody>${perRound}
         <tr><td colspan="3" style="font-weight:700;color:var(--tx)">Match points</td><td class="num" style="font-weight:700;color:var(--gold)">${matchPts}</td></tr>
-        ${sp ? `<tr><td colspan="3" class="muted">Survivor bonus, max per team</td><td class="num muted">+${fmtPts(survMax)}</td></tr>` : ""}</tbody></table>
+        ${sp ? `<tr><td colspan="3" class="muted">Survivor bonuses, max per team (pairings + day sweeps)</td><td class="num muted">+${fmtPts(survMax)}</td></tr>` : ""}</tbody></table>
       <div class="tiny muted" style="margin-top:.5rem">Each round's own rules (best ball, scramble, tiebreaks) are on the Live tab under that round.</div>
     </div></details>`;
 }
 function renderRoundBlock(r){
   const st = roundStatus(r.id), p = roundPoints(r.id), c = courseOf(r), admin = Me.isAdmin(), sp = Number(CONFIG.survivorPts || 0);
-  const badge = st === "live" ? `<span class="pill pill-live"><span class="dot"></span>Live</span>` : st === "final" ? `<span class="pill pill-final">Final</span>` : st === "awaiting" ? `<span class="pill pill-next">Survivor? ${[p.pendA && TS("a"), p.pendB && TS("b")].filter(Boolean).join(" & ")}</span>` : `<span class="pill pill-next">${esc(r.tee)}</span>`;
+  const badge = st === "live" ? `<span class="pill pill-live"><span class="dot"></span>Live</span>` : st === "final" ? `<span class="pill pill-final">Final</span>` : st === "awaiting" ? `<span class="pill pill-next">Survivor? ${p.pendA + p.pendB} to report</span>` : `<span class="pill pill-next">${esc(r.tee)}</span>`;
   const body = matchesOf(r).map(m => { if (!isSet(m)) return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p">${names(m.a)}</div></div><div class="mt-c"><div class="mt-res pend">—</div><div class="mt-thru">pairings TBD</div></div><div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p">${names(m.b)}</div></div></div>`;
     const s = matchState(r.id, m.id), aW = s.closed && s.lead === "a", bW = s.closed && s.lead === "b";
     const cls = !s.started ? "mt-res pend" : s.lead === "a" ? "mt-res a" : s.lead === "b" ? "mt-res b" : "mt-res h";
@@ -873,7 +885,7 @@ function renderRoundBlock(r){
   const survHtml = survRow(r.id);
   return `<div class="rnd ${st === "upcoming" ? "up" : ""}"><div class="rnd-h"><div class="rnd-h-l"><div class="rnd-fmt">${esc(r.format)}</div>
       <div class="rnd-meta">${dayShort(r.date)} &bull; ${esc(r.tee)} &bull; ${esc(c.name)} &bull; ${r.holes} holes</div></div>
-      <div class="rnd-pts"><div class="rnd-pts-v"><span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span></div><div class="rnd-pts-l">of ${fmtPts(p.avail)}${sp ? " +" + sp : ""}</div></div></div>
+      <div class="rnd-pts"><div class="rnd-pts-v"><span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span></div><div class="rnd-pts-l">of ${fmtPts(p.avail)}${sp ? " + survivor" : ""}</div></div></div>
     <div style="padding:.4rem .8rem .5rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem"><span class="tiny muted">${r.note}</span><span style="margin-left:auto">${badge}</span></div>${body}${survHtml}
     <div class="tiny muted" style="text-align:center;padding:.35rem;border-top:1px solid var(--line)">Tap a match to open its scorecard</div></div>`;
 }
@@ -929,7 +941,7 @@ function renderLive(){
   if (UI.card && UI.mid && isSet(matchOf(UI.rid, UI.mid))) return renderCard();
   UI.card = false;
   const c = courseOf(r), t = cupTotals(), mine = myMatch(UI.rid), admin = Me.isAdmin();
-  const chips = CONFIG.rounds.map(x => { const st = roundStatus(x.id); return `<button class="lv-chip ${x.id === UI.rid ? "on" : ""}" data-r="${x.id}">${esc(dayShort(x.date).split(",")[0])} ${esc(x.format.split(" ·")[0])}${st === "live" ? " ●" : st === "final" ? " ✓" : st === "awaiting" ? " · survivor?" : ""}</button>`; }).join("");
+  const chips = CONFIG.rounds.map(x => { const st = roundStatus(x.id); return `<button class="lv-chip ${x.id === UI.rid ? "on" : ""}" data-r="${x.id}">${esc(dayShort(x.date).split(",")[0])} ${parseTee(x.tee) < 720 ? "AM" : "PM"} · ${esc(x.format.split(" ·")[0])}</button>`; }).join("");
   const unset = ms.some(m => !isSet(m));
   const mineHtml = mine ? `<div class="mine"><div class="mine-k">Your match · ${esc(dayShort(r.date))} ${esc(r.tee)}</div><div class="mine-t">${esc(r.format)} · ${esc(c.name)}</div>
       <div class="mine-d">${mine.a.map(pshort).map(esc).join(" & ")} &nbsp;<span class="muted">v</span>&nbsp; ${mine.b.map(pshort).map(esc).join(" & ")}</div>
@@ -976,7 +988,7 @@ function ruleText(r){
   }[r.scoring] || "";
   const hcp = r.scoring === "scramble" ? "" : `<b>Strokes:</b> worked out inside your match. The lowest handicap in the match plays off zero; everyone else gets the <b>full difference</b>, taken on the hardest holes first (stroke index 1, then 2, and so on)${r.holes <= 9 && CONFIG.nineHoleHalf !== false ? ", halved for nine holes" : ""}. ${r.scoring === "singles" ? "So in singles you play off the lower handicap of the two of you." : "So in a foursome everyone plays off the lowest of the four."} Stroke holes show a gold dot on the card — you still type your gross.`;
   const mp = `<b>Match play, hole by hole.</b> Win the hole, you go 1 up; lose it, 1 down. ${carry === 0 ? "A halved hole is just halved — nothing carries over." : carry >= 99 ? "A halved hole carries over: the next hole is worth two, and it keeps stacking until someone wins one." : `A halved hole carries over to the next hole, stacking up to ${carry}.`} The match is over when a side is up by more holes than are left, or after the last hole. <b>Worth ${pts} points to the team.</b> ${CONFIG.halvedMatch === "none" ? "Finish all square and neither side scores." : `Finish all square and it's ${fmtPts(pts / 2)} each.`}`;
-  const surv = survApplies(r) ? `<b>Survivor ball:</b> ${CONFIG.survivorOneBall !== false ? "each team has <b>one ball for the whole trip</b>. Finish the round with it still in play and the team banks +" + CONFIG.survivorPts + "; lose it and it's gone for the rest of the weekend." : "keep the team ball in play for the whole round and the team banks +" + CONFIG.survivorPts + "."} After the round, someone from each team taps <em>Still got it</em> or <em>Lost it</em> — the round isn't closed until both teams have.` : "";
+  const surv = survApplies(r) ? `<b>Survivor ball:</b> every ${r.scoring === "singles" ? "player" : "pairing"} gets a fresh survivor ball for the round. ${r.scoring === "singles" ? "Play it on every hole." : "Partners alternate: one of you plays it on hole 1, the other on hole 2, back to the first on 3, and so on — and it must be used for the whole hole."} Finish the round with it still in play and your ${r.scoring === "singles" ? "match" : "pairing"} banks <b>+${CONFIG.survivorPts}</b> for the team; lose it, nothing. After the round, tap <em>Kept it</em> or <em>Lost it</em> for your side — the round isn't closed until every pairing has. ${Number(CONFIG.survivorSweep) ? `<b>Day sweep:</b> if every pairing on a team keeps its ball in every round of the day, the team earns an extra <b>+${CONFIG.survivorSweep}</b>.` : ""}` : "";
   return [entry, fmt, hcp, mp, surv].filter(Boolean).map(P).join("");
 }
 const scoreClass = (g, par) => g === null ? "empty" : (d => d <= -2 ? "eagle" : d === -1 ? "birdie" : d === 0 ? "" : d === 1 ? "bogey" : "dbl")(g - par);
@@ -1028,7 +1040,7 @@ function renderCard(){
     ${note ? `<div class="note" style="margin-bottom:.6rem">${s.closed && s.started ? `<b>Final — ${s.lead === "h" ? "halved" : TS(s.lead) + " wins " + esc(s.short)}.</b> ` : ""}${note}</div>` : ""}
     ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
     ${grid}
-    ${survCard(r.id)}
+    ${survCard(r.id, m.id)}
     ${renderField(r, m.id)}`;
 }
 function renderField(r, excludeMid){
@@ -1100,7 +1112,7 @@ function renderTrip(){
   const cards = Object.entries(CONFIG.courses).filter(([k]) => used.has(k)).map(([, c]) => `<details class="card" style="margin-bottom:.4rem"><summary style="padding:.6rem .75rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem"><span style="font-weight:600">${esc(c.name)}</span><span class="tiny muted">${esc(c.club)}</span><span style="margin-left:auto;font-family:var(--hd);font-weight:700;color:var(--gold)">Par ${c.par.reduce((a, b) => a + b, 0)}</span></summary>
     <div style="overflow-x:auto"><table class="tbl" style="font-size:.72rem;min-width:520px"><tbody><tr><th>Hole</th>${c.par.map((_, i) => `<th class="ctr">${i + 1}</th>`).join("")}</tr><tr><td class="muted">Par</td>${c.par.map(p => `<td class="ctr">${p}</td>`).join("")}</tr><tr><td class="muted">SI</td>${c.si.map(p => `<td class="ctr muted">${p}</td>`).join("")}</tr></tbody></table></div></details>`).join("");
   const comm = admin ? `<div class="sect"><div class="sect-h">Commissioner</div><div class="card" style="padding:.75rem">
-      <div class="tiny muted" style="margin-bottom:.6rem">Pairings and tees are set on the Live tab. Survivor ball is answered by each team after the round (Still got it / Lost it); you can change either answer on the Cup tab. Clearing removes every score for that round on every phone; handicaps and pairings stay. No undo.</div>
+      <div class="tiny muted" style="margin-bottom:.6rem">Pairings and tees are set on the Live tab. Survivor ball is answered per pairing after each round (Kept it / Lost it); you can change any answer on the Cup tab. Clearing removes every score for that round on every phone; handicaps and pairings stay. No undo.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.6rem">${CONFIG.rounds.map(r => `<button class="btn btn-sm" data-clear="${r.id}">Clear ${esc(dayShort(r.date).split(",")[0])} ${esc(r.format.split(" ·")[0])}</button>`).join("")}</div>
       <button class="btn btn-full" id="wipeAll" style="border-color:rgba(224,86,80,.5);color:var(--a-lt)">Wipe every score — fresh start</button></div></div>` : "";
   $("#v-trip").innerHTML = `<div class="sect"><div class="sect-h">Schedule</div>${days}</div>
@@ -1163,7 +1175,7 @@ document.addEventListener("click", e => {
   const stp = e.target.closest("[data-stp]"); if (stp) { const cur = gross(UI.rid, UI.mid, UI.hole, stp.dataset.k), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; return setScore(stp.dataset.k, cur === null ? par : Math.max(1, Math.min(15, cur + +stp.dataset.stp))); }
   const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; if (cur === null) return setScore(tap.dataset.tap, par); if (canEdit(UI.rid, UI.mid)) ask("Clear this score?", "Removes the score in this box. You can tap to re-enter it.", { yes:"Clear it" }).then(ok => ok && setScore(tap.dataset.tap, null)); return; }
   const ov = e.target.closest("[data-ov]"); if (ov) return setOverride(ov.dataset.ov);
-  const sv = e.target.closest("[data-surv]"); if (sv && canSurv(sv.dataset.side)) { const v = sv.dataset.v === "true"; return Store.set(["surv", sv.dataset.surv, sv.dataset.side], survState(sv.dataset.surv, sv.dataset.side) === v ? null : v); }
+  const sv = e.target.closest("[data-surv]"); if (sv && canSurv(sv.dataset.side)) { const v = sv.dataset.v === "true", { surv:rid, mid, side } = sv.dataset; return Store.set(["surv", rid, mid, side], survState(rid, mid, side) === v ? null : v); }
   const cl = e.target.closest("[data-clear]"); if (cl && Me.isAdmin()) { const r = ROUND[cl.dataset.clear];
     ask(`Clear ${r.format}?`, `Every score entered for <b>${esc(r.format)} (${esc(dayShort(r.date))})</b> disappears from every phone. Pairings and handicaps stay. No undo.`, { yes:"Clear the round" })
       .then(ok => { if (!ok) return; r.matches.forEach(m => ["gross", "over", "meta"].forEach(k => Store.set([k, mkey(r.id, m.id)], null))); Store.set(["surv", r.id], null); }); return; }
@@ -1195,7 +1207,7 @@ if (DEMO) {
       for (let h = 1; h <= upto; h++) { const par = c.par[h-1]; sc.forEach(x => { const g = r.scoring === "scramble" ? par + (rnd() < 0.35 ? -1 : rnd() < 0.8 ? 0 : 1) : shot(x.key, par); Store.set(["gross", mkey(rid, m.id), String(h), x.key], g); });
         Store.set(["meta", mkey(rid, m.id), String(h)], pshort(sc[Math.floor(rnd() * sc.length)].ids[0]) + " · " + (7 + Math.floor(h / 2.2)) + ":" + String(10 + Math.floor(rnd() * 49)).padStart(2, "0") + (h < 8 ? " AM" : " PM")); } }); };
     fill("r1", 18); fill("r2", 18); fill("r3", [18, 14, 13, 12, 11, 9]);
-    Store.set(["over","r1_m2","17"], "a"); Store.set(["surv","r1","a"], true); Store.set(["surv","r1","b"], false); Store.set(["surv","r2","a"], true);
+    Store.set(["over","r1_m2","17"], "a"); ["m1","m2","m3"].forEach((mid, i) => { Store.set(["surv","r1",mid,"a"], true); Store.set(["surv","r1",mid,"b"], i !== 1); Store.set(["surv","r2",mid,"a"], i !== 2); Store.set(["surv","r2",mid,"b"], true); });
     Me.save("a2"); renderAll(); });
 }
 (function(){ let t = "light"; try { t = localStorage.getItem("cup:theme") || "light"; } catch(e){} setLight(t !== "dark"); })();
