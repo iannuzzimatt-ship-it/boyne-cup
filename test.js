@@ -22,7 +22,7 @@ const tests = String.raw`
 Store._initLocal();
 const G = (rid, mid, h, k, v) => Store.set(["gross", mkey(rid, mid), String(h), k], v);
 const O = (rid, mid, h, v) => Store.set(["over", mkey(rid, mid), String(h), v === undefined ? null : v].slice(0, 3), v);
-const reset = () => { ["gross","over","meta","surv","pair","hcp"].forEach(k => Store.set([k], null)); Me.save(null); CONFIG.carry = 0; CONFIG.halvedMatch = "split"; };
+const reset = () => { ["gross","over","meta","surv","pair","hcp","cfg","call"].forEach(k => Store.set([k], null)); Me.save(null); CONFIG.carry = 0; CONFIG.halvedMatch = "split"; };
 const r1 = ROUND.r1, c1 = courseOf(r1), par = (r, h) => courseOf(r).par[h-1];
 const play = (rid, mid, h, scores) => Object.entries(scores).forEach(([k, v]) => G(rid, mid, h, k, v));
 
@@ -195,6 +195,27 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
     ms.forEach(m => winHoles("r1", m.id, "a", 1, 10)); const p = roundPoints("r1"); const S = playerStats();
     if (!(p.ma === 6 && p.mb === 0 && p.final && A.every(id => S[id].pts === 1 && S[id].w === 1) && B.every(id => S[id].pts === 0 && S[id].l === 1))) badRound++; }
   eq(badRound, 0, "H4 every full-round arrangement (" + arrangements + ") pairs all 12 exactly once and scores 6–0 correctly");
+  reset(); }
+
+/* ── I. LIVE SETTINGS + COMMISSIONER CONTROLS ───────────── */
+{ reset(); Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] });
+  Store.set(["cfg","carry"], 1); O("r1","m1",1,"h"); O("r1","m1",2,"h"); O("r1","m1",3,"a"); let s = matchState("r1","m1"); eq([s.up, s.per[3].worth], [2, 2], "I1 in-app carry=1 caps the stack at 1 → hole worth 2");
+  Store.set(["cfg","carry"], null); s = matchState("r1","m1"); eq(s.up, 1, "I2 clearing the setting falls back to the file default (no carry)");
+  for (let h = 1; h <= 18; h++) O("r1","m1",h,"h"); Store.set(["cfg","halvedMatch"], "none"); eq(matchState("r1","m1").pts, { a:0, b:0 }, "I3 in-app halvedMatch=none → no points"); Store.set(["cfg","halvedMatch"], null); eq(matchState("r1","m1").pts, { a:1, b:1 }, "I4 back to 1 each");
+  Store.set(["cfg","teams"], { a:{ name:"Gaylord Gooners", short:"GG" } }); eq([TA().name, TA().short, TB().short], ["Gaylord Gooners", "GG", "B"], "I5 team rename overrides only what's set"); Store.set(["cfg","teams"], null);
+  Store.set(["cfg","survivorPts"], 0); eq(survApplies(ROUND.r1), false, "I6 survivor pts 0 switches survivor off"); Store.set(["cfg","survivorPts"], null);
+  Store.set(["cfg","survOff","r3"], true); eq([survApplies(ROUND.r3), survApplies(ROUND.r1)], [false, true], "I7 survivor off for one round only"); Store.set(["cfg","survOff"], null);
+  reset(); Store.set(["pair","r4","m1"], { a:["a1","a2"], b:["b3","b1"] }); const r4 = ROUND.r4, m4 = matchOf("r4","m1"), sc4 = scorers(r4, m4), c4 = courseOf(r4), h = c4.si.indexOf(18) + 1, p = par(r4, h);
+  play("r4","m1",h, { a1:p, a2:p+2, b3:p, b1:p+1 }); eq(holeResult(r4, m4, sc4, h).res, "b", "I8 second-man on → B"); Store.set(["cfg","secondMan"], false); eq(holeResult(r4, m4, sc4, h).res, "h", "I9 second-man off → halved"); Store.set(["cfg","secondMan"], null);
+  // call a match
+  reset(); Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); winHoles("r1","m1","a",1,5); winHoles("r1","m1","b",6,7);
+  Store.set(["call","r1_m1"], "a"); s = matchState("r1","m1"); eq([s.closed, s.lead, s.pts, s.called, s.short], [true, "a", { a:2, b:0 }, "a", "3 UP"], "I10 called for A: closed, full points, status shows the margin");
+  Store.set(["call","r1_m1"], "h"); s = matchState("r1","m1"); eq([s.pts, s.short], [{ a:1, b:1 }, "AS"], "I11 called halved → 1 each");
+  Store.set(["call","r1_m1"], "void"); s = matchState("r1","m1"); eq([s.closed, s.pts, s.short], [true, { a:0, b:0 }, "VOID"], "I12 voided → closed, no points"); eq(roundPoints("r1").avail, 6, "I12b available points unchanged");
+  Store.set(["call","r1_m1"], null); s = matchState("r1","m1"); eq([s.closed, s.up], [false, 3], "I13 un-called → back to live scores");
+  // lock
+  Me.save("a1"); eq(canEdit("r1","m1"), true, "I14 participant can edit"); Store.set(["cfg","lock","r1"], true); eq(canEdit("r1","m1"), false, "I15 locked round → participant can't"); ok(/locked/.test(editNote("r1","m1")), "I16 lock note"); eq(canSurv("a","r1","m1"), false, "I17 …nor mark survivor");
+  Me.save("admin"); eq(canEdit("r1","m1"), true, "I18 commissioner still can"); Store.set(["cfg","lock"], null); Me.save(null);
   reset(); }
 
 /* ── G. FUZZ ────────────────────────────────────────────────── */
