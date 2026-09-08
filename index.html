@@ -864,7 +864,7 @@ function soloStandings(){
   const rids = CONFIG.solo.rounds.filter(id => ROUND[id]);
   return CONFIG.players.map(p => { const rounds = rids.map(rid => playerRound(rid, p.id)).filter(Boolean), played = rounds.filter(x => x.thru > 0);
     return { id:p.id, rounds, net:played.reduce((s, x) => s + x.netToPar, 0), grossTP:played.reduce((s, x) => s + x.grossToPar, 0), gross:played.reduce((s, x) => s + x.gross, 0), holes:played.reduce((s, x) => s + x.thru, 0), birdies:played.reduce((s, x) => s + x.birdies, 0), eagles:played.reduce((s, x) => s + x.eagles, 0) }; })
-    .filter(x => x.holes > 0).sort((x, y) => (y.holes - x.holes) || ((UI.soloSort === "gross" ? x.grossTP - y.grossTP : x.net - y.net)));
+    .filter(x => x.holes > 0).sort((x, y) => ((UI.soloSort === "gross" ? x.grossTP - y.grossTP : x.net - y.net)) || (y.holes - x.holes));
 }
 function playerStats(){
   const S = {}; CONFIG.players.forEach(p => S[p.id] = { id:p.id, team:p.team, w:0, l:0, h:0, played:0, pts:0, hw:0, hl:0, hh:0, birdies:0, eagles:0, pars:0, snow:0, blow:0,
@@ -905,7 +905,9 @@ const dayName  = iso => new Date(iso + "T12:00:00").toLocaleDateString(undefined
 const dayShort = iso => new Date(iso + "T12:00:00").toLocaleDateString(undefined, { weekday:"short", month:"numeric", day:"numeric" });
 const names = ids => ids.length ? ids.map(pshort).map(esc).join("<br>") : `<span class="muted">TBD</span>`;
 
-function renderCup(){
+function keepOpen(root, fn){ if (!root || typeof root.querySelectorAll !== "function") return fn(); const open = new Set([...root.querySelectorAll("details[open] > summary")].map(x => x.textContent.trim().slice(0, 40))); fn(); root.querySelectorAll("details").forEach(d => { const k = d.querySelector("summary")?.textContent.trim().slice(0, 40); if (k && open.has(k)) d.open = true; }); }
+function renderCup(){ keepOpen($("#v-cup"), renderCupInner); }
+function renderCupInner(){
   const t = cupTotals(), scale = Math.max(t.avail, t.a + t.b + t.matchLeft, t.a + t.survLeftA, t.b + t.survLeftB), aPct = scale ? Math.min(100, t.a / scale * 100) : 0, bPct = scale ? Math.min(100, t.b / scale * 100) : 0;
   const banner = t.aWon ? `<div class="won-banner">${esc(TA().name)} wins the cup</div>` : t.bWon ? `<div class="won-banner">${esc(TB().name)} wins the cup</div>` : (t.done && t.a === t.b) ? `<div class="won-banner">Tied on points — tiebreaker to be decided</div>` : "";
   const need = (n, can) => can ? `needs <b>${fmtPts(n)}</b> to clinch` : `<span class="muted">can't clinch yet</span>`;
