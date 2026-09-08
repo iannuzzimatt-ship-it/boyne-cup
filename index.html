@@ -617,7 +617,7 @@ const CONFIG = {
   nineHoleHalf: true,      // 9-hole rounds: strokes are half the difference (standard)
   concessions:  false,     // true = show "A wins / Halve / B wins" buttons on each hole for conceded holes. Off for now.
   survivorPts:  0.5,       // bonus per PAIRING that keeps its survivor ball for the whole round (every round, singles too)
-  survivorSweep: 3,        // extra team bonus when every pairing on the team keeps its ball for every round that day for keeping the survivor ball (commissioner ticks it)
+  survivorSweep: 3,        // extra team bonus when every pairing on the team keeps its ball for the whole round (per round) for keeping the survivor ball (commissioner ticks it)
   solo: { name:"Individual Title", rounds:["r1","r3","r4"] },   // best net over the own-ball rounds
 
   /* ── 7. THE SCHEDULE ─────────────────────────────────────────── */
@@ -774,11 +774,10 @@ const survLostHole = (rid, mid, side) => survLoss(rid, mid, side)?.hole ?? null;
 // "kept" | "lost" | "play" (match still going, ball in play) | null (n/a)
 function survStatus(rid, mid, side){ const r = ROUND[rid], m = matchOf(rid, mid); if (!survApplies(r) || !isSet(m)) return null;
   if (survLostHole(rid, mid, side) !== null) return "lost"; return matchState(rid, mid).closed ? "kept" : "play"; }
-function dayBonus(){
-  const out = {}, sw = Number(CONFIG.survivorSweep || 0);
-  CONFIG.rounds.forEach(r => { const d = out[r.date] = out[r.date] || { a:{ kept:0, lost:0, pending:0, n:0 }, b:{ kept:0, lost:0, pending:0, n:0 } }; if (!survApplies(r)) return;
-    matchesOf(r).forEach(m => ["a","b"].forEach(side => { d[side].n++; const st = isSet(m) ? survStatus(r.id, m.id, side) : "play"; if (st === "kept") d[side].kept++; else if (st === "lost") d[side].lost++; else d[side].pending++; })); });
-  Object.values(out).forEach(d => ["a","b"].forEach(side => { const x = d[side]; x.swept = x.n > 0 && x.kept === x.n; x.possible = x.n > 0 && x.lost === 0 && !x.swept; x.pts = x.swept ? sw : 0; }));
+function roundSweep(rid){ // { a:{kept,lost,pending,n,swept,possible,pts}, b:{...} }
+  const r = ROUND[rid], sw = Number(CONFIG.survivorSweep || 0), out = { a:{ kept:0, lost:0, pending:0, n:0 }, b:{ kept:0, lost:0, pending:0, n:0 } };
+  if (survApplies(r)) matchesOf(r).forEach(m => ["a","b"].forEach(side => { out[side].n++; const st = isSet(m) ? survStatus(r.id, m.id, side) : "play"; if (st === "kept") out[side].kept++; else if (st === "lost") out[side].lost++; else out[side].pending++; }));
+  ["a","b"].forEach(side => { const x = out[side]; x.swept = x.n > 0 && x.kept === x.n; x.possible = x.n > 0 && x.lost === 0 && !x.swept; x.pts = x.swept ? sw : 0; });
   return out;
 }
 const canSurv = (side, rid, mid) => Me.isAdmin() || (rid && mid ? matchOf(rid, mid)[side].includes(Me.role) : Me.team() === side);
@@ -787,29 +786,31 @@ function canEdit(rid, mid){ if (Me.isAdmin()) return true; const m = matchOf(rid
 function editNote(rid, mid){ if (canEdit(rid, mid)) return ""; if (!Me.canScore()) return "Read-only — sign in to enter scores."; const m = matchOf(rid, mid);
   if (!(m.a.includes(Me.role) || m.b.includes(Me.role))) return "Read-only — only the players in this match can score it."; return "Match complete and locked. Ask the commissioner if something needs fixing."; }
 function renderSweep(){
-  const sw = Number(CONFIG.survivorSweep || 0); if (!sw || !CONFIG.rounds.some(survApplies)) return "";
-  const days = dayBonus(), dates = Object.keys(days);
-  const hint = `${TS("a")} ${fmtPts(Object.values(days).reduce((n, d) => n + d.a.pts, 0))} · ${TS("b")} ${fmtPts(Object.values(days).reduce((n, d) => n + d.b.pts, 0))} sweep pts`;
-  const dotsFor = (date, side) => CONFIG.rounds.filter(r => r.date === date && survApplies(r)).map(r => matchesOf(r).map(m => { const st = isSet(m) ? survStatus(r.id, m.id, side) : "play"; const L = isSet(m) ? survLoss(r.id, m.id, side) : null;
-      return `<span class="sv-dot ${st === "kept" ? "kept" : st === "lost" ? "lost" : ""}" title="${esc(r.format.split(" ·")[0])} · ${esc(m.label)} · ${st === "kept" ? "kept" : st === "lost" ? "lost on " + L.hole + (L.by ? " by " + pfirst(L.by) : "") : "still out"}"></span>`; }).join("")).join(`<span class="sv-gap"></span>`);
-  const row = date => `<div class="sv-day"><div class="sv-lbl">${esc(dayShort(date).split(",")[0])}</div>
-    ${["a", "b"].map(side => { const x = days[date][side]; return `<div class="sv-team ${x.swept ? "swept" : ""}" title="${x.kept} of ${x.n} kept"><b style="font-family:var(--hd);font-size:.62rem;color:var(--${side}-lt)">${TS(side)}</b>${dotsFor(date, side)}${x.swept ? `<span class="sv-pts">sweep +${sw}</span>` : x.lost ? `<span class="sv-pts" style="color:var(--tx3)">${x.lost} lost</span>` : ""}</div>`; }).join("")}</div>`;
-  return `<div class="sect"><div class="sect-h">Survivor Ball</div><details class="card">${SUM("By day", hint)}<div style="padding:.3rem .7rem .6rem">
-    ${dates.map(row).join("")}
-    <div class="tiny muted" style="margin-top:.5rem;line-height:1.5">One dot per pairing per round — <span style="color:var(--ok)">●</span> kept, <span style="color:var(--a-lt)">●</span> lost, ○ still out. A gold box means every pairing kept it all day: <b>+${sw}</b> to the team. Each kept ball is +${CONFIG.survivorPts}. Tap a dot for who and where.</div></div></details></div>`;
+  const sw = Number(CONFIG.survivorSweep || 0); if (!CONFIG.rounds.some(survApplies)) return "";
+  const rs = CONFIG.rounds.filter(survApplies).map(r => ({ r, p:roundPoints(r.id) }));
+  const tot = side => rs.reduce((n, x) => n + x.p[side === "a" ? "sa" : "sb"], 0);
+  const hint = `${TS("a")} +${fmtPts(tot("a"))} · ${TS("b")} +${fmtPts(tot("b"))} survivor pts`;
+  const dots = (r, side) => matchesOf(r).map(m => { const st = isSet(m) ? survStatus(r.id, m.id, side) : "play"; const L = isSet(m) ? survLoss(r.id, m.id, side) : null;
+    return `<span class="sv-dot ${st === "kept" ? "kept" : st === "lost" ? "lost" : ""}" title="${esc(m.label)} · ${st === "kept" ? "kept" : st === "lost" ? "lost on " + L.hole + (L.by ? " by " + pfirst(L.by) : "") : "still out"}"></span>`; }).join("");
+  const row = ({ r, p }) => `<div class="sv-day"><div class="sv-lbl">${esc(dayShort(r.date).split(",")[0])} ${parseTee(r.tee) < 720 ? "AM" : "PM"}</div>
+    ${["a", "b"].map(side => { const x = p.sweep[side]; return `<div class="sv-team ${x.swept ? "swept" : ""}" title="${x.kept} of ${x.n} kept"><b style="font-family:var(--hd);font-size:.62rem;color:var(--${side}-lt)">${TS(side)}</b>${dots(r, side)}<span class="sv-pts" style="${x.swept ? "" : "color:var(--tx3)"}">${x.swept ? `sweep +${sw}` : x.lost ? `${x.lost} lost` : ""}</span></div>`; }).join("")}</div>`;
+  return `<div class="sect"><div class="sect-h">Survivor Ball</div><details class="card">${SUM("By round", hint)}<div style="padding:.3rem .7rem .6rem">
+    ${rs.map(row).join("")}
+    <div class="tiny muted" style="margin-top:.5rem;line-height:1.5">One dot per pairing — <span style="color:var(--ok)">●</span> kept (+${CONFIG.survivorPts}), <span style="color:var(--a-lt)">●</span> lost, ○ still out. Gold box = every pairing kept it that round: <b>sweep +${sw}</b>. Balls reset every round. Tap a dot for who and where.</div></div></details></div>`;
 }
 function roundPoints(rid){
   const r = ROUND[rid]; let a = 0, b = 0, avail = 0, final = true, any = false;
   matchesOf(r).forEach(m => { avail += m.pts; if (!isSet(m)) { final = false; return; } const s = matchState(rid, m.id); a += s.pts.a; b += s.pts.b; if (!s.closed) final = false; if (s.started) any = true; });
   const sp = Number(CONFIG.survivorPts || 0); let sa = 0, sb = 0, pendA = 0, pendB = 0;
   if (survApplies(r)) matchesOf(r).forEach(m => { if (!isSet(m)) { pendA++; pendB++; return; } const A = survStatus(rid, m.id, "a"), B = survStatus(rid, m.id, "b"); if (A === "kept") sa += sp; if (B === "kept") sb += sp; if (A === "play") pendA++; if (B === "play") pendB++; });
-  return { a:a + sa, b:b + sb, ma:a, mb:b, sa, sb, avail, final, matchesDone:final, pendA, pendB, any };
+  const swp = roundSweep(rid); sa += swp.a.pts; sb += swp.b.pts;
+  return { a:a + sa, b:b + sb, ma:a, mb:b, sa, sb, sweep:swp, avail, final, matchesDone:final, pendA, pendB, any };
 }
 function roundStatus(rid){ const p = roundPoints(rid); return p.final ? "final" : p.any ? "live" : "upcoming"; }
 function cupTotals(){
   let a = 0, b = 0, avail = 0, matchLeft = 0, survLeftA = 0, survLeftB = 0; const sp = Number(CONFIG.survivorPts || 0), sw = Number(CONFIG.survivorSweep || 0);
-  CONFIG.rounds.forEach(r => { const p = roundPoints(r.id); a += p.a; b += p.b; avail += p.avail; matchLeft += p.avail - p.ma - p.mb; survLeftA += p.pendA * sp; survLeftB += p.pendB * sp; });
-  const days = dayBonus(); Object.values(days).forEach(d => { a += d.a.pts; b += d.b.pts; if (d.a.possible) survLeftA += sw; if (d.b.possible) survLeftB += sw; });
+  CONFIG.rounds.forEach(r => { const p = roundPoints(r.id); a += p.a; b += p.b; avail += p.avail; matchLeft += p.avail - p.ma - p.mb; survLeftA += p.pendA * sp; survLeftB += p.pendB * sp; if (p.sweep.a.possible) survLeftA += sw; if (p.sweep.b.possible) survLeftB += sw; });
+  const days = null;
   const aWon = a > b + matchLeft + survLeftB, bWon = b > a + matchLeft + survLeftA, done = matchLeft === 0;
   const aNeeds = Math.max(0, (b + matchLeft + survLeftB) - a + 0.5), bNeeds = Math.max(0, (a + matchLeft + survLeftA) - b + 0.5);
   return { a, b, avail, matchLeft, survLeftA, survLeftB, days, aWon, bWon, done, aNeeds, bNeeds, aCan:aNeeds <= matchLeft + survLeftA, bCan:bNeeds <= matchLeft + survLeftB };
@@ -888,7 +889,7 @@ function renderCup(){
     <div class="sect"><div class="sect-h">The Format</div>${renderFormat().replace('class="card" style="margin-top:1rem"', 'class="card"')}</div>`;
 }
 function renderFormat(){
-  const rounds = CONFIG.rounds, matchPts = rounds.reduce((s, r) => s + r.matches.reduce((x, m) => x + m.pts, 0), 0), sp = Number(CONFIG.survivorPts || 0), survMax = rounds.reduce((n, r) => n + (survApplies(r) ? r.matches.length * sp : 0), 0) + Number(CONFIG.survivorSweep || 0) * new Set(rounds.map(r => r.date)).size;
+  const rounds = CONFIG.rounds, matchPts = rounds.reduce((s, r) => s + r.matches.reduce((x, m) => x + m.pts, 0), 0), sp = Number(CONFIG.survivorPts || 0), survMax = rounds.reduce((n, r) => n + (survApplies(r) ? r.matches.length * sp + Number(CONFIG.survivorSweep || 0) : 0), 0);
   const perRound = rounds.map(r => `<tr><td>${esc(dayShort(r.date).split(",")[0])}</td><td>${esc(r.format)}</td><td class="ctr muted">${r.matches.length} × ${r.matches[0].pts}</td><td class="num" style="font-weight:700">${r.matches.reduce((x, m) => x + m.pts, 0)}</td></tr>`).join("");
   const mp = rounds[0]?.matches[0]?.pts ?? 2;
   const halved = CONFIG.halvedMatch === "none" ? `Finish all square and nobody gets anything.` : `Finish all square and it's ${fmtPts(mp / 2)} point${mp / 2 === 1 ? "" : "s"} each.`;
@@ -903,7 +904,7 @@ function renderFormat(){
         ${li(`<b style="color:var(--tx)">Match play.</b> Won hole: 1 up. Tied hole: half each. ${carry === 0 ? "No carryovers." : carry >= 99 ? "Tied holes carry over." : `Tied holes carry over, max ${carry}.`}`)}
         ${li(`<b style="color:var(--tx)">Points.</b> Every match is worth ${mp} points. Win the match, ${mp} points to your team. ${halved} ${perRoundTxt.charAt(0).toUpperCase() + perRoundTxt.slice(1)}.`)}
         ${li(`<b style="color:var(--tx)">${matchPts} match points in total</b>, plus survivor bonuses on top (up to ${fmtPts(survMax)} a team). Because of the bonuses there's no fixed number that clinches: a team has the Cup when it leads by more than everything the other side could still win — remaining matches and remaining bonuses. The board does that math live and shows each team's magic number.`)}
-        ${sp ? li(`<b style="color:var(--tx)">Survivor ball: +${sp} per pairing per round.</b> Every pairing (and every singles player) starts each round with a survivor ball; partners alternate holes with it. Lose it and you tap <em>lost ball</em> next to your name on that hole — nothing else to do. Finish with it in play and the team banks ${sp} automatically. <b>Day sweep:</b> every pairing on a team keeps its ball in every round of the day → an extra +${Number(CONFIG.survivorSweep || 0)}. All of it counts toward the total.`) : ""}
+        ${sp ? li(`<b style="color:var(--tx)">Survivor ball: +${sp} per pairing per round.</b> Every pairing (and every singles player) starts each round with a survivor ball; partners alternate holes with it. Lose it and you tap <em>lost ball</em> next to your name on that hole — nothing else to do. Finish with it in play and the team banks ${sp} automatically. <b>Sweep:</b> every pairing on a team keeps its ball in a round → an extra +${Number(CONFIG.survivorSweep || 0)} that round. Balls reset every round. All of it counts toward the total.`) : ""}
         ${li(`<b style="color:var(--tx)">Nothing to submit.</b> Hole results feed the match, the match feeds the round, the round feeds the Cup — instantly. Only the players in a match can score it, and a decided match locks; the commissioner can amend anything.`)}
         ${li(`<b style="color:var(--tx)">Most total points lifts the Cup.</b> Match points plus survivor bonuses. The board above tracks it live and tells you what each side still needs to clinch.`)}
         ${li(`<b style="color:var(--tx)">Handicaps</b> only matter in the own-ball rounds (best ball, singles). Strokes are set inside each match: the lowest handicap in the match plays off zero, everyone else gets the full difference, on the hardest holes first. Scrambles are gross. You always type gross scores — the app does the net.`)}
@@ -911,7 +912,7 @@ function renderFormat(){
       </ul>
       <table class="tbl" style="font-size:.76rem"><thead><tr><th>Day</th><th>Format</th><th class="ctr">Matches</th><th class="num">Pts</th></tr></thead><tbody>${perRound}
         <tr><td colspan="3" style="font-weight:700;color:var(--tx)">Match points</td><td class="num" style="font-weight:700;color:var(--gold)">${matchPts}</td></tr>
-        ${sp ? `<tr><td colspan="3" class="muted">Survivor bonuses, max per team (pairings + day sweeps)</td><td class="num muted">+${fmtPts(survMax)}</td></tr>` : ""}</tbody></table>
+        ${sp ? `<tr><td colspan="3" class="muted">Survivor bonuses, max per team (pairings + round sweeps)</td><td class="num muted">+${fmtPts(survMax)}</td></tr>` : ""}</tbody></table>
       <div class="tiny muted" style="margin-top:.5rem">Each round's own rules (best ball, scramble, tiebreaks) are on the Scoring tab under that round.</div>
     </div></details>`;
 }
@@ -1061,7 +1062,7 @@ function ruleText(r){
   }[r.scoring] || "";
   const hcp = r.scoring === "scramble" ? "" : `<b>Strokes:</b> worked out inside your match. The lowest handicap in the match plays off zero; everyone else gets the <b>full difference</b>, taken on the hardest holes first (stroke index 1, then 2, and so on)${r.holes <= 9 && CONFIG.nineHoleHalf !== false ? ", halved for nine holes" : ""}. ${r.scoring === "singles" ? "So in singles you play off the lower handicap of the two of you." : "So in a foursome everyone plays off the lowest of the four."} Stroke holes show a gold dot on the card — you still type your gross.`;
   const mp = `<b>Match play.</b> Won hole: 1 up. Tied hole: half each. ${carry === 0 ? "No carryovers." : carry >= 99 ? "Tied holes carry over." : `Tied holes carry over, max ${carry}.`} <b>Match worth ${pts} points</b>${CONFIG.halvedMatch === "none" ? "; all square = nothing." : `; all square = ${fmtPts(pts / 2)} each.`}`;
-  const surv = survApplies(r) ? `<b>Survivor ball:</b> every ${r.scoring === "singles" ? "player" : "pairing"} starts the round with a survivor ball. ${r.scoring === "singles" ? "Play it on every hole." : "Partners alternate: one plays it on hole 1, the other on hole 2, back to the first on 3, and so on — and it must be used for the whole hole."} <b>Lose it and tap <em>lost ball</em> next to your name on that hole</b> — that's the only thing you ever need to do (it records who lost it and where). Finish the match with it still in play and your ${r.scoring === "singles" ? "match" : "pairing"} banks <b>+${CONFIG.survivorPts}</b> for the team automatically. ${Number(CONFIG.survivorSweep) ? `<b>Day sweep:</b> every pairing on a team keeps its ball in every round of the day → an extra <b>+${CONFIG.survivorSweep}</b>.` : ""}` : "";
+  const surv = survApplies(r) ? `<b>Survivor ball:</b> every ${r.scoring === "singles" ? "player" : "pairing"} starts the round with a survivor ball. ${r.scoring === "singles" ? "Play it on every hole." : "Partners alternate: one plays it on hole 1, the other on hole 2, back to the first on 3, and so on — and it must be used for the whole hole."} <b>Lose it and tap <em>lost ball</em> next to your name on that hole</b> — that's the only thing you ever need to do (it records who lost it and where). Finish the match with it still in play and your ${r.scoring === "singles" ? "match" : "pairing"} banks <b>+${CONFIG.survivorPts}</b> for the team automatically. ${Number(CONFIG.survivorSweep) ? `<b>Sweep:</b> every pairing on the team keeps its ball this round → an extra <b>+${CONFIG.survivorSweep}</b> to the team.` : ""}` : "";
   return [entry, fmt, hcp, mp, surv].filter(Boolean).map(P).join("");
 }
 const scoreClass = (g, par) => g === null ? "empty" : (d => d <= -2 ? "eagle" : d === -1 ? "birdie" : d === 0 ? "" : d === 1 ? "bogey" : "dbl")(g - par);

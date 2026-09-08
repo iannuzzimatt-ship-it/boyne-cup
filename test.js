@@ -103,10 +103,10 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
   reset(); }
 { Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); Store.set(["pair","r1","m2"], { a:["a3","a4"], b:["b3","b4"] }); Store.set(["pair","r1","m3"], { a:["a5","a6"], b:["b5","b6"] });
   winHoles("r1","m1","a",1,10); winHoles("r1","m2","b",1,10); for (let h = 1; h <= 18; h++) O("r1","m3",h,"h");
-  let p = roundPoints("r1"); eq([p.a, p.b, p.final, p.sa, p.sb], [4.5, 4.5, true, 1.5, 1.5], "D15 matches done 3-3; every pairing kept its ball by default → +1.5 each, round final"); eq(roundStatus("r1"), "final", "D16 status final");
+  let p = roundPoints("r1"); eq([p.a, p.b, p.final, p.sa, p.sb], [7.5, 7.5, true, 4.5, 4.5], "D15 matches done 3-3; every pairing kept its ball → +1.5 each plus a round sweep +3 each, round final"); eq(roundStatus("r1"), "final", "D16 status final");
   Store.set(["surv","r1","m2","b"], 7); p = roundPoints("r1"); eq([p.b, p.sb], [4, 1], "D17 B's Match 2 pairing lost it on 7 → B 3 + 1.0"); eq(survStatus("r1","m2","b"), "lost", "D17a status lost"); eq(survLostHole("r1","m2","b"), 7, "D17b hole recorded");
-  const db = dayBonus()["2026-09-17"]; eq([db.a.swept, db.a.pts, db.b.swept, db.b.lost], [true, 3, false, 1], "D17c Thursday sweep: A kept all three → +3, B lost one → no sweep");
-  const t0 = cupTotals(); eq([t0.a, t0.b], [7.5, 4], "D17d cup totals include pairing bonuses + day sweep");
+  const sw1 = roundSweep("r1"); eq([sw1.a.swept, sw1.a.pts, sw1.b.swept, sw1.b.lost], [true, 3, false, 1], "D17c round sweep: A kept all three → +3, B lost one → no sweep");
+  const t0 = cupTotals(); eq([t0.a, t0.b], [7.5, 4], "D17d cup totals include pairing bonuses + round sweep");
   Store.set(["surv","r1","m2","b"], null); eq(survStatus("r1","m2","b"), "kept", "D17e undo → kept again");
   reset(); Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); winHoles("r1","m1","a",1,5); eq(survStatus("r1","m1","a"), "play", "D17f match in progress → ball 'in play', no bonus yet"); eq(roundPoints("r1").sa, 0, "D17g no survivor points until the match is decided");
   Me.save("a1"); eq([canSurv("a","r1","m1"), canSurv("b","r1","m1")], [true, false], "D22 only the pairing's own players can mark a loss"); Me.save("a3"); eq(canSurv("a","r1","m1"), false, "D22b teammate not in the match cannot"); Me.save("admin"); eq([canSurv("a","r1","m1"), canSurv("b","r1","m1")], [true, true], "D23 commissioner both");
@@ -115,10 +115,10 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
   ["r1","r2","r4","r5"].forEach(rid => ROUND[rid].matches.forEach((m, i) => Store.set(["pair", rid, m.id], { a:["a"+(2*i+1), "a"+(2*i+2)], b:["b"+(2*i+1), "b"+(2*i+2)] })));
   ROUND.r3.matches.forEach((m, i) => Store.set(["pair","r3",m.id], { a:["a"+(i+1)], b:["b"+(i+1)] }));
   ["r1","r2","r3"].forEach(rid => ROUND[rid].matches.forEach(m => winHoles(rid, m.id, "a", 1, 10)));
-  let t = cupTotals(); eq([t.a, t.matchLeft], [24 + 12 * 0.5 + 3 + 3, 12], "D24 A: 24 match + 12 pairings kept (6) + Thu and Fri sweeps (6); 12 match pts left"); ok(t.aWon && !t.bWon, "D25 A has clinched: B's ceiling is 12 match + 3 pairings + Sat sweep = 18"); eq(t.done, false, "D26 not done");
+  let t = cupTotals(); eq([t.a, t.matchLeft], [24 + 12 * 0.5 + 3 * 3, 12], "D24 A: 24 match + 12 pairings kept (6) + three round sweeps (9); 12 match pts left"); ok(t.aWon && !t.bWon, "D25 A has clinched: B's ceiling is 12 match + 6 pairings (3) + 2 sweeps (6) = 21 < 39"); eq(t.done, false, "D26 not done");
   // B wins everything left; A loses every ball from here: A = 24 + 6 + 3 (Thu sweep) = 33; B = 12 + 18 × 0.5 + 3 sweeps... B lost r1-r3? no — B kept all too
   ["r4","r5"].forEach(rid => ROUND[rid].matches.forEach(m => winHoles(rid, m.id, "b", 1, 10))); CONFIG.rounds.forEach(r => matchesOf(r).forEach(m => Store.set(["surv", r.id, m.id, "a"], 3)));
-  t = cupTotals(); eq([t.a, t.b, t.done], [24, 12 + 18 * 0.5 + 9, true], "D27 all done: A 24 (lost every ball), B 12 match + 9 pairings + 3 sweeps = 30"); ok(t.bWon && !t.aWon, "D28 survivor bonuses can outweigh matches");
+  t = cupTotals(); eq([t.a, t.b, t.done], [24, 12 + 18 * 0.5 + 5 * 3, true], "D27 all done: A 24 (lost every ball), B 12 match + 9 pairings + 5 round sweeps = 36"); ok(t.bWon && !t.aWon, "D28 survivor bonuses can outweigh matches");
   reset(); }
 { // tie scenario: 18-18 on match points, survivor decides
   CONFIG.rounds.forEach(r => ROUND[r.id].matches.forEach((m, i) => Store.set(["pair", r.id, m.id], r.scoring === "singles" ? { a:["a"+(i+1)], b:["b"+(i+1)] } : { a:["a"+(2*i+1), "a"+(2*i+2)], b:["b"+(2*i+1), "b"+(2*i+2)] })));
