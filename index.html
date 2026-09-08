@@ -876,8 +876,7 @@ function renderCup(){
   const banner = t.aWon ? `<div class="won-banner">${esc(TA().name)} wins the cup</div>` : t.bWon ? `<div class="won-banner">${esc(TB().name)} wins the cup</div>` : (t.done && t.a === t.b) ? `<div class="won-banner">Tied — cup shared</div>` : "";
   const need = (n, can) => can ? `needs <b>${fmtPts(n)}</b> to clinch` : `<span class="muted">can't clinch yet</span>`;
   const clinch = (t.aWon || t.bWon || t.done) ? "" : `<div class="clinch">${esc(TA().short)} ${need(t.aNeeds, t.aCan)} &nbsp;·&nbsp; ${esc(TB().short)} ${need(t.bNeeds, t.bCan)} &nbsp;·&nbsp; <b>${fmtPts(t.matchLeft)}</b> match pts left</div>`;
-  const under = (t.aWon || t.bWon || t.done) ? "" : `<div class="track-under">${esc(TA().short)} needs <b>${fmtPts(t.aNeeds)}</b> · ${esc(TB().short)} needs <b>${fmtPts(t.bNeeds)}</b> · ${fmtPts(t.matchLeft)} match pts left</div>
-    <div class="track-note">to clinch = lead by more than the other side can still win, bonuses included</div>`;
+  const under = (t.aWon || t.bWon) ? `<div class="track-under" style="color:var(--gold)">${esc((t.aWon ? TA() : TB()).short)} clinches the Cup${t.matchLeft ? " · " + fmtPts(t.matchLeft) + " match pts still to play" : ""}</div>` : t.done ? "" : `<div class="track-under">${fmtPts(t.matchLeft)} match pts left</div>`;
   $("#v-cup").innerHTML = `
     <div class="score-names"><span class="a">${esc(TA().name)}</span><span class="v">v</span><span class="b">${esc(TB().name)}</span></div>
     <div class="track" style="margin-top:.5rem"><div class="track-a" style="width:${aPct}%"></div><div class="track-b" style="width:${bPct}%"></div>
