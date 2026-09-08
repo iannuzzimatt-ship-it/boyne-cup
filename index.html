@@ -39,7 +39,7 @@ a{color:var(--gold)}
 
 /* ══ HERO ══ */
 .hero{background:linear-gradient(165deg,#1a4030 0%,var(--bg) 78%);
-  padding:1.4rem 1rem .9rem;text-align:center;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+  padding:calc(1.6rem + env(safe-area-inset-top,0px)) 1rem .9rem;text-align:center;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
 .hero::after{content:'';position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(216,169,74,.10),transparent 70%)}
 .hero-kick{font-family:var(--hd);font-size:.72rem;font-weight:600;letter-spacing:.34em;
@@ -157,6 +157,9 @@ summary::-webkit-details-marker{display:none}
 .track-n{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-family:var(--hd);font-weight:700;font-size:1.9rem;line-height:1;z-index:3;padding:0 .8rem;text-shadow:0 1px 3px rgba(0,0,0,.45)}
 .track-n.a{left:0;color:#fff} .track-n.b{right:0;color:#fff}
 .track-n.a.off{color:var(--a-lt);text-shadow:none} .track-n.b.off{color:var(--b-lt);text-shadow:none}
+.score-names{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;padding:1.1rem .2rem 0;font-family:var(--hd);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.95rem}
+.score-names .a{color:var(--a-lt)} .score-names .b{color:var(--b-lt);text-align:right} .score-names .v{color:var(--tx3);font-size:.75rem;font-weight:600}
+.track-under{text-align:center;margin-top:.5rem;font-family:var(--hd);font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tx2)}
 .track-wrap{position:relative;padding-top:1.1rem}
 .track-cl{position:absolute;top:0;left:50%;transform:translateX(-50%);font-family:var(--hd);font-size:.62rem;font-weight:700;letter-spacing:.12em;color:var(--gold);white-space:nowrap;text-transform:uppercase}
 .track-lbl{display:flex;justify-content:space-between;margin-top:.4rem;
@@ -855,16 +858,13 @@ function renderCup(){
   const need = (n, can) => can ? `needs <b>${fmtPts(n)}</b> to clinch` : `<span class="muted">can't clinch yet</span>`;
   const clinch = (t.aWon || t.bWon || t.done) ? "" : `<div class="clinch">${esc(TA().short)} ${need(t.aNeeds, t.aCan)} &nbsp;·&nbsp; ${esc(TB().short)} ${need(t.bNeeds, t.bCan)} &nbsp;·&nbsp; <b>${fmtPts(t.matchLeft)}</b> match pts left</div>`;
   const toWin = t.avail / 2 + 0.5;
+  const needs = (t.aWon || t.bWon || t.done) ? "" : [t.aNeeds <= t.matchLeft ? `${esc(TA().short)} needs ${fmtPts(t.aNeeds)}` : "", t.bNeeds <= t.matchLeft ? `${esc(TB().short)} needs ${fmtPts(t.bNeeds)}` : ""].filter(Boolean).join(" · ");
+  const under = (t.aWon || t.bWon) ? "" : `<div class="track-under">${fmtPts(toWin)} to clinch · ${fmtPts(t.matchLeft)} match pts left${needs ? " · " + needs : ""}</div>`;
   $("#v-cup").innerHTML = `
-    <div class="bigscore" style="padding-bottom:0">
-      <div class="bs-side"><div class="bs-nm a">${esc(TA().name)}</div><div class="bs-cap">${esc(TA().captain || "")}</div></div>
-      <div class="bs-mid">v</div>
-      <div class="bs-side"><div class="bs-nm b">${esc(TB().name)}</div><div class="bs-cap">${esc(TB().captain || "")}</div></div>
-    </div>
-    <div class="track-wrap"><div class="track-cl">▼ ${fmtPts(toWin)} clinches</div><div class="track"><div class="track-a" style="width:${aPct}%"></div><div class="track-mid"></div><div class="track-b" style="width:${bPct}%"></div>
-      <div class="track-n a ${aPct < 14 ? "off" : ""}">${fmtPts(t.a)}</div><div class="track-n b ${bPct < 14 ? "off" : ""}">${fmtPts(t.b)}</div></div></div>
-    <div class="track-lbl"><span>0</span><span>${fmtPts(t.avail)} match points + survivor bonuses</span><span>${fmtPts(t.avail)}</span></div>
-    ${clinch}${banner}
+    <div class="score-names"><span class="a">${esc(TA().name)}</span><span class="v">v</span><span class="b">${esc(TB().name)}</span></div>
+    <div class="track" style="margin-top:.5rem"><div class="track-a" style="width:${aPct}%"></div><div class="track-mid"></div><div class="track-b" style="width:${bPct}%"></div>
+      <div class="track-n a ${aPct < 14 ? "off" : ""}">${fmtPts(t.a)}</div><div class="track-n b ${bPct < 14 ? "off" : ""}">${fmtPts(t.b)}</div></div>
+    ${under}${banner}
     ${renderLiveNow()}
     <div class="sect"><div class="sect-h">The Rounds</div>${renderTiles()}${renderRoundBlock(ROUND[UI.cupRound && ROUND[UI.cupRound] ? UI.cupRound : nextRound().id])}</div>
     ${renderSweep()}${renderSolo()}${renderHonours()}
@@ -1258,7 +1258,7 @@ document.addEventListener("touchend", e => { if (tx0 === null) return; const dx 
 const DEMO = /[?&]demo=1/.test(location.search);
 if (DEMO) {
   CONFIG.firebase = null; CONFIG.tripKey = "demo4"; CONFIG.title = CONFIG.title + " · DEMO";
-  const b = document.createElement("div"); b.textContent = "DEMO MODE — dummy scores, this phone only. Remove ?demo=1 from the link for the real board."; b.style.cssText = "background:#d8a94a;color:#1a1204;font:600 .72rem/1.3 Inter,system-ui;text-align:center;padding:.4rem .8rem;letter-spacing:.04em";
+  const b = document.createElement("div"); b.textContent = "DEMO MODE — dummy scores, this phone only. Remove ?demo=1 from the link for the real board."; b.style.cssText = "background:#d8a94a;color:#1a1204;font:600 .72rem/1.3 Inter,system-ui;text-align:center;padding:calc(.4rem + env(safe-area-inset-top,0px)) .8rem .4rem;letter-spacing:.04em";
   document.body.prepend(b);
   Store.onChange(function seedOnce(){ if (Store._seeded) return; Store._seeded = true; if (Object.keys(Store.data.gross || {}).length) return;
     let seed = 2026; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
