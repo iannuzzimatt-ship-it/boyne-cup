@@ -864,7 +864,7 @@ function soloStandings(){
   const rids = CONFIG.solo.rounds.filter(id => ROUND[id]);
   return CONFIG.players.map(p => { const rounds = rids.map(rid => playerRound(rid, p.id)).filter(Boolean), played = rounds.filter(x => x.thru > 0);
     return { id:p.id, rounds, net:played.reduce((s, x) => s + x.netToPar, 0), grossTP:played.reduce((s, x) => s + x.grossToPar, 0), gross:played.reduce((s, x) => s + x.gross, 0), holes:played.reduce((s, x) => s + x.thru, 0), birdies:played.reduce((s, x) => s + x.birdies, 0), eagles:played.reduce((s, x) => s + x.eagles, 0) }; })
-    .filter(x => x.holes > 0).sort((x, y) => ((UI.soloSort === "gross" ? x.grossTP - y.grossTP : x.net - y.net)) || (y.holes - x.holes));
+    .filter(x => x.holes > 0);
 }
 function playerStats(){
   const S = {}; CONFIG.players.forEach(p => S[p.id] = { id:p.id, team:p.team, w:0, l:0, h:0, played:0, pts:0, hw:0, hl:0, hh:0, birdies:0, eagles:0, pars:0, snow:0, blow:0,
@@ -993,17 +993,20 @@ ${body}
 }
 const SUM = (label, hint) => `<summary style="padding:.7rem .85rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem;font-family:var(--hd);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:var(--gold)"><span>${label}</span><span class="hint" style="margin-left:auto;font-size:.7rem;color:var(--tx3);letter-spacing:.06em;font-weight:500;text-transform:none;font-family:var(--bd)">${hint}</span></summary>`;
 function renderSolo(){
-  const rows = soloStandings(), rids = CONFIG.solo.rounds.filter(id => ROUND[id]), g = UI.soloSort === "gross";
-  const leader = rows.length ? `${pshort(rows[0].id)} ${toPar(g ? rows[0].grossTP : rows[0].net)}` : "no scores yet";
+  const rids = CONFIG.solo.rounds.filter(id => ROUND[id]), rows = soloStandings(), { key, dir } = UI.soloSort;
+  const val = (x, k) => k === "name" ? pshort(x.id) : k === "holes" ? x.holes : k === "net" ? x.net : k === "gross" ? x.grossTP : (() => { const pr = x.rounds.find(q => q.rid === k); return pr && pr.thru ? pr.netToPar : null; })();
+  rows.sort((x, y) => { const a = val(x, key), b = val(y, key); if (a === null && b === null) return 0; if (a === null) return 1; if (b === null) return -1;
+    const c = typeof a === "string" ? a.localeCompare(b) : a - b; return (dir === "asc" ? c : -c) || (y.holes - x.holes); });
+  const th = (k, label, cls = "num") => `<th class="${cls}" data-solosort="${k}" style="cursor:pointer;white-space:nowrap;${key === k ? "color:var(--gold)" : ""}">${label}${key === k ? (dir === "asc" ? " ▲" : " ▼") : ""}</th>`;
+  const leader = rows.length ? `${pshort(rows[0].id)} ${toPar(val(rows[0], key === "gross" ? "gross" : "net"))}` : "no scores yet";
   const head = `<div class="sect"><div class="sect-h">${esc(CONFIG.solo.name)}</div><details class="card">${SUM("Standings", esc(leader))}<div style="padding:.6rem .85rem .85rem">
-    <div class="row" style="margin-bottom:.5rem"><span class="tiny muted grow">${g ? "Gross" : "Net"} score to par, ${rids.map(id => dayShort(ROUND[id].date).split(",")[0] + " " + (parseTee(ROUND[id].tee) < 720 ? "AM" : "PM")).join(" · ")} combined.</span>
-      <span style="display:inline-flex;border:1px solid var(--line2);border-radius:99px;overflow:hidden"><button class="lv-chip ${g ? "" : "on"}" data-solo="net" style="border:none;border-radius:0;padding:.3rem .6rem;font-size:.66rem">Net</button><button class="lv-chip ${g ? "on" : ""}" data-solo="gross" style="border:none;border-radius:0;padding:.3rem .6rem;font-size:.66rem">Gross</button></span></div>`;
+    <div class="tiny muted" style="margin-bottom:.5rem">Best ball and singles rounds — your own ball, net of full handicap.</div>`;
   if (!rows.length) return head + `<div class="empty">Standings appear after the first hole is scored</div></div></details></div>`;
-  const cell = pr => !pr || !pr.thru ? "—" : toPar(g ? pr.grossToPar : pr.netToPar) + (pr.complete ? "" : "*");
-  return head + `<div style="overflow-x:auto;border:1px solid var(--line);border-radius:10px"><table class="tbl"><thead><tr><th></th><th>Player</th>${rids.map(id => `<th class="num">${esc(dayShort(ROUND[id].date).split(",")[0])}</th>`).join("")}<th class="num">Holes</th><th class="num" style="${g ? "" : "color:var(--gold)"}">Net</th><th class="num" style="${g ? "color:var(--gold)" : ""}">Gross</th></tr></thead><tbody>` +
+  const cell = pr => !pr || !pr.thru ? "—" : toPar(pr.netToPar) + (pr.complete ? "" : "*");
+  return head + `<div style="overflow-x:auto;border:1px solid var(--line);border-radius:10px"><table class="tbl"><thead><tr><th></th>${th("name", "Player", "")}${rids.map(id => th(id, dayShort(ROUND[id].date).split(",")[0] + " " + (parseTee(ROUND[id].tee) < 720 ? "AM" : "PM"))).join("")}${th("holes", "Holes")}${th("net", "Net")}${th("gross", "Gross")}</tr></thead><tbody>` +
     rows.map((x, i) => `<tr><td class="rk ${i === 0 ? "top" : ""}">${i + 1}</td><td><span class="tdot ${teamOf(x.id)}"></span>${esc(pshort(x.id))}</td>${rids.map(rid => `<td class="num muted">${cell(x.rounds.find(q => q.rid === rid))}</td>`).join("")}<td class="num muted">${x.holes}</td>
-      <td class="num" style="font-weight:${g ? 500 : 700};${g ? "color:var(--tx2)" : ""}">${toPar(x.net)}</td><td class="num" style="font-weight:${g ? 700 : 500};${g ? "" : "color:var(--tx2)"}">${toPar(x.grossTP)} <span class="tiny muted">(${x.gross})</span></td></tr>`).join("") +
-    `</tbody></table></div><div class="tiny muted" style="margin-top:.4rem;line-height:1.55">${g ? "Gross score to par." : "Net score to par, full handicap."} Lowest total wins. Own-ball rounds only. * = still on the course.</div></div></details></div>`;
+      <td class="num" style="font-weight:700">${toPar(x.net)}</td><td class="num" style="color:var(--tx2)">${toPar(x.grossTP)} <span class="tiny muted">(${x.gross})</span></td></tr>`).join("") +
+    `</tbody></table></div><div class="tiny muted" style="margin-top:.4rem;line-height:1.55">Lowest wins. Tap a column heading to sort. * = still on the course.</div></div></details></div>`;
 }
 function renderHonours(){
   const list = Object.values(playerStats()), revealed = !!Store.get(["meta", "honoursPublic"], false), admin = Me.isAdmin(), hide = !revealed && !admin;
@@ -1040,7 +1043,7 @@ function renderHonours(){
 
 <script>
 /* ═══ RENDER: LIVE ══════════════════════════════════════════ */
-const UI = { rid:null, mid:null, hole:1, card:false, editPairs:false, soloSort:"net", cupRound:null };
+const UI = { rid:null, mid:null, hole:1, card:false, editPairs:false, soloSort:{ key:"net", dir:"asc" }, cupRound:null };
 function myMatch(rid){ if (!P[Me.role]) return null; return matchesOf(ROUND[rid]).find(m => m.a.includes(Me.role) || m.b.includes(Me.role)) || null; }
 function firstOpenHole(rid, mid){ const r = ROUND[rid], m = matchOf(rid, mid), sc = scorers(r, m); for (let i = 1; i <= r.holes; i++) if (!holeResult(r, m, sc, i)) return i; return r.holes; }
 function openCard(rid, mid){ UI.rid = rid; UI.mid = mid; UI.card = true; UI.hole = firstOpenHole(rid, mid); renderLive(); window.scrollTo({ top:0 }); }
@@ -1317,7 +1320,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("#honoursToggle") && Me.isAdmin()) return Store.set(["meta", "honoursPublic"], Store.get(["meta", "honoursPublic"], false) ? null : true);
   const ct = e.target.closest("[data-cfgtoggle]"); if (ct && Me.isAdmin()) { const k = ct.dataset.cfgtoggle, rid = ct.dataset.rid, cur = !!(SET(k, {}) || {})[rid]; return Store.set(["cfg", k, rid], cur ? null : true); }
   const tl = e.target.closest("[data-tile]"); if (tl) { UI.cupRound = tl.dataset.tile; return renderCup(); }
-  const ss = e.target.closest("[data-solo]"); if (ss) { UI.soloSort = ss.dataset.solo; return renderCup(); }
+  const ss = e.target.closest("[data-solosort]"); if (ss) { const k = ss.dataset.solosort; UI.soloSort = UI.soloSort.key === k ? { key:k, dir:UI.soloSort.dir === "asc" ? "desc" : "asc" } : { key:k, dir:"asc" }; return renderCup(); }
   const rc = e.target.closest("[data-r].lv-chip"); if (rc) { UI.rid = rc.dataset.r; UI.mid = null; UI.card = false; UI.editPairs = false; return renderLive(); }
   if (e.target.closest("#editPairs")) { UI.editPairs = !UI.editPairs; return renderLive(); }
   const go = e.target.closest("[data-go]"); if (go) { const [rid, mid] = go.dataset.go.split(":"); if (!isSet(matchOf(rid, mid))) return; curView = "live"; $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-live")); $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.v === "live")); return openCard(rid, mid); }
