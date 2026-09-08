@@ -912,8 +912,8 @@ function renderCupInner(){
   const t = cupTotals(), scale = Math.max(t.avail, t.a + t.b + t.matchLeft, t.a + t.survLeftA, t.b + t.survLeftB), aPct = scale ? Math.min(100, t.a / scale * 100) : 0, bPct = scale ? Math.min(100, t.b / scale * 100) : 0;
   const banner = t.aWon ? `<div class="won-banner">${esc(TA().name)} wins the cup</div>` : t.bWon ? `<div class="won-banner">${esc(TB().name)} wins the cup</div>` : (t.done && t.a === t.b) ? `<div class="won-banner">Tied on points — tiebreaker to be decided</div>` : "";
   const need = (n, can) => can ? `needs <b>${fmtPts(n)}</b> to clinch` : `<span class="muted">can't clinch yet</span>`;
-  const clinch = (t.aWon || t.bWon || t.done) ? "" : `<div class="clinch">${esc(TA().short)} ${need(t.aNeeds, t.aCan)} &nbsp;·&nbsp; ${esc(TB().short)} ${need(t.bNeeds, t.bCan)} &nbsp;·&nbsp; <b>${fmtPts(t.matchLeft)}</b> match pts left</div>`;
-  const under = (t.aWon || t.bWon) ? `<div class="track-under" style="color:var(--gold)">${esc((t.aWon ? TA() : TB()).short)} clinches the Cup${t.matchLeft ? " · " + fmtPts(t.matchLeft) + " match pts still to play" : ""}</div>` : t.done ? "" : `<div class="track-under">${fmtPts(t.matchLeft)} match pts left</div>`;
+  const clinch = (t.aWon || t.bWon || t.done) ? "" : `<div class="clinch">${esc(TA().short)} ${need(t.aNeeds, t.aCan)} &nbsp;·&nbsp; ${esc(TB().short)} ${need(t.bNeeds, t.bCan)} &nbsp;·&nbsp; <b>${fmtPts(t.matchLeft)}</b> match pts remain</div>`;
+  const under = (t.aWon || t.bWon) ? `<div class="track-under" style="color:var(--gold)">${esc((t.aWon ? TA() : TB()).short)} clinches the Cup${t.matchLeft ? " · " + fmtPts(t.matchLeft) + " match pts remain" : ""}</div>` : t.done ? "" : `<div class="track-under">${fmtPts(t.matchLeft)} match pts remain</div>`;
   $("#v-cup").innerHTML = `
     <div class="score-names"><span class="a">${esc(TA().name)}</span><span class="v">v</span><span class="b">${esc(TB().name)}</span></div>
     <div class="track" style="margin-top:.5rem"><div class="track-a" style="width:${aPct}%"></div><div class="track-b" style="width:${bPct}%"></div>
@@ -1213,6 +1213,21 @@ async function loadWeather(){
     WX[d + ":where"] = c.club || c.name; try { const j = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation_probability,precipitation,weathercode,windspeed_10m&temperature_unit=celsius&windspeed_unit=kmh&timezone=America%2FDetroit&start_date=${d}&end_date=${d}`)).json(); WX[d] = j.hourly; } catch(e){ console.warn("wx", e); } }));
   wxBusy = false; renderTrip();
 }
+function wxSummary(h){
+  const idx = [...Array(h.time.length).keys()].filter(i => { const hr = +h.time[i].slice(11, 13); return hr >= 8 && hr <= 18; }); if (!idx.length) return "";
+  const codes = idx.map(i => h.weathercode[i]), pp = idx.map(i => h.precipitation_probability[i]), tmp = idx.map(i => h.temperature_2m[i]), wind = idx.map(i => h.windspeed_10m[i]);
+  const bucket = c => c === 0 ? "sunny" : c <= 2 ? "partly cloudy" : c === 3 ? "overcast" : c <= 49 ? "foggy" : c <= 67 ? "rainy" : c <= 77 ? "snowy" : c <= 82 ? "showery" : "stormy";
+  const counts = {}; codes.forEach(c => { const b = bucket(c); counts[b] = (counts[b] || 0) + 1; });
+  const dom = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0], share = counts[dom] / codes.length;
+  let sky = dom === "sunny" ? (share > 0.75 ? "Sunny" : "Mostly sunny") : dom === "partly cloudy" ? (counts.sunny ? "Sun and cloud" : "Partly cloudy") : dom === "overcast" ? "Overcast" : dom === "foggy" ? "Foggy start" : dom === "rainy" ? "Rain" : dom === "showery" ? "Showers" : dom === "snowy" ? "Snow" : "Thunderstorms";
+  const lo = Math.round(Math.min(...tmp)), hi = Math.round(Math.max(...tmp));
+  const half = Math.floor(idx.length / 2), amPP = Math.max(...pp.slice(0, half)), pmPP = Math.max(...pp.slice(half)), maxPP = Math.max(amPP, pmPP);
+  let rain = ""; if (maxPP >= 60) rain = `${dom === "rainy" || dom === "showery" ? "Rain likely" : "Showers likely"} ${pmPP > amPP + 15 ? "in the afternoon" : amPP > pmPP + 15 ? "in the morning" : "through the day"} (${maxPP}%).`;
+  else if (maxPP >= 30) rain = `Chance of showers ${pmPP > amPP + 15 ? "in the afternoon" : amPP > pmPP + 15 ? "in the morning" : ""} (${maxPP}%).`.replace("  ", " ");
+  else if (maxPP >= 15) rain = "Slight chance of a shower.";
+  const w = Math.max(...wind); const windTxt = w >= 40 ? `Windy, up to ${Math.round(w)} km/h.` : w >= 25 ? `Breezy, up to ${Math.round(w)} km/h.` : "Light winds.";
+  return `${sky}, ${lo}–${hi}°. ${rain} ${windTxt}`.replace(/\s+/g, " ").trim();
+}
 function wxStrip(date){
   if (!WX) return `<div class="tiny muted">Loading forecast…</div>`; if (WX.tooFar) return `<div class="tiny muted">Forecast unlocks about two weeks out.</div>`;
   const h = WX[date]; if (!h) return `<div class="tiny muted">No forecast yet.</div>`; const cards = [];
@@ -1220,7 +1235,7 @@ function wxStrip(date){
     const mm = h.precipitation?.[i] || 0, pp = h.precipitation_probability[i];
     cards.push(`<div class="wx-c"><div class="wx-h">${lbl}</div><div class="wx-i">${wxIcon(h.weathercode[i])}</div><div class="wx-t">${Math.round(h.temperature_2m[i])}°</div>
       <div class="wx-w">💨 ${Math.round(h.windspeed_10m[i])} km/h</div><div class="wx-w" style="color:${pp >= 50 ? "var(--a-lt)" : pp >= 25 ? "var(--gold)" : "var(--tx2)"}">☔ ${pp}%${mm >= 0.1 ? " · " + (mm < 1 ? mm.toFixed(1) : Math.round(mm)) + " mm" : ""}</div></div>`); }
-  return `<div class="tiny muted" style="margin-bottom:.3rem">Forecast at ${esc(WX[date + ":where"] || "the course")} · °C · wind · chance of rain (mm if any)</div><div class="wx">${cards.join("")}</div>`;
+  return `<div class="tiny" style="margin-bottom:.35rem;color:var(--tx2);line-height:1.45"><b style="color:var(--beige)">${esc(WX[date + ":where"] || "Forecast")}:</b> ${esc(wxSummary(h))}</div><div class="wx">${cards.join("")}</div>`;
 }
 function renderTrip(){
   const admin = Me.isAdmin();
@@ -1288,7 +1303,7 @@ function hero(){
   if (now > d1) { const t = cupTotals(); cd.textContent = t.a === t.b ? "Cup shared" : (t.a > t.b ? TA().name : TB().name) + " · Champions"; } else if (n > 1) cd.textContent = n + " days out"; else if (n === 1) cd.textContent = "Tomorrow"; else cd.innerHTML = `<span class="dot"></span>Game on`;
 }
 function openLogin(){
-  const sel = $("#whoSel"), grp = t => `<optgroup label="${esc(TEAM(t).name)}">` + CONFIG.players.filter(p => p.team === t).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("") + "</optgroup>";
+  const sel = $("#whoSel"), grp = t => `<optgroup label="${esc(TEAM(t).name)}">` + CONFIG.players.filter(p => p.team === t).slice().sort((x, y) => x.name.localeCompare(y.name)).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("") + "</optgroup>";
   sel.innerHTML = `<option value="">Choose…</option>${grp("a")}${grp("b")}<optgroup label="Officials"><option value="admin">Commissioner</option></optgroup>`;
   $("#loginErr").classList.remove("show"); $("#pcIn").value = ""; $("#loginOv").classList.add("open");
   const needs = who => who === "admin" ? CONFIG.adminPin : (P[who]?.pin || null);
