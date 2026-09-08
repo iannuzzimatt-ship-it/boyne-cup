@@ -1219,9 +1219,9 @@ function wxSummary(h){
   const bucket = c => c === 0 ? "sunny" : c <= 2 ? "partly cloudy" : c === 3 ? "overcast" : c <= 49 ? "foggy" : c <= 67 ? "rainy" : c <= 77 ? "snowy" : c <= 82 ? "showery" : "stormy";
   const counts = {}; codes.forEach(c => { const b = bucket(c); counts[b] = (counts[b] || 0) + 1; });
   const dom = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0], share = counts[dom] / codes.length;
-  let sky = dom === "sunny" ? (share > 0.75 ? "Sunny" : "Mostly sunny") : dom === "partly cloudy" ? (counts.sunny ? "Sun and cloud" : "Partly cloudy") : dom === "overcast" ? "Overcast" : dom === "foggy" ? "Foggy start" : dom === "rainy" ? "Rain" : dom === "showery" ? "Showers" : dom === "snowy" ? "Snow" : "Thunderstorms";
   const lo = Math.round(Math.min(...tmp)), hi = Math.round(Math.max(...tmp));
   const half = Math.floor(idx.length / 2), amPP = Math.max(...pp.slice(0, half)), pmPP = Math.max(...pp.slice(half)), maxPP = Math.max(amPP, pmPP);
+  let sky = dom === "sunny" ? (share > 0.75 ? "Sunny" : "Mostly sunny") : dom === "partly cloudy" ? (counts.sunny ? "Sun and cloud" : "Partly cloudy") : dom === "overcast" ? "Overcast" : dom === "foggy" ? "Foggy start" : (dom === "rainy" || dom === "showery") ? (maxPP >= 60 ? "Wet" : "Cloudy, showers around") : dom === "snowy" ? "Snow" : "Thunderstorms";
   let rain = ""; if (maxPP >= 60) rain = `${dom === "rainy" || dom === "showery" ? "Rain likely" : "Showers likely"} ${pmPP > amPP + 15 ? "in the afternoon" : amPP > pmPP + 15 ? "in the morning" : "through the day"} (${maxPP}%).`;
   else if (maxPP >= 30) rain = `Chance of showers ${pmPP > amPP + 15 ? "in the afternoon" : amPP > pmPP + 15 ? "in the morning" : ""} (${maxPP}%).`.replace("  ", " ");
   else if (maxPP >= 15) rain = "Slight chance of a shower.";
