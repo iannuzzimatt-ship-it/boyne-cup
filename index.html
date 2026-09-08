@@ -1069,10 +1069,10 @@ function renderLive(){
         ${c.tees ? `<label class="tiny muted" style="margin-left:auto">Tees <select data-teebox="${r.id}" style="background:var(--bg3);border:1px solid var(--line2);border-radius:6px;color:var(--tx);padding:.3rem .4rem;font-size:.75rem">${Object.keys(c.tees).map(t => `<option ${t === teeBox(r) ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>` : ""}</div>`
         : (c.tees ? `<div class="tiny muted" style="margin-bottom:.5rem">${esc(teeBox(r))} tees · ${yards(r).reduce((x, y) => x + y, 0).toLocaleString()} yds</div>` : "")}
       ${admin && UI.editPairs ? renderPairEditor(r, ms) : `<div class="card">${groups}</div>`}
-      <div class="tiny muted" style="margin-top:.45rem;text-align:center">${r.note}${Me.canScore() && !UI.editPairs ? " · Tap your match to score it, any match to watch" : ""}</div></div>
-    <div class="sect"><div class="sect-h">Rules · ${esc(r.format)}</div>
-      <div class="card" style="padding:.75rem .85rem .35rem;font-size:.8rem;line-height:1.5;color:var(--tx2)">${ruleText(r)}</div>
-      <div class="tiny muted" style="margin-top:.4rem;text-align:center">${esc(dayName(r.date))} · ${esc(r.tee)} · ${esc(courseOf(r).name)} · ${r.holes} holes · par ${courseOf(r).par.reduce((a, b) => a + b, 0)}</div></div>`;
+      ${Me.canScore() && !UI.editPairs ? `<div class="tiny muted" style="margin-top:.45rem;text-align:center">Tap your match to score it, any match to watch</div>` : ""}</div>
+    <div class="sect"><div class="sect-h">Rules</div><details class="card">${SUM(esc(r.format), esc(courseOf(r).name) + " · " + r.holes + " holes · par " + courseOf(r).par.reduce((a, b) => a + b, 0))}
+      <div style="padding:.2rem .85rem .35rem;font-size:.8rem;line-height:1.5;color:var(--tx2)">${ruleText(r)}</div>
+      <div class="tiny muted" style="padding:0 .85rem .7rem;text-align:center">${esc(dayName(r.date))} · ${esc(r.tee)} · ${esc(courseOf(r).name)} · ${r.holes} holes · par ${courseOf(r).par.reduce((a, b) => a + b, 0)}</div></details></div>`;
 }
 function renderPairEditor(r, ms){
   const n = slotsPer(r), used = {}; ms.forEach(m => [...m.a, ...m.b].forEach(id => used[id] = (used[id] || 0) + 1));
