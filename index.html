@@ -1221,11 +1221,12 @@ function wxSummary(h){
   const dom = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0], share = counts[dom] / codes.length;
   const lo = Math.round(Math.min(...tmp)), hi = Math.round(Math.max(...tmp));
   const half = Math.floor(idx.length / 2), amPP = Math.max(...pp.slice(0, half)), pmPP = Math.max(...pp.slice(half)), maxPP = Math.max(amPP, pmPP);
-  let sky = dom === "sunny" ? (share > 0.75 ? "Sunny" : "Mostly sunny") : dom === "partly cloudy" ? (counts.sunny ? "Sun and cloud" : "Partly cloudy") : dom === "overcast" ? "Overcast" : dom === "foggy" ? "Foggy start" : (dom === "rainy" || dom === "showery") ? (maxPP >= 60 ? "Wet" : "Cloudy, showers around") : dom === "snowy" ? "Snow" : "Thunderstorms";
+  let sky = dom === "sunny" ? (share > 0.75 ? "Sunny" : "Mostly sunny") : dom === "partly cloudy" ? (counts.sunny ? "Sun and cloud" : "Partly cloudy") : dom === "overcast" ? "Overcast" : dom === "foggy" ? "Fog early" : (dom === "rainy" || dom === "showery") ? "Cloudy" : dom === "snowy" ? "Snow" : "Thunderstorms";
   let rain = ""; if (maxPP >= 60) rain = `${dom === "rainy" || dom === "showery" ? "Rain likely" : "Showers likely"} ${pmPP > amPP + 15 ? "in the afternoon" : amPP > pmPP + 15 ? "in the morning" : "through the day"} (${maxPP}%).`;
   else if (maxPP >= 30) rain = `Chance of showers ${pmPP > amPP + 15 ? "in the afternoon" : amPP > pmPP + 15 ? "in the morning" : ""} (${maxPP}%).`.replace("  ", " ");
   else if (maxPP >= 15) rain = "Slight chance of a shower.";
-  const w = Math.max(...wind); const windTxt = w >= 40 ? `Windy, up to ${Math.round(w)} km/h.` : w >= 25 ? `Breezy, up to ${Math.round(w)} km/h.` : "Light winds.";
+  // Beaufort-style, on the strongest hourly sustained wind of the day (not gusts): <20 light · 20–29 breezy · 30–44 windy · 45+ very windy
+  const w = Math.round(Math.max(...wind)); const windTxt = w >= 45 ? `Very windy, ${w} km/h.` : w >= 30 ? `Windy, ${w} km/h.` : w >= 20 ? `Breezy, ${w} km/h.` : "Light winds.";
   return `${sky}, ${lo}–${hi}°. ${rain} ${windTxt}`.replace(/\s+/g, " ").trim();
 }
 function wxStrip(date){
