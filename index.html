@@ -905,7 +905,8 @@ const dayName  = iso => new Date(iso + "T12:00:00").toLocaleDateString(undefined
 const dayShort = iso => new Date(iso + "T12:00:00").toLocaleDateString(undefined, { weekday:"short", month:"numeric", day:"numeric" });
 const names = ids => ids.length ? ids.map(pshort).map(esc).join("<br>") : `<span class="muted">TBD</span>`;
 
-function keepOpen(root, fn){ if (!root || typeof root.querySelectorAll !== "function") return fn(); const open = new Set([...root.querySelectorAll("details[open] > summary")].map(x => x.textContent.trim().slice(0, 40))); fn(); root.querySelectorAll("details").forEach(d => { const k = d.querySelector("summary")?.textContent.trim().slice(0, 40); if (k && open.has(k)) d.open = true; }); }
+function keepOpen(root, fn){ if (!root || typeof root.querySelectorAll !== "function") return fn(); const key = d => { const sm = d.querySelector("summary"); return sm ? (sm.querySelector("span")?.textContent || sm.textContent).trim().slice(0, 40) : ""; };
+  const open = new Set([...root.querySelectorAll("details[open]")].map(key)); fn(); root.querySelectorAll("details").forEach(d => { if (open.has(key(d))) d.open = true; }); }
 function renderCup(){ keepOpen($("#v-cup"), renderCupInner); }
 function renderCupInner(){
   const t = cupTotals(), scale = Math.max(t.avail, t.a + t.b + t.matchLeft, t.a + t.survLeftA, t.b + t.survLeftB), aPct = scale ? Math.min(100, t.a / scale * 100) : 0, bPct = scale ? Math.min(100, t.b / scale * 100) : 0;
