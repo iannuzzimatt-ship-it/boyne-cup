@@ -796,7 +796,7 @@ function renderSweep(){
     ${["a", "b"].map(side => { const x = p.sweep[side]; return `<div class="sv-team ${x.swept ? "swept" : ""}" title="${x.kept} of ${x.n} kept"><b style="font-family:var(--hd);font-size:.62rem;color:var(--${side}-lt)">${TS(side)}</b>${dots(r, side)}<span class="sv-pts" style="${x.swept ? "" : "color:var(--tx3)"}">${x.swept ? `sweep +${sw}` : x.lost ? `${x.lost} lost` : ""}</span></div>`; }).join("")}</div>`;
   return `<div class="sect"><div class="sect-h">Survivor Ball</div><details class="card">${SUM("By round", hint)}<div style="padding:.3rem .7rem .6rem">
     ${rs.map(row).join("")}
-    <div class="tiny muted" style="margin-top:.5rem;line-height:1.5">One dot per pairing — <span style="color:var(--ok)">●</span> kept (+${CONFIG.survivorPts}), <span style="color:var(--a-lt)">●</span> lost, ○ still out. Gold box = every pairing kept it that round: <b>sweep +${sw}</b>. Balls reset every round. Tap a dot for who and where.</div></div></details></div>`;
+    <div class="tiny muted" style="margin-top:.5rem;line-height:1.5">One dot per pairing — <span style="color:var(--ok)">●</span> kept (+${CONFIG.survivorPts}), <span style="color:var(--a-lt)">●</span> lost, ○ still out. Tap a dot for who and where.</div></div></details></div>`;
 }
 function roundPoints(rid){
   const r = ROUND[rid]; let a = 0, b = 0, avail = 0, final = true, any = false;
