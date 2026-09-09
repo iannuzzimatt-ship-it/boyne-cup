@@ -489,7 +489,7 @@ summary::-webkit-details-marker{display:none}
 
 <div class="strip">
   <div class="strip-s"><span class="strip-d" id="connDot"></span><span id="connTxt">Loading</span></div>
-  <button class="sun" id="sunBtn" title="Sunlight mode">☀︎</button>
+  <button class="sun" id="sunBtn" title="Sunlight mode">🌞</button>
   <button class="strip-u" id="whoBtn">Sign in</button>
 </div>
 
@@ -1094,7 +1094,8 @@ function renderPairEditor(r, ms){
 function ruleText(r){
   const carry = CARRY(), pts = r.matches[0]?.pts ?? 2;
   const P = t => `<p style="margin:0 0 .5rem">${t}</p>`;
-  const entry = `<b>What you type in:</b> every player's <b>gross</b> score on each hole — what you actually shot. The app takes off strokes and works out who won the hole.`;
+  const entry = r.scoring === "scramble" ? `<b>What you type in:</b> your <b>team's</b> score on each hole — one number per side. No strokes in a scramble; the app compares the two and marks who won the hole.`
+    : `<b>What you type in:</b> every player's <b>gross</b> score on each hole — what you actually shot. The app takes off strokes and works out who won the hole.`;
   const fmt = {
     bestball:`<b>Best ball · two-man teams, own ball.</b> On each hole, a player's <em>net</em> is their gross minus any stroke they get there. Your team's score for the hole is the <b>better of you and your partner's nets</b>. The team with the lower score wins the hole; same score, the hole is halved.`,
     bestball2:`<b>Best ball with second-man tiebreak · two-man teams, own ball.</b> On each hole, a player's <em>net</em> is their gross minus any stroke they get there. Your team's score for the hole is the <b>better of you and your partner's nets</b>; lower team score wins the hole. <b>If the two teams' best nets tie</b>, the other two players' nets (the "second men") decide it. If those tie too, the hole is halved.`,
@@ -1288,7 +1289,7 @@ function renderTrip(){
   $("#v-trip").innerHTML = `<div class="sect"><div class="sect-h">Schedule</div>${days}</div>
     <div class="sect"><div class="sect-h">Roster &amp; Handicaps</div><div class="tiny muted" style="margin-bottom:.5rem">Strokes vs scratch. Inside a match, the lowest handicap plays off zero and everyone else gets the full difference.${admin ? " Tap a number to change it — it updates every phone." : ""}</div>${roster}</div>
     <div class="sect"><div class="sect-h">Courses</div>${cards}</div>${comm}
-    <div class="sect"><div class="sect-h">Tips</div><div class="note">📱 <b>Add to Home Screen</b> (Share → Add to Home Screen on iPhone, ⋮ → Add to Home screen on Android) so this opens full-screen like an app.<br><br>☀︎ / ☾ at the top switches between the dark green scheme (default) and a bright daylight one.<br><br>📶 Spotty signal? Keep scoring — entries queue and sync when you're back in range.</div></div>
+    <div class="sect"><div class="sect-h">Tips</div><div class="note">📱 <b>Add to Home Screen</b> (Share → Add to Home Screen on iPhone, ⋮ → Add to Home screen on Android) so this opens full-screen like an app.<br><br>🌞 / 🌝 at the top switches between the dark green scheme (default) and a bright daylight one.<br><br>📶 Spotty signal? Keep scoring — entries queue and sync when you're back in range.</div></div>
     <div class="tiny muted" style="text-align:center;margin:1.5rem 0 0;line-height:1.6">Weather by Open-Meteo · Built with love by Metteo</div>`;
   if (!WX) loadWeather();
 }
@@ -1325,7 +1326,7 @@ function ask(title, text, opts = {}){
     $("#askNo").onclick = () => close(false); inp.style.borderColor = ""; if (opts.typed) setTimeout(() => inp.focus(), 50);
   });
 }
-function setLight(on){ document.documentElement.toggleAttribute("data-light", on); const b = $("#sunBtn"); if (b) { b.textContent = on ? "☾" : "☀︎"; b.title = on ? "Switch to dark mode" : "Switch to light mode"; } try { localStorage.setItem("cup:theme", on ? "light" : "dark"); } catch(e){} }
+function setLight(on){ document.documentElement.toggleAttribute("data-light", on); const b = $("#sunBtn"); if (b) { b.textContent = on ? "🌝" : "🌞"; b.title = on ? "Switch to dark mode" : "Switch to light mode"; } try { localStorage.setItem("cup:theme", on ? "light" : "dark"); } catch(e){} }
 
 document.addEventListener("click", e => {
   const tab = e.target.closest("[data-v]"); if (tab) return showView(tab.dataset.v);
