@@ -238,6 +238,39 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
   Me.save("b1"); eq(canPair("b","r2"), true, "J9 once A has all three pairs in, B unlocks"); Me.save("admin"); Store.set(["cfg","pairFirst","r2"], "b"); eq(canPair("a","r2"), true, "J10 commissioner is never locked out");
   Me.save(null); reset(); }
 
+/* ── L. LIFECYCLE: when does each fact become true? ────────── */
+// A match goes: not started → live → decided (points) → 18 in (submit available) → submitted (row locked, survivor kept).
+{ reset(); Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); const r = ROUND.r1, m = matchOf("r1","m1"), sc = scorers(r, m), c = courseOf(r);
+  const state = () => { const s = matchState("r1","m1"); return { started:s.started, closed:s.closed, ptsA:s.pts.a, survA:survStatus("r1","m1","a"), survB:survStatus("r1","m1","b"), sa:roundPoints("r1").sa, rowA1:rowComplete("r1","m1","a1"), card:cardComplete("r1","m1") }; };
+  eq(state(), { started:false, closed:false, ptsA:0, survA:"play", survB:"play", sa:0, rowA1:false, card:false }, "L1 before any score: nothing true, balls in play");
+  // A wins holes 1-10 with real gross scores (a1 eagles beat any net birdie; everyone else par)
+  for (let h = 1; h <= 10; h++) { const p = c.par[h-1]; play("r1","m1",h, { a1:p-2, a2:p, b1:p, b2:p }); if (h < 10) eq(state().closed, false, "L2." + h + " not decided thru " + h); }
+  let st = state(); eq([st.closed, st.ptsA], [true, 2], "L3 decided 10&8 → 2 points on the board immediately"); eq([st.survA, st.survB, st.sa], ["play", "play", 0], "L4 …but survivor still in play, no bonus");
+  eq([st.rowA1, st.card], [false, false], "L5 card not complete — 8 holes still to score"); Me.save("a1"); eq(canEditRow("r1","m1","a1"), true, "L6 players can keep scoring after the decision");
+  eq(canSurv("b","r1","m1"), true, "L7 a1 can mark an opponent's lost ball"); Store.set(["surv","r1","m1","b"], { hole:12, by:"b2" }); eq(survStatus("r1","m1","b"), "lost", "L8 B lost on 12 (marked by an opponent)");
+  for (let h = 11; h <= 18; h++) { const p = c.par[h-1]; play("r1","m1",h, { a1:p, a2:p, b1:p, b2:p }); }
+  st = state(); eq([st.rowA1, st.card, st.survA, st.sa], [true, true, "play", 0], "L9 18 in: card complete, still no survivor bonus until submitted");
+  Store.set(["signed","r1_m1","a1"], "t"); eq([survStatus("r1","m1","a"), roundPoints("r1").sa], ["play", 0], "L10 one of the two A cards submitted → side not yet kept");
+  Store.set(["signed","r1_m1","a2"], "t"); eq([survStatus("r1","m1","a"), roundPoints("r1").sa], ["kept", 0.5], "L11 both A cards submitted → kept, +0.5"); eq(canEditRow("r1","m1","a1"), false, "L12 submitted row locked for players");
+  Store.set(["signed","r1_m1","b1"], "t"); Store.set(["signed","r1_m1","b2"], "t"); eq([survStatus("r1","m1","b"), roundPoints("r1").sb, allSigned("r1","m1")], ["lost", 0, true], "L13 B submitted but lost → no bonus; match fully signed");
+  // undo a lost ball after submission? players can't (locked), commissioner can
+  Me.save("b2"); eq(canSurv("b","r1","m1"), true, "L14 canSurv is match-membership…"); Me.save("admin"); Store.set(["surv","r1","m1","b"], null); eq([survStatus("r1","m1","b"), roundPoints("r1").sb], ["kept", 0.5], "L15 commissioner clears the loss → kept");
+  // points never double count and never go negative
+  const p = roundPoints("r1"); ok(p.ma + p.mb === 2 && p.sa >= 0 && p.sb >= 0, "L16 match points sum to the match value; bonuses non-negative");
+  reset(); }
+// Random partial cards: survivor is never 'kept' without signatures; bonus equals 0.5 × kept sides; a signed side with a loss never scores.
+{ let seed = 99; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff; let bad = 0;
+  for (let n = 0; n < 400; n++) { reset(); Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); const r = ROUND.r1, c = courseOf(r);
+    const upto = Math.floor(rnd() * 19); for (let h = 1; h <= upto; h++) { const p = c.par[h-1]; play("r1","m1",h, { a1:p + Math.floor(rnd()*3), a2:p + Math.floor(rnd()*3), b1:p + Math.floor(rnd()*3), b2:p + Math.floor(rnd()*3) }); }
+    const signA = rnd() < 0.4 && upto === 18, signB = rnd() < 0.4 && upto === 18, lostA = rnd() < 0.3, lostB = rnd() < 0.3;
+    if (lostA) Store.set(["surv","r1","m1","a"], { hole:1 + Math.floor(rnd() * 18), by:"a1" }); if (lostB) Store.set(["surv","r1","m1","b"], { hole:1 + Math.floor(rnd() * 18), by:"b2" });
+    if (signA) ["a1","a2"].forEach(k => Store.set(["signed","r1_m1",k], "t")); if (signB) ["b1","b2"].forEach(k => Store.set(["signed","r1_m1",k], "t"));
+    const sA = survStatus("r1","m1","a"), sB = survStatus("r1","m1","b"), p = roundPoints("r1");
+    const expA = lostA ? "lost" : signA ? "kept" : "play", expB = lostB ? "lost" : signB ? "kept" : "play";
+    const expSa = (expA === "kept" ? 0.5 : 0), expSb = (expB === "kept" ? 0.5 : 0);
+    if (sA !== expA || sB !== expB || p.sa !== expSa || p.sb !== expSb) { bad++; if (bad < 3) console.log("lifecycle fuzz", { upto, signA, signB, lostA, lostB, sA, sB, sa:p.sa, sb:p.sb }); } }
+  eq(bad, 0, "L17 400 random partial cards: survivor status and bonus always follow lost > submitted > in play"); reset(); }
+
 /* ── G. FUZZ ────────────────────────────────────────────────── */
 { let seed = 42; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
   let bad = 0, closedCount = 0, halvedCount = 0; const N = 1500;
