@@ -827,8 +827,9 @@ const survApplies = r => SP() > 0 && r.survivor !== false && !SURVOFF(r.id);
 const survLoss = (rid, mid, side) => { const v = Store.get(["surv", rid, mid, side], null); if (typeof v === "number" && v > 0) return { hole:v, by:null }; if (v && typeof v === "object" && v.hole > 0) return { hole:Number(v.hole), by:v.by || null }; return null; };
 const survLostHole = (rid, mid, side) => survLoss(rid, mid, side)?.hole ?? null;
 // "kept" | "lost" | "play" (match still going, ball in play) | null (n/a)
+function sideDone(rid, mid, side){ const r = ROUND[rid], m = matchOf(rid, mid); return scorers(r, m).filter(x => x.side === side).every(x => rowComplete(rid, mid, x.key)); }
 function survStatus(rid, mid, side){ const r = ROUND[rid], m = matchOf(rid, mid); if (!survApplies(r) || !isSet(m)) return null;
-  if (survLostHole(rid, mid, side) !== null) return "lost"; return matchState(rid, mid).closed ? "kept" : "play"; }
+  if (survLostHole(rid, mid, side) !== null) return "lost"; return sideDone(rid, mid, side) ? "kept" : "play"; }
 function roundSweep(rid){ // { a:{kept,lost,pending,n,swept,possible,pts}, b:{...} }
   const r = ROUND[rid], sw = SW(), out = { a:{ kept:0, lost:0, pending:0, n:0 }, b:{ kept:0, lost:0, pending:0, n:0 } };
   if (survApplies(r)) matchesOf(r).forEach(m => ["a","b"].forEach(side => { out[side].n++; const st = isSet(m) ? survStatus(r.id, m.id, side) : "play"; if (st === "kept") out[side].kept++; else if (st === "lost") out[side].lost++; else out[side].pending++; }));
@@ -1338,9 +1339,6 @@ function showView(v){ curView = v; document.querySelector(".hero").classList.tog
 function hero(){
   $("#heroKick").textContent = CONFIG.kicker; $("#heroName").textContent = CONFIG.title; $("#heroSub").textContent = CONFIG.subtitle; document.title = CONFIG.title;
   const ds = tripDates(), now = new Date(); now.setHours(0, 0, 0, 0); const d0 = new Date(ds[0] + "T00:00:00"), d1 = new Date(ds[ds.length - 1] + "T23:59:59"), n = Math.ceil((d0 - now) / 864e5), cd = $("#heroCd");
-  const nr = nextRound(), mine = P[Me.role] ? myMatch(nr.id) : null;
-  if (mine) { const st = matchState(nr.id, mine.id); cd.innerHTML = `<span class="dot" style="${st.started ? "" : "animation:none;background:var(--beige)"}"></span>My scorecard ›`; cd.style.cursor = "pointer"; cd.dataset.mycard = nr.id + ":" + mine.id; return; }
-  cd.style.cursor = ""; delete cd.dataset.mycard;
   if (DEMO) { cd.innerHTML = `<span class="dot"></span>Game on · Fri PM (demo)`; return; }
   if (now > d1) { const t = cupTotals(); cd.textContent = t.a === t.b ? "Cup shared" : (t.a > t.b ? TA().name : TB().name) + " · Champions"; } else if (n > 1) cd.textContent = n + " days out"; else if (n === 1) cd.textContent = "Tomorrow"; else cd.innerHTML = `<span class="dot"></span>Game on`;
 }
@@ -1380,7 +1378,6 @@ document.addEventListener("click", e => {
   const ss = e.target.closest("[data-solosort]"); if (ss) { const k = ss.dataset.solosort; UI.soloSort = UI.soloSort.key === k ? { key:k, dir:UI.soloSort.dir === "asc" ? "desc" : "asc" } : { key:k, dir:"asc" }; return renderCup(); }
   const rc = e.target.closest("[data-r].lv-chip"); if (rc) { UI.rid = rc.dataset.r; UI.mid = null; UI.card = false; UI.editPairs = false; return renderLive(); }
   if (e.target.closest("#editPairs")) { UI.editPairs = !UI.editPairs; return renderLive(); }
-  const mc = e.target.closest("[data-mycard]"); if (mc) { const [rid, mid] = mc.dataset.mycard.split(":"); curView = "live"; $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-live")); $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.v === "live")); document.querySelector(".hero").classList.add("compact"); return openCard(rid, mid); }
   const go = e.target.closest("[data-go]"); if (go) { const [rid, mid] = go.dataset.go.split(":"); if (!isSet(matchOf(rid, mid))) return; curView = "live"; $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-live")); $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.v === "live")); return openCard(rid, mid); }
   const op = e.target.closest("[data-open]"); if (op) return openCard(UI.rid, op.dataset.open);
   if (e.target.closest("#cardBack")) { UI.card = false; renderLive(); return window.scrollTo({ top:0 }); }
