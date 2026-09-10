@@ -1103,8 +1103,8 @@ function renderLive(){
       <div class="tiny muted" style="padding:0 .85rem .7rem;text-align:center">${esc(dayName(r.date))} · ${esc(r.tee)} · ${esc(courseOf(r).name)} · ${r.holes} holes · par ${courseOf(r).par.reduce((a, b) => a + b, 0)}</div></details></div>`;
 }
 function renderPairEditor(r, ms){
-  const n = slotsPer(r), used = {}; ms.forEach(m => [...m.a, ...m.b].forEach(id => used[id] = (used[id] || 0) + 1));
-  const opts = (side, cur) => `<option value="">— pick —</option>` + CONFIG.players.filter(p => p.team === side).map(p => `<option value="${p.id}" ${cur === p.id ? "selected" : ""} ${used[p.id] && cur !== p.id ? "disabled" : ""}>${esc(p.name)}${used[p.id] && cur !== p.id ? " · placed" : ""}</option>`).join("");
+  const n = slotsPer(r), used = {}, where = {}; ms.forEach(m => [...m.a, ...m.b].forEach(id => { used[id] = (used[id] || 0) + 1; where[id] = m.label; }));
+  const opts = (side, cur) => `<option value="">— pick —</option>` + CONFIG.players.filter(p => p.team === side).map(p => `<option value="${p.id}" ${cur === p.id ? "selected" : ""}>${esc(p.name)}${used[p.id] && cur !== p.id ? " · in " + esc(where[p.id]) : ""}</option>`).join("");
   const col = (m, side) => canPair(side, r.id) ? `<div class="${side}">${[...Array(n)].map((_, i) => `<select data-pair="${m.id}" data-side="${side}" data-i="${i}">${opts(side, m[side][i])}</select>`).join("")}</div>`
     : `<div class="${side}" style="display:flex;flex-direction:column;justify-content:center;gap:.3rem;padding:.2rem .4rem;font-size:.8rem;color:var(--${side}-lt)">${[...Array(n)].map((_, i) => `<div>${m[side][i] ? esc(pname(m[side][i])) : `<span class="muted">${esc(TEAM(side).short)} TBD</span>`}</div>`).join("")}<div class="tiny muted">${pairWait(r.id, side) && (Me.isAdmin() || Me.team() === side) ? `waiting — ${esc(TEAM(pairWait(r.id, side)).short)} enters first` : `set by ${esc(TEAM(side).short)}'s captain`}</div></div>`;
   const placed = side => CONFIG.players.filter(p => p.team === side && used[p.id]).length, total = side => CONFIG.players.filter(p => p.team === side).length;
@@ -1112,7 +1112,7 @@ function renderPairEditor(r, ms){
   const hasScores = m => Object.keys(Store.get(["gross", mkey(r.id, m.id)], {}) || {}).length > 0 || Object.keys(Store.get(["over", mkey(r.id, m.id)], {}) || {}).length > 0;
   const one = m => `<div class="pe" style="${r.scoring === "singles" ? "margin:.35rem .35rem" : ""}"><div class="pe-h">${esc(m.label)}${r.scoring === "singles" ? "" : " · " + esc(matchTee(r, m))}${hasScores(m) ? ` <span style="color:var(--a-lt);letter-spacing:0;text-transform:none">· has scores — swapping a player hides their entries (clear the round to start clean)</span>` : ""}</div><div class="pe-g">${col(m, "a")}${col(m, "b")}</div></div>`;
   return teeGroups(r, ms, one) +
-    `<div class="tiny muted" style="text-align:center;margin-top:.3rem">${wait ? `<b style="color:var(--gold)">${esc(TEAM(wait).short)} enters pairings first</b> — yours unlock when they're done. · ` : ""}${esc(TA().short)} ${placed("a")}/${total("a")} placed · ${esc(TB().short)} ${placed("b")}/${total("b")} placed · saves instantly to every phone</div>`;
+    `<div class="tiny muted" style="text-align:center;margin-top:.3rem">${wait ? `<b style="color:var(--gold)">${esc(TEAM(wait).short)} enters pairings first</b> — yours unlock when they're done. · ` : ""}${esc(TA().short)} ${placed("a")}/${total("a")} placed · ${esc(TB().short)} ${placed("b")}/${total("b")} placed · picking someone already placed moves them here · saves instantly to every phone</div>`;
 }
 
 function ruleText(r){
@@ -1395,7 +1395,9 @@ document.addEventListener("click", e => {
       .then(ok => { if (!ok) return; ["gross", "over", "meta", "surv", "call", "signed"].forEach(k => Store.set([k], null)); UI.card = false; UI.rid = null; }); return; }
 });
 document.addEventListener("change", e => {
-  const pr = e.target.closest("[data-pair]"); if (pr && canPair(pr.dataset.side, UI.rid)) { const r = ROUND[UI.rid], m = matchOf(UI.rid, pr.dataset.pair), side = pr.dataset.side, arr = [...m[side]]; arr[+pr.dataset.i] = pr.value || undefined;
+  const pr = e.target.closest("[data-pair]"); if (pr && canPair(pr.dataset.side, UI.rid)) { const r = ROUND[UI.rid], side = pr.dataset.side, pick = pr.value || null;
+    if (pick) matchesOf(r).forEach(o => { if (o.id !== pr.dataset.pair && o[side].includes(pick)) { const rest = o[side].filter(x => x !== pick); Store.set(["pair", r.id, o.id], { a: side === "a" ? rest : o.a, b: side === "b" ? rest : o.b }); } });
+    const m = matchOf(UI.rid, pr.dataset.pair), arr = [...m[side]]; arr[+pr.dataset.i] = pick || undefined;
     const clean = arr.filter(Boolean).slice(0, slotsPer(r)); const other = side === "a" ? "b" : "a"; return Store.set(["pair", r.id, m.id], { a: side === "a" ? clean : m.a, b: side === "b" ? clean : m.b }); }
   const h = e.target.closest("[data-hcp]"); if (h && Me.isAdmin()) return Store.set(["hcp", h.dataset.hcp], h.value === "" ? null : +h.value);
   const tbx = e.target.closest("[data-teebox]"); if (tbx && Me.isAdmin()) return Store.set(["teebox", tbx.dataset.teebox], tbx.value);
