@@ -1186,7 +1186,7 @@ function renderCard(){
       <tr><td style="font-weight:700">Hole to</td>${nine ? seg(resCell, 1, 9) + T("") + seg(resCell, 10, 18) + T("") : seg(resCell, 1, r.holes)}<td class="tot" colspan="2">${s.started ? (s.lead === "h" ? "AS" : TS(s.lead) + " " + esc(s.short)) : "—"}</td></tr></tbody></table></div>
     <div class="tiny muted" style="margin-top:.4rem">${tb ? `${esc(tb)} tees · ${ydSum(1, r.holes).toLocaleString()} yds · ` : ""}<span style="color:var(--gold)">•</span> stroke hole · <b>+n</b> strokes in this match</div>`;
   $("#v-live").innerHTML = `
-    <div class="sc-top"><div class="row" style="margin-bottom:.35rem"><button class="btn btn-sm" id="cardBack">‹ Matches</button><span class="tiny muted grow" style="text-align:center">${esc(r.format)} · ${esc(c.name)} · ${esc(m.label)}</span><button class="btn btn-sm" data-v="cup">Cup</button></div>
+    <div class="sc-top"><div class="row" style="margin-bottom:.35rem"><button class="btn btn-sm" id="cardBack">‹ Matches</button><span class="tiny muted grow" style="text-align:center">${esc(r.format)} · ${esc(c.name)} · ${esc(m.label)}</span>${(() => { const t = cupTotals(); return `<button class="btn btn-sm" data-v="cup" title="Cup standings" style="font-size:.72rem;padding:.38rem .55rem"><span style="color:var(--a-lt)">${fmtPts(t.a)}</span><span class="muted" style="margin:0 .25rem">–</span><span style="color:var(--b-lt)">${fmtPts(t.b)}</span></button>`; })()}</div>
       <div class="sc-h2h"><span class="sc-n a">${m.a.map(pfirst).map(esc).join(" & ")}</span>
         <span class="sc-st ${s.lead}">${!s.started ? "Tee " + esc(matchTee(r, m)) : s.closed ? (s.lead === "h" ? "Halved" : TS(s.lead) + " wins " + esc(s.short)) : (s.lead === "h" ? "All square" : TS(s.lead) + " " + esc(s.short)) + `<small>thru ${s.thru}${s.stack ? " · carry ×" + (1 + s.stack) : ""}</small>`}</span>
         <span class="sc-n b">${m.b.map(pfirst).map(esc).join(" & ")}</span></div>
@@ -1332,12 +1332,15 @@ function renderTrip(){
 
 /* ═══ BOOT + EVENTS ═════════════════════════════════════════ */
 let curView = "cup";
-function renderAll(){ const mo = $("#motd"); if (mo) { const t = MOTD(); mo.hidden = !t; mo.textContent = t; } renderCup(); if (curView === "live") renderLive(); if (curView === "trip") renderTrip();
+function renderAll(){ hero(); const mo = $("#motd"); if (mo) { const t = MOTD(); mo.hidden = !t; mo.textContent = t; } renderCup(); if (curView === "live") renderLive(); if (curView === "trip") renderTrip();
   const w = $("#whoBtn"); w.textContent = Me.role ? Me.label() : "Sign in"; w.className = "strip-u " + (Me.role ? Me.team() : ""); }
 function showView(v){ curView = v; document.querySelector(".hero").classList.toggle("compact", v === "live"); $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-" + v)); $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.v === v)); renderAll(); window.scrollTo({ top:0 }); }
 function hero(){
   $("#heroKick").textContent = CONFIG.kicker; $("#heroName").textContent = CONFIG.title; $("#heroSub").textContent = CONFIG.subtitle; document.title = CONFIG.title;
   const ds = tripDates(), now = new Date(); now.setHours(0, 0, 0, 0); const d0 = new Date(ds[0] + "T00:00:00"), d1 = new Date(ds[ds.length - 1] + "T23:59:59"), n = Math.ceil((d0 - now) / 864e5), cd = $("#heroCd");
+  const nr = nextRound(), mine = P[Me.role] ? myMatch(nr.id) : null;
+  if (mine) { const st = matchState(nr.id, mine.id); cd.innerHTML = `<span class="dot" style="${st.started ? "" : "animation:none;background:var(--beige)"}"></span>My scorecard ›`; cd.style.cursor = "pointer"; cd.dataset.mycard = nr.id + ":" + mine.id; return; }
+  cd.style.cursor = ""; delete cd.dataset.mycard;
   if (DEMO) { cd.innerHTML = `<span class="dot"></span>Game on · Fri PM (demo)`; return; }
   if (now > d1) { const t = cupTotals(); cd.textContent = t.a === t.b ? "Cup shared" : (t.a > t.b ? TA().name : TB().name) + " · Champions"; } else if (n > 1) cd.textContent = n + " days out"; else if (n === 1) cd.textContent = "Tomorrow"; else cd.innerHTML = `<span class="dot"></span>Game on`;
 }
@@ -1377,6 +1380,7 @@ document.addEventListener("click", e => {
   const ss = e.target.closest("[data-solosort]"); if (ss) { const k = ss.dataset.solosort; UI.soloSort = UI.soloSort.key === k ? { key:k, dir:UI.soloSort.dir === "asc" ? "desc" : "asc" } : { key:k, dir:"asc" }; return renderCup(); }
   const rc = e.target.closest("[data-r].lv-chip"); if (rc) { UI.rid = rc.dataset.r; UI.mid = null; UI.card = false; UI.editPairs = false; return renderLive(); }
   if (e.target.closest("#editPairs")) { UI.editPairs = !UI.editPairs; return renderLive(); }
+  const mc = e.target.closest("[data-mycard]"); if (mc) { const [rid, mid] = mc.dataset.mycard.split(":"); curView = "live"; $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-live")); $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.v === "live")); document.querySelector(".hero").classList.add("compact"); return openCard(rid, mid); }
   const go = e.target.closest("[data-go]"); if (go) { const [rid, mid] = go.dataset.go.split(":"); if (!isSet(matchOf(rid, mid))) return; curView = "live"; $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-live")); $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.v === "live")); return openCard(rid, mid); }
   const op = e.target.closest("[data-open]"); if (op) return openCard(UI.rid, op.dataset.open);
   if (e.target.closest("#cardBack")) { UI.card = false; renderLive(); return window.scrollTo({ top:0 }); }
