@@ -1195,7 +1195,8 @@ function renderCard(){
       <div class="hnav-i2"><span><b>Par ${par}</b></span><span>SI <b>${si}</b></span>${yards(r) ? `<span><b>${yards(r)[h-1]}</b> yds</span>` : ""}</div>
       </div><button class="hnav-b" data-nav="1" ${h === r.holes ? "disabled" : ""}>›</button></div>
     ${note ? `<div class="note" style="margin-bottom:.6rem">${note}</div>` : ""}
-    ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
+    ${rows}${(() => { if (h !== r.holes || !can) return ""; const pending = sc.filter(x => !rowSigned(r.id, m.id, x.key)); if (!pending.length || !pending.every(x => rowComplete(r.id, m.id, x.key))) return "";
+      return `<button id="signAll" class="btn btn-gold btn-full" style="margin:.2rem 0 .6rem">Submit all ${pending.length === sc.length ? "" : "remaining "}cards${sc.length > 1 ? " · " + pending.map(x => esc(x.ids.length > 1 ? x.label : pfirst(x.key))).join(", ") : ""}</button>`; })()}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
     ${grid}
     ${Me.isAdmin() ? `<div class="card" style="margin-top:.8rem;padding:.65rem .75rem"><div style="font-family:var(--hd);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;color:var(--gold);margin-bottom:.4rem">Commissioner · this match</div>
       <div class="tiny muted" style="margin-bottom:.45rem">${s.called ? `Called: <b>${s.called === "void" ? "void — no points" : s.called === "h" ? "halved" : TS(s.called) + " wins"}</b>. Un-call to go back to the scores.` : "Call the match if it can't be finished (rain, darkness). Points are awarded as if it ended now."}</div>
@@ -1384,6 +1385,8 @@ document.addEventListener("click", e => {
     ask("Call this match?", `Ends <b>${esc(matchOf(UI.rid, UI.mid).label)}</b> now as <b>${v === "void" ? "void (no points)" : v === "h" ? "halved" : TS(v) + " wins"}</b>. You can un-call it later.`, { yes:"Call it" }).then(ok => ok && Store.set(["call", key], v)); return; }
   if (e.target.closest("#clearMatch") && Me.isAdmin()) { const key = mkey(UI.rid, UI.mid); ask("Clear this match?", `Every score, survivor mark and call for <b>${esc(matchOf(UI.rid, UI.mid).label)}</b> is removed. Pairings stay.`, { yes:"Clear it" })
       .then(ok => { if (!ok) return; ["gross", "over", "meta", "call", "signed"].forEach(k => Store.set([k, key], null)); Store.set(["surv", UI.rid, UI.mid], null); }); return; }
+  if (e.target.closest("#signAll")) { const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), stamp = Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
+    scorers(r, m).forEach(x => { if (!rowSigned(r.id, m.id, x.key) && canEditRow(r.id, m.id, x.key)) Store.set(["signed", mkey(r.id, m.id), x.key], stamp); }); if (navigator.vibrate) navigator.vibrate([20, 40, 20]); renderLive(); return; }
   const sgb = e.target.closest("[data-sign]"); if (sgb) { const key = sgb.dataset.sign; if (!canEditRow(UI.rid, UI.mid, key)) return; Store.set(["signed", mkey(UI.rid, UI.mid), key], Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" })); if (navigator.vibrate) navigator.vibrate([20, 40, 20]); renderLive(); return; }
   const jp = e.target.closest("[data-jump]"); if (jp) { UI.hole = +jp.dataset.jump; renderLive(); return window.scrollTo({ top:0 }); }
   const stp = e.target.closest("[data-stp]"); if (stp) { const cur = gross(UI.rid, UI.mid, UI.hole, stp.dataset.k), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; return setScore(stp.dataset.k, cur === null ? par + +stp.dataset.stp : Math.max(1, Math.min(15, cur + +stp.dataset.stp))); }
