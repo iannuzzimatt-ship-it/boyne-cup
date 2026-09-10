@@ -837,11 +837,16 @@ function roundSweep(rid){ // { a:{kept,lost,pending,n,swept,possible,pts}, b:{..
 }
 const canSurv = (side, rid, mid) => Me.isAdmin() || (!(rid && LOCKED(rid)) && (rid && mid ? matchOf(rid, mid)[side].includes(Me.role) : Me.team() === side));
 // Who may edit a match: the commissioner always; its players only while it's still live.
-const isSigned = (rid, mid) => !!Store.get(["signed", mkey(rid, mid)], null);
+// Each scorer (player, or side in a scramble) submits their own card once their holes are all in.
+const rowSigned = (rid, mid, key) => { const v = Store.get(["signed", mkey(rid, mid), key], null); return typeof v === "string" ? v : null; };
+function rowComplete(rid, mid, key){ const r = ROUND[rid]; for (let i = 1; i <= r.holes; i++) if (gross(rid, mid, i, key) === null && !Store.get(["over", mkey(rid, mid), String(i)], null)) return false; return true; }
+function signedCount(rid, mid){ const r = ROUND[rid], m = matchOf(rid, mid); if (!isSet(m)) return { n:0, of:0 }; const sc = scorers(r, m); return { n:sc.filter(x => rowSigned(rid, mid, x.key)).length, of:sc.length }; }
+const allSigned = (rid, mid) => { const c = signedCount(rid, mid); return c.of > 0 && c.n === c.of; };
 function cardComplete(rid, mid){ const r = ROUND[rid], m = matchOf(rid, mid); if (!isSet(m)) return false; const sc = scorers(r, m); for (let i = 1; i <= r.holes; i++) if (!holeResult(r, m, sc, i)) return false; return true; }
-function canEdit(rid, mid){ if (Me.isAdmin()) return true; if (LOCKED(rid)) return false; const m = matchOf(rid, mid); if (!m || !(m.a.includes(Me.role) || m.b.includes(Me.role))) return false; return !isSigned(rid, mid); }
+function canEdit(rid, mid){ if (Me.isAdmin()) return true; if (LOCKED(rid)) return false; const m = matchOf(rid, mid); return !!m && (m.a.includes(Me.role) || m.b.includes(Me.role)); }
+const canEditRow = (rid, mid, key) => Me.isAdmin() || (canEdit(rid, mid) && !rowSigned(rid, mid, key));
 function editNote(rid, mid){ if (canEdit(rid, mid)) return ""; if (LOCKED(rid)) return "This round is locked by the commissioner."; if (!Me.canScore()) return "Read-only — sign in to enter scores."; const m = matchOf(rid, mid);
-  if (!(m.a.includes(Me.role) || m.b.includes(Me.role))) return "Read-only — only the players in this match can score it."; return "Scorecard submitted and locked. Ask the commissioner if something needs fixing."; }
+  return "Read-only — only the players in this match can score it."; }
 function renderSweep(){
   const sw = SW(); if (!CONFIG.rounds.some(survApplies)) return "";
   const rs = CONFIG.rounds.filter(survApplies).map(r => ({ r, p:roundPoints(r.id) }));
@@ -1088,7 +1093,7 @@ function renderLive(){
   const sideHtml = (ids, cls) => `<div class="mu-side ${cls}"><div class="mu-nm">${ids.map(id => esc(pshort(id))).join("<br>")}</div></div>`;
   const groups = teeGroups(r, ms, m => { if (!isSet(m)) return `<div class="mu" style="cursor:default"><div class="mu-side a"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div><div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div><div class="mu-st pend">${esc(matchTee(r, m))}</div><div class="mu-sub">pairings TBD</div></div><div class="mu-side b r"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div></div>`;
     const s = matchState(r.id, m.id);
-    const st = !s.started ? `<div class="mu-st pend">${esc(matchTee(r, m))}</div>` : `<div class="mu-st ${s.lead}">${s.lead === "h" ? "AS" : TS(s.lead) + " " + esc(s.short)}</div><div class="mu-sub">${isSigned(r.id, m.id) ? "Final ✓" : cardComplete(r.id, m.id) ? "18 in · submit card" : s.closed ? "decided · thru " + s.thru : "thru " + s.thru}</div>`;
+    const st = !s.started ? `<div class="mu-st pend">${esc(matchTee(r, m))}</div>` : `<div class="mu-st ${s.lead}">${s.lead === "h" ? "AS" : TS(s.lead) + " " + esc(s.short)}</div><div class="mu-sub">${(() => { const c = signedCount(r.id, m.id); return allSigned(r.id, m.id) ? "Final ✓" : c.n ? `${c.n}/${c.of} cards in` : cardComplete(r.id, m.id) ? "18 in · submit cards" : s.closed ? "decided · thru " + s.thru : "thru " + s.thru; })()}</div>`;
     return `<div class="mu" data-open="${m.id}">${sideHtml(m.a, "a")}<div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div>${st}</div>${sideHtml(m.b, "b r")}</div>`; });
   $("#v-live").innerHTML = `
     <div class="lv-pick" style="margin-top:.6rem">${chips}</div>
@@ -1144,12 +1149,13 @@ function renderCard(){
     if (st === "kept") return `<div class="tiny" style="margin-top:.25rem;color:var(--gold);font-weight:700">+${sp} survivor ball kept</div>`;
     if (!can) return "";
     return `<div style="margin-top:.3rem;display:flex;gap:.35rem;flex-wrap:wrap">${x.ids.map(id => mini(x.ids.length > 1 ? esc(pfirst(id)) + " lost ball" : "lost ball", `data-surv="${r.id}" data-mid="${m.id}" data-side="${x.side}" data-ans="lost" data-hole="${h}" data-by="${id}"`, "border-color:rgba(224,86,80,.45);color:var(--a-lt)")).join("")}</div>`; };
-  const rows = sc.map(x => { const g = gross(r.id, m.id, h, x.key), st = x.holes[h] || 0;
-    return `<div class="srow ${x.side}"><div class="srow-n"><div class="srow-nm">${esc(x.label)}${"<span class='sd'></span>".repeat(st)}</div>
-      <div class="srow-x">${r.scoring === "scramble" ? "team ball" : x.total ? `${x.total} strokes` : "scratch in this group"}${st ? ` · gets ${st} here` : ""}${g !== null && st ? ` · net ${g - st}` : ""}</div>${survBit(x)}</div>
-      <button class="stp" data-stp="-1" data-k="${esc(x.key)}" ${can && (g === null || g > 1) ? "" : "disabled"}>−</button>
+  const rows = sc.map(x => { const g = gross(r.id, m.id, h, x.key), st = x.holes[h] || 0, sg = rowSigned(r.id, m.id, x.key), rc = canEditRow(r.id, m.id, x.key);
+    const finish = h === r.holes && rowComplete(r.id, m.id, x.key) ? (sg ? `<div class="tiny" style="margin-top:.3rem;color:var(--gold);font-weight:700">✓ card submitted · ${esc(sg)}</div>` : (rc ? `<button data-sign="${esc(x.key)}" class="btn btn-sm btn-gold" style="margin-top:.35rem;padding:.3rem .7rem;font-size:.66rem">Submit ${esc(x.ids.length > 1 ? "team" : (x.key === Me.role ? "my" : pfirst(x.key) + "'s"))} card</button>` : `<div class="tiny muted" style="margin-top:.3rem">18 in · not submitted yet</div>`)) : "";
+    return `<div class="srow ${x.side}" style="${sg ? "opacity:.85" : ""}"><div class="srow-n"><div class="srow-nm">${esc(x.label)}${"<span class='sd'></span>".repeat(st)}${sg && h !== r.holes ? ` <span class="tiny" style="color:var(--gold)">✓</span>` : ""}</div>
+      <div class="srow-x">${r.scoring === "scramble" ? "team ball" : x.total ? `${x.total} strokes` : "scratch in this group"}${st ? ` · gets ${st} here` : ""}${g !== null && st ? ` · net ${g - st}` : ""}</div>${survBit(x)}${finish}</div>
+      <button class="stp" data-stp="-1" data-k="${esc(x.key)}" ${rc && (g === null || g > 1) ? "" : "disabled"}>−</button>
       <div class="sval ${scoreClass(g, par)}" data-tap="${esc(x.key)}">${g === null ? (dead ? "—" : "tap") : g}${g === null ? "" : `<small>${g - par === 0 ? "par" : toPar(g - par)}</small>`}</div>
-      <button class="stp" data-stp="1" data-k="${esc(x.key)}" ${can && !dead && (g === null || g < 15) ? "" : "disabled"}>+</button></div>`; }).join("");
+      <button class="stp" data-stp="1" data-k="${esc(x.key)}" ${rc && (g === null || g < 15) ? "" : "disabled"}>+</button></div>`; }).join("");
   const ov = Store.get(["over", mkey(r.id, m.id), String(h)], null);
   let hres = dead ? `<span class="muted">Match already decided</span>` : hr ? (hr.res === "h" ? `Hole ${h} <b>halved</b> · ${esc(hr.why)}${s.stack && h === s.thru ? ` · <b style="color:var(--gold)">next hole worth ${1 + s.stack}</b>` : ""}` : `Hole ${h} to <b style="color:var(--${hr.res}-lt)">${esc(TS(hr.res))}</b>${hr.worth > 1 ? ` <b style="color:var(--gold)">×${hr.worth}</b>` : ""} · ${esc(hr.why)}`)
     : `<span class="muted">${sc.some(x => gross(r.id, m.id, h, x.key) !== null) ? "Waiting on " + sc.filter(x => gross(r.id, m.id, h, x.key) === null).map(x => esc(x.label.split(" ")[0])).join(", ") : (CONC() ? "Enter scores, or set the result below for a concession" : "Enter each player's gross score")}</span>`;
@@ -1189,11 +1195,7 @@ function renderCard(){
       <div class="hnav-i2"><span><b>Par ${par}</b></span><span>SI <b>${si}</b></span>${yards(r) ? `<span><b>${yards(r)[h-1]}</b> yds</span>` : ""}</div>
       </div><button class="hnav-b" data-nav="1" ${h === r.holes ? "disabled" : ""}>›</button></div>
     ${note ? `<div class="note" style="margin-bottom:.6rem">${note}</div>` : ""}
-    ${rows}${(() => { if (h !== r.holes || !cardComplete(r.id, m.id)) return ""; const sg = Store.get(["signed", mkey(r.id, m.id)], null), mine = m.a.includes(Me.role) || m.b.includes(Me.role) || Me.isAdmin();
-      if (sg) return `<div class="card" style="margin:.6rem 0;padding:.7rem .8rem;text-align:center;border-color:rgba(216,169,74,.45)"><div style="font-family:var(--hd);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)">✓ Scorecard submitted</div><div class="tiny muted" style="margin-top:.2rem">${esc(sg)}</div></div>`;
-      return `<div class="card" style="margin:.6rem 0;padding:.8rem;text-align:center;border-color:rgba(216,169,74,.45)"><div style="font-family:var(--hd);font-weight:700;font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase">That's 18 — ${s.lead === "h" ? "match halved" : TS(s.lead) + " wins " + esc(s.short)}</div>
-        <div class="tiny muted" style="margin:.25rem 0 .6rem">Check the card below, then submit. Submitting locks the scores.</div>
-        ${mine ? `<button id="signCard" class="btn btn-gold btn-full">Submit scorecard</button>` : `<div class="tiny muted">Waiting for the players to submit.</div>`}</div>`; })()}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
+    ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
     ${grid}
     ${Me.isAdmin() ? `<div class="card" style="margin-top:.8rem;padding:.65rem .75rem"><div style="font-family:var(--hd);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;color:var(--gold);margin-bottom:.4rem">Commissioner · this match</div>
       <div class="tiny muted" style="margin-bottom:.45rem">${s.called ? `Called: <b>${s.called === "void" ? "void — no points" : s.called === "h" ? "halved" : TS(s.called) + " wins"}</b>. Un-call to go back to the scores.` : "Call the match if it can't be finished (rain, darkness). Points are awarded as if it ended now."}</div>
@@ -1222,7 +1224,7 @@ function renderField(r, excludeMid){
 let advanceTimer = null;
 function stamp(r, m, h){ Store.set(["meta", mkey(r.id, m.id), String(h)], Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" })); }
 function setScore(key, val){
-  if (!canEdit(UI.rid, UI.mid)) return; const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), sc = scorers(r, m), h = UI.hole;
+  if (!canEditRow(UI.rid, UI.mid, key)) return; const r = ROUND[UI.rid], m = matchOf(UI.rid, UI.mid), sc = scorers(r, m), h = UI.hole;
   const before = !!holeResult(r, m, sc, h); Store.set(["gross", mkey(r.id, m.id), String(h), key], val); stamp(r, m, h); if (navigator.vibrate) navigator.vibrate(10);
 
 }
@@ -1382,10 +1384,10 @@ document.addEventListener("click", e => {
     ask("Call this match?", `Ends <b>${esc(matchOf(UI.rid, UI.mid).label)}</b> now as <b>${v === "void" ? "void (no points)" : v === "h" ? "halved" : TS(v) + " wins"}</b>. You can un-call it later.`, { yes:"Call it" }).then(ok => ok && Store.set(["call", key], v)); return; }
   if (e.target.closest("#clearMatch") && Me.isAdmin()) { const key = mkey(UI.rid, UI.mid); ask("Clear this match?", `Every score, survivor mark and call for <b>${esc(matchOf(UI.rid, UI.mid).label)}</b> is removed. Pairings stay.`, { yes:"Clear it" })
       .then(ok => { if (!ok) return; ["gross", "over", "meta", "call", "signed"].forEach(k => Store.set([k, key], null)); Store.set(["surv", UI.rid, UI.mid], null); }); return; }
-  if (e.target.closest("#signCard")) { const key = mkey(UI.rid, UI.mid); Store.set(["signed", key], Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" })); if (navigator.vibrate) navigator.vibrate([20, 40, 20]); renderLive(); return; }
+  const sgb = e.target.closest("[data-sign]"); if (sgb) { const key = sgb.dataset.sign; if (!canEditRow(UI.rid, UI.mid, key)) return; Store.set(["signed", mkey(UI.rid, UI.mid), key], Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" })); if (navigator.vibrate) navigator.vibrate([20, 40, 20]); renderLive(); return; }
   const jp = e.target.closest("[data-jump]"); if (jp) { UI.hole = +jp.dataset.jump; renderLive(); return window.scrollTo({ top:0 }); }
   const stp = e.target.closest("[data-stp]"); if (stp) { const cur = gross(UI.rid, UI.mid, UI.hole, stp.dataset.k), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; return setScore(stp.dataset.k, cur === null ? par + +stp.dataset.stp : Math.max(1, Math.min(15, cur + +stp.dataset.stp))); }
-  const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; if (cur === null) return setScore(tap.dataset.tap, par); if (canEdit(UI.rid, UI.mid)) ask("Clear this score?", "Removes the score in this box. You can tap to re-enter it.", { yes:"Clear it" }).then(ok => ok && setScore(tap.dataset.tap, null)); return; }
+  const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; if (cur === null) return setScore(tap.dataset.tap, par); if (canEditRow(UI.rid, UI.mid, tap.dataset.tap)) ask("Clear this score?", "Removes the score in this box. You can tap to re-enter it.", { yes:"Clear it" }).then(ok => ok && setScore(tap.dataset.tap, null)); return; }
   const ov = e.target.closest("[data-ov]"); if (ov) return setOverride(ov.dataset.ov);
   const sv = e.target.closest("[data-surv]"); if (sv) { const { surv:rid, mid, side, ans, hole, by } = sv.dataset; if (!canSurv(side, rid, mid)) return; return Store.set(["surv", rid, mid, side], ans === "lost" ? { hole:Number(hole), by:by || null } : null); }
   const cl = e.target.closest("[data-clear]"); if (cl && Me.isAdmin()) { const r = ROUND[cl.dataset.clear];

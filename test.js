@@ -158,8 +158,10 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
 { Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); Me.save("a1"); winHoles("r1","m1","a",1,10);
   eq(canEdit("r1","m1"), true, "F1 participant can keep scoring after the match is decided (play to 18)"); eq(cardComplete("r1","m1"), false, "F1b card not complete at 10 holes");
   for (let h = 11; h <= 18; h++) O("r1","m1",h,"h"); eq(cardComplete("r1","m1"), true, "F1c card complete after 18"); eq(canEdit("r1","m1"), true, "F1d still editable until submitted");
-  Store.set(["signed","r1_m1"], "G. Bonfiglio · 5:01 PM"); eq(canEdit("r1","m1"), false, "F2 submitted card locks players out"); ok(/submitted/.test(editNote("r1","m1")), "F2b locked note"); Me.save("admin"); eq(canEdit("r1","m1"), true, "F3 commissioner may amend");
-  O("r1","m1",3,"b"); eq(matchState("r1","m1").closed, true, "F4 amendment recalculates (still decided: 7-2 with 9 halved)"); Store.set(["signed","r1_m1"], null); Me.save("a1"); eq(canEdit("r1","m1"), true, "F5 un-submitting reopens for players");
+  eq(rowComplete("r1","m1","a1"), true, "F1e a1's row complete (via hole results)"); Store.set(["signed","r1_m1","a1"], "G. Bonfiglio · 5:01 PM");
+  eq([canEditRow("r1","m1","a1"), canEditRow("r1","m1","a2")], [false, true], "F2 submitting locks only that player's row; partner's stays open"); eq(signedCount("r1","m1"), { n:1, of:4 }, "F2b 1 of 4 cards in"); eq(allSigned("r1","m1"), false, "F2c match not fully signed");
+  Me.save("admin"); eq(canEditRow("r1","m1","a1"), true, "F3 commissioner may amend a signed row"); ["a2","b1","b2"].forEach(k => Store.set(["signed","r1_m1",k], "x")); eq(allSigned("r1","m1"), true, "F4 all four in → Final ✓");
+  Store.set(["signed","r1_m1"], null); Me.save("a1"); eq(canEditRow("r1","m1","a1"), true, "F5 un-submitting reopens the row");
   reset(); }
 
 
