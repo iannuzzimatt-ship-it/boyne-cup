@@ -1073,7 +1073,7 @@ function renderHonours(){
 <script>
 /* ═══ RENDER: LIVE ══════════════════════════════════════════ */
 const UI = { rid:null, mid:null, hole:1, card:false, editPairs:false, soloSort:{ key:"net", dir:"asc" }, cupRound:null };
-function myMatch(rid){ if (!P[Me.role]) return null; return matchesOf(ROUND[rid]).find(m => m.a.includes(Me.role) || m.b.includes(Me.role)) || null; }
+function myMatch(rid){ if (!P[Me.role]) return null; return matchesOf(ROUND[rid]).find(m => isSet(m) && (m.a.includes(Me.role) || m.b.includes(Me.role))) || null; }
 function firstOpenHole(rid, mid){ const r = ROUND[rid], m = matchOf(rid, mid), sc = scorers(r, m); for (let i = 1; i <= r.holes; i++) if (!holeResult(r, m, sc, i)) return i; return r.holes; }
 function openCard(rid, mid){ UI.rid = rid; UI.mid = mid; UI.card = true; UI.hole = firstOpenHole(rid, mid); renderLive(); window.scrollTo({ top:0 }); }
 
