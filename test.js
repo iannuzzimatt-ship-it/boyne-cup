@@ -221,7 +221,12 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
 /* ── J. CAPTAIN PAIRINGS ───────────────────────────────────── */
 { reset(); Me.save("a3"); ok(isCaptain(), "J1 Mike Chun is a captain"); eq([canPair("a"), canPair("b"), canPair()], [true, false, true], "J2 captain may set own side only");
   Me.save("a2"); eq([isCaptain(), canPair(), canPair("a")], [false, false, false], "J3 non-captain player cannot"); Me.save("admin"); eq([canPair("a"), canPair("b")], [true, true], "J4 commissioner both");
-  Me.save("b1"); eq([canPair("b"), canPair("a")], [true, false], "J5 Matt Jackson sets B only"); Me.save(null); reset(); }
+  Me.save("b1"); eq([canPair("b"), canPair("a")], [true, false], "J5 Matt Jackson sets B only");
+  // pairings-first order
+  Store.set(["cfg","pairFirst","r2"], "a"); eq(canPair("b","r2"), false, "J6 A goes first on r2 → B's captain locked out"); eq(pairWait("r2","b"), "a", "J7 waiting on A");
+  Me.save("a3"); eq(canPair("a","r2"), true, "J8 A's captain can enter"); ROUND.r2.matches.forEach((m, i) => Store.set(["pair","r2",m.id], { a:["a"+(2*i+1), "a"+(2*i+2)], b:[] }));
+  Me.save("b1"); eq(canPair("b","r2"), true, "J9 once A has all three pairs in, B unlocks"); Me.save("admin"); Store.set(["cfg","pairFirst","r2"], "b"); eq(canPair("a","r2"), true, "J10 commissioner is never locked out");
+  Me.save(null); reset(); }
 
 /* ── G. FUZZ ────────────────────────────────────────────────── */
 { let seed = 42; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;

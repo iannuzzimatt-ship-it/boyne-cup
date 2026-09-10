@@ -708,14 +708,18 @@ const SURVOFF= rid => !!(SET("survOff", {}) || {})[rid];
 const TEAM = t => ({ ...CONFIG.teams[t], ...((SET("teams", {}) || {})[t] || {}) });
 const TA = () => TEAM("a"), TB = () => TEAM("b");
 const isCaptain = () => (CONFIG.captains || []).includes(Me.role);
-const canPair = side => Me.isAdmin() || (isCaptain() && (!side || Me.team() === side));
+const PAIRFIRST = rid => (SET("pairFirst", {}) || {})[rid] || "";           // "" (either) | "a" | "b"
+const sideComplete = (rid, side) => matchesOf(ROUND[rid]).every(m => m[side].length >= slotsPer(ROUND[rid]));
+// Who may edit pairings for a side: commissioner always; a captain their own side — unless the other team has been told to go first and hasn't finished.
+function pairWait(rid, side){ const f = PAIRFIRST(rid); return f && f !== side && !sideComplete(rid, f) ? f : null; }
+const canPair = (side, rid) => Me.isAdmin() || (isCaptain() && (!side || Me.team() === side) && !(side && rid && pairWait(rid, side)));
 const effScoring = r => r.scoring === "bestball2" && !SECOND() ? "bestball" : r.scoring;
 const TS = side => side === "a" ? TA().short : TB().short;
 const fmtPts = n => Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
 const toPar = n => n === 0 ? "E" : n > 0 ? "+" + n : String(n);
 
 /* ── store ─────────────────────────────────────────────────── */
-const KEYS = ["gross", "over", "surv", "pair", "hcp", "meta", "teebox", "cfg", "call"];
+const KEYS = ["gross", "over", "surv", "pair", "hcp", "meta", "teebox", "cfg", "call", "signed"];
 const Store = {
   data: Object.fromEntries(KEYS.map(k => [k, {}])), mode:"local", _subs:[],
   onChange(fn){ this._subs.push(fn); },
@@ -1077,12 +1081,12 @@ function renderLive(){
   const mineHtml = mine ? `<div class="mine"><div class="mine-k">Your match · ${esc(dayShort(r.date))} · tee ${esc(matchTee(r, mine))}</div><div class="mine-t">${esc(r.format)} · ${esc(c.name)}</div>
       <div class="mu" style="border:none;padding:.4rem 0 0;cursor:default"><div class="mu-side a"><div class="mu-nm">${mine.a.map(id => esc(pshort(id))).join("<br>")}</div></div><div class="mu-c"><div class="mu-lbl">v</div></div><div class="mu-side b r"><div class="mu-nm">${mine.b.map(id => esc(pshort(id))).join("<br>")}</div></div></div>
       <button class="btn btn-gold btn-full" style="margin-top:.7rem" data-open="${mine.id}">Open scorecard</button></div>`
-    : P[Me.role] && unset ? `<div class="note" style="margin-top:1rem">Pairings for this round haven't been set yet — ${isCaptain() ? "tap <b>Set pairings</b> below to enter your side." : "captains pick after the previous round."}</div>`
+    : P[Me.role] && unset ? `<div class="note" style="margin-top:1rem">Pairings for this round aren't set yet.${isCaptain() ? " Tap <b>Set pairings</b> below to enter your side." : ""}</div>`
     : Me.canScore() ? "" : `<div class="note" style="margin-top:1rem">You're watching. Tap <b>Sign in</b> at the top to open your scorecard.</div>`;
   const sideHtml = (ids, cls) => `<div class="mu-side ${cls}"><div class="mu-nm">${ids.map(id => esc(pshort(id))).join("<br>")}</div></div>`;
   const groups = teeGroups(r, ms, m => { if (!isSet(m)) return `<div class="mu" style="cursor:default"><div class="mu-side a"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div><div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div><div class="mu-st pend">${esc(matchTee(r, m))}</div><div class="mu-sub">pairings TBD</div></div><div class="mu-side b r"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div></div>`;
     const s = matchState(r.id, m.id);
-    const st = !s.started ? `<div class="mu-st pend">${esc(matchTee(r, m))}</div>` : `<div class="mu-st ${s.lead}">${s.lead === "h" ? "AS" : TS(s.lead) + " " + esc(s.short)}</div><div class="mu-sub">${s.closed ? "Final" : "thru " + s.thru}</div>`;
+    const st = !s.started ? `<div class="mu-st pend">${esc(matchTee(r, m))}</div>` : `<div class="mu-st ${s.lead}">${s.lead === "h" ? "AS" : TS(s.lead) + " " + esc(s.short)}</div><div class="mu-sub">${s.closed ? (Store.get(["signed", mkey(r.id, m.id)], null) ? "Final ✓" : "Final · submit card") : "thru " + s.thru}</div>`;
     return `<div class="mu" data-open="${m.id}">${sideHtml(m.a, "a")}<div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div>${st}</div>${sideHtml(m.b, "b r")}</div>`; });
   $("#v-live").innerHTML = `
     <div class="lv-pick" style="margin-top:.6rem">${chips}</div>
@@ -1100,14 +1104,15 @@ function renderLive(){
 }
 function renderPairEditor(r, ms){
   const n = slotsPer(r), used = {}; ms.forEach(m => [...m.a, ...m.b].forEach(id => used[id] = (used[id] || 0) + 1));
-  const opts = (side, cur) => `<option value="">— pick —</option>` + CONFIG.players.filter(p => p.team === side).map(p => `<option value="${p.id}" ${cur === p.id ? "selected" : ""}>${esc(p.name)}${used[p.id] > 1 ? " ⚠ twice" : ""}</option>`).join("");
-  const col = (m, side) => canPair(side) ? `<div class="${side}">${[...Array(n)].map((_, i) => `<select data-pair="${m.id}" data-side="${side}" data-i="${i}">${opts(side, m[side][i])}</select>`).join("")}</div>`
-    : `<div class="${side}" style="display:flex;flex-direction:column;justify-content:center;gap:.3rem;padding:.2rem .4rem;font-size:.8rem;color:var(--${side}-lt)">${[...Array(n)].map((_, i) => `<div>${m[side][i] ? esc(pname(m[side][i])) : `<span class="muted">${esc(TEAM(side).short)} TBD</span>`}</div>`).join("")}<div class="tiny muted">set by ${esc(TEAM(side).short)}'s captain</div></div>`;
-  const dup = Object.values(used).some(v => v > 1), missing = CONFIG.players.filter(p => !used[p.id] && (Me.isAdmin() || p.team === Me.team()));
+  const opts = (side, cur) => `<option value="">— pick —</option>` + CONFIG.players.filter(p => p.team === side).map(p => `<option value="${p.id}" ${cur === p.id ? "selected" : ""} ${used[p.id] && cur !== p.id ? "disabled" : ""}>${esc(p.name)}${used[p.id] && cur !== p.id ? " · placed" : ""}</option>`).join("");
+  const col = (m, side) => canPair(side, r.id) ? `<div class="${side}">${[...Array(n)].map((_, i) => `<select data-pair="${m.id}" data-side="${side}" data-i="${i}">${opts(side, m[side][i])}</select>`).join("")}</div>`
+    : `<div class="${side}" style="display:flex;flex-direction:column;justify-content:center;gap:.3rem;padding:.2rem .4rem;font-size:.8rem;color:var(--${side}-lt)">${[...Array(n)].map((_, i) => `<div>${m[side][i] ? esc(pname(m[side][i])) : `<span class="muted">${esc(TEAM(side).short)} TBD</span>`}</div>`).join("")}<div class="tiny muted">${pairWait(r.id, side) && (Me.isAdmin() || Me.team() === side) ? `waiting — ${esc(TEAM(pairWait(r.id, side)).short)} enters first` : `set by ${esc(TEAM(side).short)}'s captain`}</div></div>`;
+  const placed = side => CONFIG.players.filter(p => p.team === side && used[p.id]).length, total = side => CONFIG.players.filter(p => p.team === side).length;
+  const wait = !Me.isAdmin() && pairWait(r.id, Me.team());
   const hasScores = m => Object.keys(Store.get(["gross", mkey(r.id, m.id)], {}) || {}).length > 0 || Object.keys(Store.get(["over", mkey(r.id, m.id)], {}) || {}).length > 0;
   const one = m => `<div class="pe" style="${r.scoring === "singles" ? "margin:.35rem .35rem" : ""}"><div class="pe-h">${esc(m.label)}${r.scoring === "singles" ? "" : " · " + esc(matchTee(r, m))}${hasScores(m) ? ` <span style="color:var(--a-lt);letter-spacing:0;text-transform:none">· has scores — swapping a player hides their entries (clear the round to start clean)</span>` : ""}</div><div class="pe-g">${col(m, "a")}${col(m, "b")}</div></div>`;
   return teeGroups(r, ms, one) +
-    `<div class="tiny" style="color:${dup ? "var(--a-lt)" : "var(--tx3)"};text-align:center;margin-top:.3rem">${dup ? "Someone is in two matches." : missing.length ? "Not yet placed: " + missing.map(p => pshort(p.id)).join(", ") : "Everyone placed ✓"} · saves instantly to every phone</div>`;
+    `<div class="tiny muted" style="text-align:center;margin-top:.3rem">${wait ? `<b style="color:var(--gold)">${esc(TEAM(wait).short)} enters pairings first</b> — yours unlock when they're done. · ` : ""}${esc(TA().short)} ${placed("a")}/${total("a")} placed · ${esc(TB().short)} ${placed("b")}/${total("b")} placed · saves instantly to every phone</div>`;
 }
 
 function ruleText(r){
@@ -1184,6 +1189,11 @@ function renderCard(){
     ${note ? `<div class="note" style="margin-bottom:.6rem">${s.closed && s.started ? `<b>Final — ${s.lead === "h" ? "halved" : TS(s.lead) + " wins " + esc(s.short)}.</b> ` : ""}${note}</div>` : ""}
     ${rows}<div class="hres">${hres}</div>${who ? `<div class="entered">last entry ${esc(who)}</div>` : ""}${overBtns}
     ${grid}
+    ${(() => { const sg = Store.get(["signed", mkey(r.id, m.id)], null), mine = m.a.includes(Me.role) || m.b.includes(Me.role) || Me.isAdmin();
+      if (!s.closed) return ""; if (sg) return `<div class="card" style="margin-top:.8rem;padding:.7rem .8rem;text-align:center;border-color:rgba(216,169,74,.45)"><div style="font-family:var(--hd);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)">✓ Scorecard submitted</div><div class="tiny muted" style="margin-top:.2rem">${esc(sg)}</div></div>`;
+      return `<div class="card" style="margin-top:.8rem;padding:.8rem;text-align:center;border-color:rgba(216,169,74,.45)"><div style="font-family:var(--hd);font-weight:700;font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase">That's the match — ${s.lead === "h" ? "halved" : TS(s.lead) + " wins " + esc(s.short)}</div>
+        <div class="tiny muted" style="margin:.25rem 0 .6rem">${s.pts.a || s.pts.b ? `${fmtPts(Math.max(s.pts.a, s.pts.b))} point${Math.max(s.pts.a, s.pts.b) === 1 ? "" : "s"} to ${s.lead === "h" ? "each side" : TS(s.lead)} — already on the board.` : "No points awarded."} Check the card, then submit it.</div>
+        ${mine ? `<button id="signCard" class="btn btn-gold btn-full">Submit scorecard</button>` : `<div class="tiny muted">Waiting for the players to submit.</div>`}</div>`; })()}
     ${Me.isAdmin() ? `<div class="card" style="margin-top:.8rem;padding:.65rem .75rem"><div style="font-family:var(--hd);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;color:var(--gold);margin-bottom:.4rem">Commissioner · this match</div>
       <div class="tiny muted" style="margin-bottom:.45rem">${s.called ? `Called: <b>${s.called === "void" ? "void — no points" : s.called === "h" ? "halved" : TS(s.called) + " wins"}</b>. Un-call to go back to the scores.` : "Call the match if it can't be finished (rain, darkness). Points are awarded as if it ended now."}</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem">${[["a", TS("a") + " wins"], ["h", "Halve"], ["b", TS("b") + " wins"], ["void", "Void"]].map(([v, l]) => `<button data-call="${v}" class="btn btn-sm ${s.called === v ? "btn-gold" : ""}" style="padding:.4rem .2rem;font-size:.66rem">${l}</button>`).join("")}</div>
@@ -1284,12 +1294,16 @@ function renderTrip(){
   const rulesPanel = admin ? `<div class="sect"><div class="sect-h">Commissioner · Rules</div><div class="card" style="padding:.2rem .75rem .6rem">
       <div class="tiny muted" style="padding:.5rem 0 .2rem">Changes apply to every phone immediately and rewrite the rules text.</div>
       ${rowC("Carryovers", sel("carry", CARRY(), [[0, "None"], [1, "Carry 1"], [2, "Carry 2"]]), "tied hole rolls into the next")}
-      ${rowC("Halved match", sel("halvedMatch", HALVED(), [["split", "1 point each"], ["none", "Nothing"]]))}
+      ${rowC("Tied match", sel("halvedMatch", HALVED(), [["split", "1 point each"], ["none", "Nothing"]]), "match finishes all square")}
       ${rowC("Survivor ball · per pairing", num("survivorPts", SP(), 0.5), "0 turns survivor off everywhere")}
       ${rowC("Survivor sweep · per round", num("survivorSweep", SW(), 0.5), "every pairing on a team keeps it")}
       ${rowC("Survivor in play", `<div style="display:flex;flex-wrap:wrap;gap:.3rem;justify-content:flex-end">${CONFIG.rounds.map(r => `<button data-cfgtoggle="survOff" data-rid="${r.id}" class="btn btn-sm ${SURVOFF(r.id) ? "" : "btn-gold"}" style="padding:.25rem .5rem;font-size:.62rem">${esc(dayShort(r.date).split(",")[0])} ${parseTee(r.tee) < 720 ? "AM" : "PM"}</button>`).join("")}</div>`, "gold = on for that round")}
       ${rowC("2nd-man tiebreak (Sat AM)", sel("secondMan", SECOND(), [[true, "On"], [false, "Off — plain best ball"]]))}
       ${rowC("Concession buttons", sel("concessions", CONC(), [[false, "Hidden"], [true, "Shown"]]), "A wins / Halve / B wins on each hole")}
+    </div></div>
+    <div class="sect"><div class="sect-h">Commissioner · Pairings order</div><div class="card" style="padding:.2rem .75rem .6rem">
+      <div class="tiny muted" style="padding:.5rem 0 .2rem">Who has to enter their pairings first, per round. The other captain's editor stays locked until the first team has all its pairings in. "Either" = no rule.</div>
+      ${CONFIG.rounds.map(r => rowC(`${esc(dayShort(r.date).split(",")[0])} ${parseTee(r.tee) < 720 ? "AM" : "PM"} · ${esc(r.format.split(" ·")[0])}`, sel("pairFirst." + r.id, PAIRFIRST(r.id), [["", "Either"], ["a", TEAM("a").short + " first"], ["b", TEAM("b").short + " first"]]))).join("")}
     </div></div>
     <div class="sect"><div class="sect-h">Commissioner · Teams</div><div class="card" style="padding:.6rem .75rem;display:grid;gap:.5rem">
       ${["a", "b"].map(t => `<div style="display:grid;grid-template-columns:1fr 64px;gap:.4rem;align-items:center"><div style="font-family:var(--hd);font-weight:700;letter-spacing:.1em;color:var(--${t}-lt);grid-column:1/-1;font-size:.7rem">TEAM ${t.toUpperCase()}</div>
@@ -1367,7 +1381,8 @@ document.addEventListener("click", e => {
   const cb = e.target.closest("[data-call]"); if (cb && Me.isAdmin()) { const v = cb.dataset.call; const key = mkey(UI.rid, UI.mid); if (v === "none") return Store.set(["call", key], null);
     ask("Call this match?", `Ends <b>${esc(matchOf(UI.rid, UI.mid).label)}</b> now as <b>${v === "void" ? "void (no points)" : v === "h" ? "halved" : TS(v) + " wins"}</b>. You can un-call it later.`, { yes:"Call it" }).then(ok => ok && Store.set(["call", key], v)); return; }
   if (e.target.closest("#clearMatch") && Me.isAdmin()) { const key = mkey(UI.rid, UI.mid); ask("Clear this match?", `Every score, survivor mark and call for <b>${esc(matchOf(UI.rid, UI.mid).label)}</b> is removed. Pairings stay.`, { yes:"Clear it" })
-      .then(ok => { if (!ok) return; ["gross", "over", "meta", "call"].forEach(k => Store.set([k, key], null)); Store.set(["surv", UI.rid, UI.mid], null); }); return; }
+      .then(ok => { if (!ok) return; ["gross", "over", "meta", "call", "signed"].forEach(k => Store.set([k, key], null)); Store.set(["surv", UI.rid, UI.mid], null); }); return; }
+  if (e.target.closest("#signCard")) { const key = mkey(UI.rid, UI.mid); Store.set(["signed", key], Me.label() + " · " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" })); if (navigator.vibrate) navigator.vibrate([20, 40, 20]); UI.card = false; renderLive(); return window.scrollTo({ top:0 }); }
   const jp = e.target.closest("[data-jump]"); if (jp) { UI.hole = +jp.dataset.jump; renderLive(); return window.scrollTo({ top:0 }); }
   const stp = e.target.closest("[data-stp]"); if (stp) { const cur = gross(UI.rid, UI.mid, UI.hole, stp.dataset.k), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; return setScore(stp.dataset.k, cur === null ? par : Math.max(1, Math.min(15, cur + +stp.dataset.stp))); }
   const tap = e.target.closest("[data-tap]"); if (tap) { const cur = gross(UI.rid, UI.mid, UI.hole, tap.dataset.tap), par = courseOf(ROUND[UI.rid]).par[UI.hole - 1]; if (cur === null) return setScore(tap.dataset.tap, par); if (canEdit(UI.rid, UI.mid)) ask("Clear this score?", "Removes the score in this box. You can tap to re-enter it.", { yes:"Clear it" }).then(ok => ok && setScore(tap.dataset.tap, null)); return; }
@@ -1375,12 +1390,12 @@ document.addEventListener("click", e => {
   const sv = e.target.closest("[data-surv]"); if (sv) { const { surv:rid, mid, side, ans, hole, by } = sv.dataset; if (!canSurv(side, rid, mid)) return; return Store.set(["surv", rid, mid, side], ans === "lost" ? { hole:Number(hole), by:by || null } : null); }
   const cl = e.target.closest("[data-clear]"); if (cl && Me.isAdmin()) { const r = ROUND[cl.dataset.clear];
     ask(`Clear ${r.format}?`, `Every score entered for <b>${esc(r.format)} (${esc(dayShort(r.date))})</b> disappears from every phone. Pairings and handicaps stay. No undo.`, { yes:"Clear the round" })
-      .then(ok => { if (!ok) return; r.matches.forEach(m => ["gross", "over", "meta", "call"].forEach(k => Store.set([k, mkey(r.id, m.id)], null))); Store.set(["surv", r.id], null); }); return; }
+      .then(ok => { if (!ok) return; r.matches.forEach(m => ["gross", "over", "meta", "call", "signed"].forEach(k => Store.set([k, mkey(r.id, m.id)], null))); Store.set(["surv", r.id], null); }); return; }
   if (e.target.closest("#wipeAll") && Me.isAdmin()) { ask("Wipe everything?", "Every score for the whole trip, on every phone. Pairings and handicaps stay.", { typed:"RESET", yes:"Wipe it all" })
-      .then(ok => { if (!ok) return; ["gross", "over", "meta", "surv", "call"].forEach(k => Store.set([k], null)); UI.card = false; UI.rid = null; }); return; }
+      .then(ok => { if (!ok) return; ["gross", "over", "meta", "surv", "call", "signed"].forEach(k => Store.set([k], null)); UI.card = false; UI.rid = null; }); return; }
 });
 document.addEventListener("change", e => {
-  const pr = e.target.closest("[data-pair]"); if (pr && canPair(pr.dataset.side)) { const r = ROUND[UI.rid], m = matchOf(UI.rid, pr.dataset.pair), side = pr.dataset.side, arr = [...m[side]]; arr[+pr.dataset.i] = pr.value || undefined;
+  const pr = e.target.closest("[data-pair]"); if (pr && canPair(pr.dataset.side, UI.rid)) { const r = ROUND[UI.rid], m = matchOf(UI.rid, pr.dataset.pair), side = pr.dataset.side, arr = [...m[side]]; arr[+pr.dataset.i] = pr.value || undefined;
     const clean = arr.filter(Boolean).slice(0, slotsPer(r)); const other = side === "a" ? "b" : "a"; return Store.set(["pair", r.id, m.id], { a: side === "a" ? clean : m.a, b: side === "b" ? clean : m.b }); }
   const h = e.target.closest("[data-hcp]"); if (h && Me.isAdmin()) return Store.set(["hcp", h.dataset.hcp], h.value === "" ? null : +h.value);
   const tbx = e.target.closest("[data-teebox]"); if (tbx && Me.isAdmin()) return Store.set(["teebox", tbx.dataset.teebox], tbx.value);
