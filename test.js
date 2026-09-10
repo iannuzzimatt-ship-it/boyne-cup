@@ -218,6 +218,11 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
   Me.save("admin"); eq(canEdit("r1","m1"), true, "I18 commissioner still can"); Store.set(["cfg","lock"], null); Me.save(null);
   reset(); }
 
+/* ── J. CAPTAIN PAIRINGS ───────────────────────────────────── */
+{ reset(); Me.save("a3"); ok(isCaptain(), "J1 Mike Chun is a captain"); eq([canPair("a"), canPair("b"), canPair()], [true, false, true], "J2 captain may set own side only");
+  Me.save("a2"); eq([isCaptain(), canPair(), canPair("a")], [false, false, false], "J3 non-captain player cannot"); Me.save("admin"); eq([canPair("a"), canPair("b")], [true, true], "J4 commissioner both");
+  Me.save("b1"); eq([canPair("b"), canPair("a")], [true, false], "J5 Matt Jackson sets B only"); Me.save(null); reset(); }
+
 /* ── G. FUZZ ────────────────────────────────────────────────── */
 { let seed = 42; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
   let bad = 0, closedCount = 0, halvedCount = 0; const N = 1500;

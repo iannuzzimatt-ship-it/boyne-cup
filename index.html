@@ -564,6 +564,9 @@ const CONFIG = {
     b: { name:"Team B", short:"B", captain:"Matt Jackson & Ryan Adams" },
   },
 
+  // Captains can set their own team's pairings in the app (the commissioner can set both sides).
+  captains: ["a3", "a6", "b1", "b6"],   // Mike Chun, Kevin Sayers, Matt Jackson, Ryan Adams
+
   /* ── 3. THE PLAYERS ──────────────────────────────────────────── */
   // hcp = strokes vs scratch. In best ball and singles everyone plays off the
   // lowest man IN THEIR GROUP (full difference, hardest holes first). Scrambles: none.
@@ -704,6 +707,8 @@ const LOCKED = rid => !!(SET("lock", {}) || {})[rid];
 const SURVOFF= rid => !!(SET("survOff", {}) || {})[rid];
 const TEAM = t => ({ ...CONFIG.teams[t], ...((SET("teams", {}) || {})[t] || {}) });
 const TA = () => TEAM("a"), TB = () => TEAM("b");
+const isCaptain = () => (CONFIG.captains || []).includes(Me.role);
+const canPair = side => Me.isAdmin() || (isCaptain() && (!side || Me.team() === side));
 const effScoring = r => r.scoring === "bestball2" && !SECOND() ? "bestball" : r.scoring;
 const TS = side => side === "a" ? TA().short : TB().short;
 const fmtPts = n => Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
@@ -1072,7 +1077,7 @@ function renderLive(){
   const mineHtml = mine ? `<div class="mine"><div class="mine-k">Your match · ${esc(dayShort(r.date))} · tee ${esc(matchTee(r, mine))}</div><div class="mine-t">${esc(r.format)} · ${esc(c.name)}</div>
       <div class="mu" style="border:none;padding:.4rem 0 0;cursor:default"><div class="mu-side a"><div class="mu-nm">${mine.a.map(id => esc(pshort(id))).join("<br>")}</div></div><div class="mu-c"><div class="mu-lbl">v</div></div><div class="mu-side b r"><div class="mu-nm">${mine.b.map(id => esc(pshort(id))).join("<br>")}</div></div></div>
       <button class="btn btn-gold btn-full" style="margin-top:.7rem" data-open="${mine.id}">Open scorecard</button></div>`
-    : P[Me.role] && unset ? `<div class="note" style="margin-top:1rem">Pairings for this round haven't been set yet — captains pick after the previous round.</div>`
+    : P[Me.role] && unset ? `<div class="note" style="margin-top:1rem">Pairings for this round haven't been set yet — ${isCaptain() ? "tap <b>Set pairings</b> below to enter your side." : "captains pick after the previous round."}</div>`
     : Me.canScore() ? "" : `<div class="note" style="margin-top:1rem">You're watching. Tap <b>Sign in</b> at the top to open your scorecard.</div>`;
   const sideHtml = (ids, cls) => `<div class="mu-side ${cls}"><div class="mu-nm">${ids.map(id => esc(pshort(id))).join("<br>")}</div></div>`;
   const groups = teeGroups(r, ms, m => { if (!isSet(m)) return `<div class="mu" style="cursor:default"><div class="mu-side a"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div><div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div><div class="mu-st pend">${esc(matchTee(r, m))}</div><div class="mu-sub">pairings TBD</div></div><div class="mu-side b r"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div></div>`;
@@ -1084,10 +1089,10 @@ function renderLive(){
     <div class="tiny muted" style="display:flex;gap:.6rem;justify-content:center;margin:.1rem 0 .3rem"><span style="color:var(--a-lt);font-weight:700">${esc(TA().short)} ${fmtPts(t.a)}</span><span>cup</span><span style="color:var(--b-lt);font-weight:700">${fmtPts(t.b)} ${esc(TB().short)}</span></div>
     ${mineHtml}
     <div class="sect"><div class="sect-h">Matches · ${esc(r.format)}</div>
-      ${admin ? `<div class="row" style="margin-bottom:.5rem"><button class="btn btn-sm ${UI.editPairs ? "btn-gold" : "btn-gh"}" id="editPairs">${UI.editPairs ? "Done editing" : (unset ? "Set pairings" : "Edit pairings")}</button>
-        ${c.tees ? `<label class="tiny muted" style="margin-left:auto">Tees <select data-teebox="${r.id}" style="background:var(--bg3);border:1px solid var(--line2);border-radius:6px;color:var(--tx);padding:.3rem .4rem;font-size:.75rem">${Object.keys(c.tees).map(t => `<option ${t === teeBox(r) ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>` : ""}</div>`
+      ${canPair() ? `<div class="row" style="margin-bottom:.5rem"><button class="btn btn-sm ${UI.editPairs ? "btn-gold" : "btn-gh"}" id="editPairs">${UI.editPairs ? "Done editing" : (unset ? (admin ? "Set pairings" : "Set " + esc(TEAM(Me.team()).short) + " pairings") : (admin ? "Edit pairings" : "Edit " + esc(TEAM(Me.team()).short) + " pairings"))}</button>
+        ${admin && c.tees ? `<label class="tiny muted" style="margin-left:auto">Tees <select data-teebox="${r.id}" style="background:var(--bg3);border:1px solid var(--line2);border-radius:6px;color:var(--tx);padding:.3rem .4rem;font-size:.75rem">${Object.keys(c.tees).map(t => `<option ${t === teeBox(r) ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>` : ""}</div>`
         : (c.tees ? `<div class="tiny muted" style="margin-bottom:.5rem">${esc(teeBox(r))} tees · ${yards(r).reduce((x, y) => x + y, 0).toLocaleString()} yds</div>` : "")}
-      ${admin && UI.editPairs ? renderPairEditor(r, ms) : `<div class="card">${groups}</div>`}
+      ${canPair() && UI.editPairs ? renderPairEditor(r, ms) : `<div class="card">${groups}</div>`}
       ${Me.canScore() && !UI.editPairs ? `<div class="tiny muted" style="margin-top:.45rem;text-align:center">Tap your match to score it, any match to watch</div>` : ""}</div>
     <div class="sect"><div class="sect-h">Rules</div><details class="card">${SUM(esc(r.format), esc(courseOf(r).name) + " · " + r.holes + " holes · par " + courseOf(r).par.reduce((a, b) => a + b, 0))}
       <div style="padding:.2rem .85rem .35rem;font-size:.8rem;line-height:1.5;color:var(--tx2)">${ruleText(r)}</div>
@@ -1096,8 +1101,9 @@ function renderLive(){
 function renderPairEditor(r, ms){
   const n = slotsPer(r), used = {}; ms.forEach(m => [...m.a, ...m.b].forEach(id => used[id] = (used[id] || 0) + 1));
   const opts = (side, cur) => `<option value="">— pick —</option>` + CONFIG.players.filter(p => p.team === side).map(p => `<option value="${p.id}" ${cur === p.id ? "selected" : ""}>${esc(p.name)}${used[p.id] > 1 ? " ⚠ twice" : ""}</option>`).join("");
-  const col = (m, side) => `<div class="${side}">${[...Array(n)].map((_, i) => `<select data-pair="${m.id}" data-side="${side}" data-i="${i}">${opts(side, m[side][i])}</select>`).join("")}</div>`;
-  const dup = Object.values(used).some(v => v > 1), missing = CONFIG.players.filter(p => !used[p.id]);
+  const col = (m, side) => canPair(side) ? `<div class="${side}">${[...Array(n)].map((_, i) => `<select data-pair="${m.id}" data-side="${side}" data-i="${i}">${opts(side, m[side][i])}</select>`).join("")}</div>`
+    : `<div class="${side}" style="display:flex;flex-direction:column;justify-content:center;gap:.3rem;padding:.2rem .4rem;font-size:.8rem;color:var(--${side}-lt)">${[...Array(n)].map((_, i) => `<div>${m[side][i] ? esc(pname(m[side][i])) : `<span class="muted">${esc(TEAM(side).short)} TBD</span>`}</div>`).join("")}<div class="tiny muted">set by ${esc(TEAM(side).short)}'s captain</div></div>`;
+  const dup = Object.values(used).some(v => v > 1), missing = CONFIG.players.filter(p => !used[p.id] && (Me.isAdmin() || p.team === Me.team()));
   const hasScores = m => Object.keys(Store.get(["gross", mkey(r.id, m.id)], {}) || {}).length > 0 || Object.keys(Store.get(["over", mkey(r.id, m.id)], {}) || {}).length > 0;
   const one = m => `<div class="pe" style="${r.scoring === "singles" ? "margin:.35rem .35rem" : ""}"><div class="pe-h">${esc(m.label)}${r.scoring === "singles" ? "" : " · " + esc(matchTee(r, m))}${hasScores(m) ? ` <span style="color:var(--a-lt);letter-spacing:0;text-transform:none">· has scores — swapping a player hides their entries (clear the round to start clean)</span>` : ""}</div><div class="pe-g">${col(m, "a")}${col(m, "b")}</div></div>`;
   return teeGroups(r, ms, one) +
@@ -1344,7 +1350,7 @@ function setLight(on){ document.documentElement.toggleAttribute("data-light", on
 document.addEventListener("click", e => {
   const tab = e.target.closest("[data-v]"); if (tab) return showView(tab.dataset.v);
   if (e.target.closest("#sunBtn")) return setLight(!document.documentElement.hasAttribute("data-light"));
-  if (e.target.closest("#whoBtn")) { if (!Me.role) return openLogin(); $("#outNm").textContent = Me.label(); $("#outSub").textContent = Me.isAdmin() ? "You can edit everything." : "Playing for " + TEAM(Me.team()).name + ". You can score any match."; $("#outOv").classList.add("open"); return; }
+  if (e.target.closest("#whoBtn")) { if (!Me.role) return openLogin(); $("#outNm").textContent = Me.label(); $("#outSub").textContent = Me.isAdmin() ? "You can edit everything." : "Playing for " + TEAM(Me.team()).name + "." + (isCaptain() ? " As captain you can set your team's pairings on the Scoring tab." : ""); $("#outOv").classList.add("open"); return; }
   if (e.target.closest("#outSwitch")) { $("#outOv").classList.remove("open"); return openLogin(); }
   if (e.target.closest("#outGo")) { Me.save(null); $("#outOv").classList.remove("open"); UI.card = false; UI.editPairs = false; return renderAll(); }
   if (e.target.closest("#outX")) return $("#outOv").classList.remove("open");
@@ -1374,7 +1380,7 @@ document.addEventListener("click", e => {
       .then(ok => { if (!ok) return; ["gross", "over", "meta", "surv", "call"].forEach(k => Store.set([k], null)); UI.card = false; UI.rid = null; }); return; }
 });
 document.addEventListener("change", e => {
-  const pr = e.target.closest("[data-pair]"); if (pr && Me.isAdmin()) { const r = ROUND[UI.rid], m = matchOf(UI.rid, pr.dataset.pair), side = pr.dataset.side, arr = [...m[side]]; arr[+pr.dataset.i] = pr.value || undefined;
+  const pr = e.target.closest("[data-pair]"); if (pr && canPair(pr.dataset.side)) { const r = ROUND[UI.rid], m = matchOf(UI.rid, pr.dataset.pair), side = pr.dataset.side, arr = [...m[side]]; arr[+pr.dataset.i] = pr.value || undefined;
     const clean = arr.filter(Boolean).slice(0, slotsPer(r)); const other = side === "a" ? "b" : "a"; return Store.set(["pair", r.id, m.id], { a: side === "a" ? clean : m.a, b: side === "b" ? clean : m.b }); }
   const h = e.target.closest("[data-hcp]"); if (h && Me.isAdmin()) return Store.set(["hcp", h.dataset.hcp], h.value === "" ? null : +h.value);
   const tbx = e.target.closest("[data-teebox]"); if (tbx && Me.isAdmin()) return Store.set(["teebox", tbx.dataset.teebox], tbx.value);
