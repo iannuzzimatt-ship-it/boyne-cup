@@ -323,8 +323,8 @@ summary::-webkit-details-marker{display:none}
 .who-b{padding:.7rem .4rem;border-radius:9px;background:var(--bg3);border:1.5px solid var(--line2);
   font-family:var(--hd);font-size:.78rem;font-weight:700;letter-spacing:.07em;
   text-transform:uppercase;color:var(--tx2);line-height:1.25}
-.who-b.on.a{background:rgba(184,51,47,.2);border-color:var(--a-lt);color:var(--a-lt)}
-.who-b.on.b{background:rgba(31,111,74,.2);border-color:var(--b-lt);color:var(--b-lt)}
+.who-b.on.a{background:color-mix(in srgb,var(--a) 22%,transparent);border-color:var(--a-lt);color:var(--a-lt)}
+.who-b.on.b{background:color-mix(in srgb,var(--b) 22%,transparent);border-color:var(--b-lt);color:var(--b-lt)}
 .err{background:rgba(184,51,47,.14);border:1px solid rgba(224,86,80,.35);color:var(--a-lt);
   padding:.5rem .6rem;border-radius:7px;font-size:.76rem;margin-bottom:.7rem;display:none}
 .err.show{display:block}
@@ -443,9 +443,9 @@ summary::-webkit-details-marker{display:none}
 .grid td:first-child,.grid th:first-child{text-align:left;position:sticky;left:0;background:var(--card);
   padding-left:.6rem;min-width:88px;max-width:88px;overflow:hidden;text-overflow:ellipsis;font-weight:600;z-index:1}
 .grid td.cur{background:rgba(216,169,74,.14)}
-.grid td.nm-a{background:#3a1e1c!important;border-left:3px solid var(--a);color:var(--tx)}
-.grid td.nm-b{background:#173b2a!important;border-left:3px solid var(--b);color:var(--tx)}
-:root[data-light] .grid td.nm-a{background:#f3dcda!important} :root[data-light] .grid td.nm-b{background:#d9ebe0!important}
+.grid td.nm-a{background:color-mix(in srgb,var(--a) 38%,var(--card))!important;border-left:3px solid var(--a);color:var(--tx)}
+.grid td.nm-b{background:color-mix(in srgb,var(--b) 38%,var(--card))!important;border-left:3px solid var(--b);color:var(--tx)}
+:root[data-light] .grid td.nm-a{background:color-mix(in srgb,var(--a) 18%,#fffdf7)!important} :root[data-light] .grid td.nm-b{background:color-mix(in srgb,var(--b) 18%,#fffdf7)!important}
 .grid td.tot{font-weight:700;background:var(--bg2)}
 .grid tr:last-child td{border-bottom:none}
 .grid td.pick{cursor:pointer}
@@ -707,6 +707,12 @@ const LOCKED = rid => !!(SET("lock", {}) || {})[rid];
 const SURVOFF= rid => !!(SET("survOff", {}) || {})[rid];
 const TEAM = t => ({ ...CONFIG.teams[t], ...((SET("teams", {}) || {})[t] || {}) });
 const TA = () => TEAM("a"), TB = () => TEAM("b");
+const PALETTE = { red:{ name:"Red", dark:["#b8332f","#e05650","#8a221f"], light:["#b8332f","#a5231f","#8a221f"] }, green:{ name:"Green", dark:["#1f6f4a","#34a06c","#144d33"], light:["#1f6f4a","#186642","#144d33"] },
+  blue:{ name:"Blue", dark:["#2b5fa8","#5b8fe0","#1e4478"], light:["#2b5fa8","#244f8c","#1e4478"] }, orange:{ name:"Orange", dark:["#c4661d","#ee8a3c","#8f4a13"], light:["#c4661d","#a3541a","#8f4a13"] },
+  purple:{ name:"Purple", dark:["#6b3fa0","#9a6fd0","#4b2b72"], light:["#6b3fa0","#5a348a","#4b2b72"] }, black:{ name:"Black", dark:["#2a2a2a","#8a8a8a","#111"], light:["#222","#333","#111"] },
+  gold:{ name:"Gold", dark:["#a67f2e","#d9b46b","#7a5c1f"], light:["#8a6a1c","#7a5c1f","#5f4716"] }, white:{ name:"White", dark:["#c9c9c9","#f2f2f2","#9a9a9a"], light:["#6e6e6e","#555","#444"] } };
+function applyTeamColors(){ const light = document.documentElement.hasAttribute("data-light"), st = document.documentElement.style;
+  ["a", "b"].forEach(t => { const c = PALETTE[TEAM(t).color] || PALETTE[t === "a" ? "red" : "green"], v = light ? c.light : c.dark; st.setProperty(`--${t}`, v[0]); st.setProperty(`--${t}-lt`, v[1]); st.setProperty(`--${t}-dk`, v[2]); }); }
 const isCaptain = () => (CONFIG.captains || []).includes(Me.role);
 const PAIRFIRST = rid => (SET("pairFirst", {}) || {})[rid] || "";           // "" (either) | "a" | "b"
 const sideComplete = (rid, side) => matchesOf(ROUND[rid]).every(m => m[side].length >= slotsPer(ROUND[rid]));
@@ -827,7 +833,7 @@ const survApplies = r => SP() > 0 && r.survivor !== false && !SURVOFF(r.id);
 const survLoss = (rid, mid, side) => { const v = Store.get(["surv", rid, mid, side], null); if (typeof v === "number" && v > 0) return { hole:v, by:null }; if (v && typeof v === "object" && v.hole > 0) return { hole:Number(v.hole), by:v.by || null }; return null; };
 const survLostHole = (rid, mid, side) => survLoss(rid, mid, side)?.hole ?? null;
 // "kept" | "lost" | "play" (match still going, ball in play) | null (n/a)
-function sideDone(rid, mid, side){ const r = ROUND[rid], m = matchOf(rid, mid); return scorers(r, m).filter(x => x.side === side).every(x => rowComplete(rid, mid, x.key)); }
+function sideDone(rid, mid, side){ const r = ROUND[rid], m = matchOf(rid, mid); return scorers(r, m).filter(x => x.side === side).every(x => !!rowSigned(rid, mid, x.key)); }
 function survStatus(rid, mid, side){ const r = ROUND[rid], m = matchOf(rid, mid); if (!survApplies(r) || !isSet(m)) return null;
   if (survLostHole(rid, mid, side) !== null) return "lost"; return sideDone(rid, mid, side) ? "kept" : "play"; }
 function roundSweep(rid){ // { a:{kept,lost,pending,n,swept,possible,pts}, b:{...} }
@@ -836,7 +842,7 @@ function roundSweep(rid){ // { a:{kept,lost,pending,n,swept,possible,pts}, b:{..
   ["a","b"].forEach(side => { const x = out[side]; x.swept = x.n > 0 && x.kept === x.n; x.possible = x.n > 0 && x.lost === 0 && !x.swept; x.pts = x.swept ? sw : 0; });
   return out;
 }
-const canSurv = (side, rid, mid) => Me.isAdmin() || (!(rid && LOCKED(rid)) && (rid && mid ? matchOf(rid, mid)[side].includes(Me.role) : Me.team() === side));
+const canSurv = (side, rid, mid) => Me.isAdmin() || (!(rid && LOCKED(rid)) && (rid && mid ? (() => { const m = matchOf(rid, mid); return m.a.includes(Me.role) || m.b.includes(Me.role); })() : Me.team() === side));
 // Who may edit a match: the commissioner always; its players only while it's still live.
 // Each scorer (player, or side in a scramble) submits their own card once their holes are all in.
 const rowSigned = (rid, mid, key) => { const v = Store.get(["signed", mkey(rid, mid), key], null); return typeof v === "string" ? v : null; };
@@ -970,7 +976,7 @@ function renderFormat(){
         ${li(`<b style="color:var(--tx)">Match play.</b> Won hole: 1 up. Tied hole: half each. ${carry === 0 ? "No carryovers." : carry >= 99 ? "Tied holes carry over." : `Tied holes carry over (max ${carry}).`}`)}
         ${li(`<b style="color:var(--tx)">Points.</b> Every match is worth ${mp} points. Win the match, ${mp} points to your team. ${halved} ${perRoundTxt.charAt(0).toUpperCase() + perRoundTxt.slice(1)}.`)}
         ${li(`<b style="color:var(--tx)">${matchPts} match points in total</b>, plus survivor bonuses on top (up to ${fmtPts(survMax)} a team). Because of the bonuses there's no fixed number that clinches: a team has the Cup when it leads by more than everything the other side could still win — remaining matches and remaining bonuses. The board does that math live and shows each team's magic number.`)}
-        ${sp ? li(`<b style="color:var(--tx)">Survivor ball: +${sp} per pairing per round.</b> Every pairing (and every singles player) starts each round with a survivor ball; partners alternate holes with it. Lose it and you tap <em>lost ball</em> next to your name on that hole — nothing else to do. Finish with it in play and the team banks ${sp} automatically. <b>Sweep:</b> every pairing on a team keeps its ball in a round → an extra +${SW()} that round. Balls reset every round. All of it counts toward the total.`) : ""}
+        ${sp ? li(`<b style="color:var(--tx)">Survivor ball: +${sp} per pairing per round.</b> Every pairing (and every singles player) starts each round with a survivor ball; partners alternate holes with it. Lose it and someone in the group taps <em>lost ball</em> next to the name on that hole. Submit the card with it still in play and the team banks ${sp}. <b>Sweep:</b> every pairing on a team keeps its ball in a round → an extra +${SW()} that round. Balls reset every round. All of it counts toward the total.`) : ""}
         ${li(`<b style="color:var(--tx)">Nothing to submit.</b> Type gross scores hole by hole; the match, the round and the Cup update instantly. Only the players in a match can score it, and a decided match locks — the commissioner can fix anything. Pick-ups, gimmes and mulligans are sorted between the teams on the course; whatever you agree, type a number for the hole.`)}
         ${li(`<b style="color:var(--tx)">Most total points lifts the Cup</b> — match points plus survivor bonuses. Tied on total points: tiebreaker still to be decided (the Individual Honours may get a say).`)}
         ${li(`<b style="color:var(--tx)">Handicaps</b> only matter in the own-ball rounds (best ball, singles). Strokes are set inside each match: the lowest handicap in the match plays off zero, everyone else gets the full difference, on the hardest holes first. Scrambles are gross. You always type gross scores — the app does the net.`)}
@@ -1136,7 +1142,7 @@ function ruleText(r){
   }[r.scoring] || "";
   const hcp = r.scoring === "scramble" ? "" : `<b>Strokes:</b> worked out inside your match. The lowest handicap in the match plays off zero; everyone else gets the <b>full difference</b>, taken on the hardest holes first (stroke index 1, then 2, and so on)${r.holes <= 9 && CONFIG.nineHoleHalf !== false ? ", halved for nine holes" : ""}. ${r.scoring === "singles" ? "So in singles you play off the lower handicap of the two of you." : "So in a foursome everyone plays off the lowest of the four."} Stroke holes show a gold dot on the card — you still type your gross.`;
   const mp = `<b>Match play.</b> Won hole: 1 up. Tied hole: half each. ${carry === 0 ? "No carryovers." : carry >= 99 ? "Tied holes carry over." : `Tied holes carry over (max ${carry}).`} <b>Match worth ${pts} points</b>${HALVED() === "none" ? "; all square = nothing." : `; all square = ${fmtPts(pts / 2)} each.`}`;
-  const surv = survApplies(r) ? `<b>Survivor ball:</b> every ${r.scoring === "singles" ? "player" : "pairing"} starts the round with a survivor ball. ${r.scoring === "singles" ? "Play it on every hole." : "Partners alternate: one plays it on hole 1, the other on hole 2, back to the first on 3, and so on — and it must be used for the whole hole."} <b>Lose it and tap <em>lost ball</em> next to your name on that hole</b> — that's the only thing you ever need to do (it records who lost it and where). Finish the match with it still in play and your ${r.scoring === "singles" ? "match" : "pairing"} banks <b>+${SP()}</b> for the team automatically. ${SW() ? `<b>Sweep:</b> every pairing on the team keeps its ball this round → an extra <b>+${SW()}</b> to the team.` : ""}` : "";
+  const surv = survApplies(r) ? `<b>Survivor ball:</b> every ${r.scoring === "singles" ? "player" : "pairing"} starts the round with a survivor ball. ${r.scoring === "singles" ? "Play it on every hole." : "Partners alternate: one plays it on hole 1, the other on hole 2, back to the first on 3, and so on — and it must be used for the whole hole."} <b>Lose it and tap <em>lost ball</em> next to the name on that hole</b> — anyone scoring the match can do it, and it records who and where. Submit the card with the ball still in play and your ${r.scoring === "singles" ? "match" : "pairing"} banks <b>+${SP()}</b> for the team. ${SW() ? `<b>Sweep:</b> every pairing on the team keeps its ball this round → an extra <b>+${SW()}</b> to the team.` : ""}` : "";
   return [entry, fmt, hcp, mp, surv].filter(Boolean).map(P).join("");
 }
 const scoreClass = (g, par) => g === null ? "empty" : (d => d <= -2 ? "eagle" : d === -1 ? "birdie" : d === 0 ? "" : d === 1 ? "bogey" : "dbl")(g - par);
@@ -1312,7 +1318,9 @@ function renderTrip(){
     <div class="sect"><div class="sect-h">Commissioner · Teams</div><div class="card" style="padding:.6rem .75rem;display:grid;gap:.5rem">
       ${["a", "b"].map(t => `<div style="display:grid;grid-template-columns:1fr 64px;gap:.4rem;align-items:center"><div style="font-family:var(--hd);font-weight:700;letter-spacing:.1em;color:var(--${t}-lt);grid-column:1/-1;font-size:.7rem">TEAM ${t.toUpperCase()}</div>
         ${txt("teams." + t + ".name", TEAM(t).name, "Team name")}${txt("teams." + t + ".short", TEAM(t).short, "AB", "64px")}
-        <div style="grid-column:1/-1">${txt("teams." + t + ".captain", TEAM(t).captain || "", "Captain(s)")}</div></div>`).join("")}
+        <div style="grid-column:1/-1">${txt("teams." + t + ".captain", TEAM(t).captain || "", "Captain(s)")}</div>
+        <div style="grid-column:1/-1;display:flex;align-items:center;gap:.5rem"><span class="tiny muted grow">Team colour</span>${sel("teams." + t + ".color", TEAM(t).color || (t === "a" ? "red" : "green"), Object.entries(PALETTE).map(([k, v]) => [k, v.name]))}<span style="width:18px;height:18px;border-radius:50%;background:var(--${t});border:1px solid var(--line2)"></span></div></div>`).join("")}
+      <button class="btn btn-sm" id="swapColors">Swap the two colours</button>
       <div class="tiny muted">Short code shows in tight spots ("GG 2 UP", the Hole-to row) — keep it to 1–3 characters.</div></div></div>
     <div class="sect"><div class="sect-h">Commissioner · Housekeeping</div><div class="card" style="padding:.6rem .75rem">
       <div style="font-size:.82rem;font-weight:600;margin-bottom:.3rem">Message of the day</div>${txt("motd", MOTD(), "e.g. Tee times moved 20 min · lunch at the turn")}
@@ -1333,7 +1341,7 @@ function renderTrip(){
 
 /* ═══ BOOT + EVENTS ═════════════════════════════════════════ */
 let curView = "cup";
-function renderAll(){ hero(); const mo = $("#motd"); if (mo) { const t = MOTD(); mo.hidden = !t; mo.textContent = t; } renderCup(); if (curView === "live") renderLive(); if (curView === "trip") renderTrip();
+function renderAll(){ applyTeamColors(); hero(); const mo = $("#motd"); if (mo) { const t = MOTD(); mo.hidden = !t; mo.textContent = t; } renderCup(); if (curView === "live") renderLive(); if (curView === "trip") renderTrip();
   const w = $("#whoBtn"); w.textContent = Me.role ? Me.label() : "Sign in"; w.className = "strip-u " + (Me.role ? Me.team() : ""); }
 function showView(v){ curView = v; document.querySelector(".hero").classList.toggle("compact", v === "live"); $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-" + v)); $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.v === v)); renderAll(); window.scrollTo({ top:0 }); }
 function hero(){
@@ -1363,7 +1371,7 @@ function ask(title, text, opts = {}){
     $("#askNo").onclick = () => close(false); inp.style.borderColor = ""; if (opts.typed) setTimeout(() => inp.focus(), 50);
   });
 }
-function setLight(on){ document.documentElement.toggleAttribute("data-light", on); const b = $("#sunBtn"); if (b) { b.textContent = on ? "🌚" : "🌞"; b.title = on ? "Switch to dark mode" : "Switch to light mode"; } try { localStorage.setItem("cup:theme", on ? "light" : "dark"); } catch(e){} }
+function setLight(on){ document.documentElement.toggleAttribute("data-light", on); if (typeof applyTeamColors === "function" && typeof Store !== "undefined") try { applyTeamColors(); } catch(e){} const b = $("#sunBtn"); if (b) { b.textContent = on ? "🌚" : "🌞"; b.title = on ? "Switch to dark mode" : "Switch to light mode"; } try { localStorage.setItem("cup:theme", on ? "light" : "dark"); } catch(e){} }
 
 document.addEventListener("click", e => {
   const tab = e.target.closest("[data-v]"); if (tab) return showView(tab.dataset.v);
@@ -1373,6 +1381,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("#outGo")) { Me.save(null); $("#outOv").classList.remove("open"); UI.card = false; UI.editPairs = false; return renderAll(); }
   if (e.target.closest("#outX")) return $("#outOv").classList.remove("open");
   if (e.target.closest("#honoursToggle") && Me.isAdmin()) return Store.set(["meta", "honoursPublic"], Store.get(["meta", "honoursPublic"], false) ? null : true);
+  if (e.target.closest("#swapColors") && Me.isAdmin()) { const ca = TEAM("a").color || "red", cb = TEAM("b").color || "green"; Store.set(["cfg","teams","a","color"], cb); Store.set(["cfg","teams","b","color"], ca); return; }
   const ct = e.target.closest("[data-cfgtoggle]"); if (ct && Me.isAdmin()) { const k = ct.dataset.cfgtoggle, rid = ct.dataset.rid, cur = !!(SET(k, {}) || {})[rid]; return Store.set(["cfg", k, rid], cur ? null : true); }
   const tl = e.target.closest("[data-tile]"); if (tl) { UI.cupRound = tl.dataset.tile; return renderCup(); }
   const ss = e.target.closest("[data-solosort]"); if (ss) { const k = ss.dataset.solosort; UI.soloSort = UI.soloSort.key === k ? { key:k, dir:UI.soloSort.dir === "asc" ? "desc" : "asc" } : { key:k, dir:"asc" }; return renderCup(); }
