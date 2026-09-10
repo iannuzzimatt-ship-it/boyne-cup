@@ -156,8 +156,10 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
 
 /* ── F. LOCK ────────────────────────────────────────────────── */
 { Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); Me.save("a1"); winHoles("r1","m1","a",1,10);
-  eq(canEdit("r1","m1"), false, "F1 participant locked out once match decided"); ok(/locked/.test(editNote("r1","m1")), "F2 locked note"); Me.save("admin"); eq(canEdit("r1","m1"), true, "F3 commissioner may amend");
-  O("r1","m1",3,"b"); eq(matchState("r1","m1").closed, false, "F4 commissioner amendment reopens the match (8-1 thru 10, 8 left)"); Me.save("a1"); eq(canEdit("r1","m1"), true, "F5 …and players can score again");
+  eq(canEdit("r1","m1"), true, "F1 participant can keep scoring after the match is decided (play to 18)"); eq(cardComplete("r1","m1"), false, "F1b card not complete at 10 holes");
+  for (let h = 11; h <= 18; h++) O("r1","m1",h,"h"); eq(cardComplete("r1","m1"), true, "F1c card complete after 18"); eq(canEdit("r1","m1"), true, "F1d still editable until submitted");
+  Store.set(["signed","r1_m1"], "G. Bonfiglio · 5:01 PM"); eq(canEdit("r1","m1"), false, "F2 submitted card locks players out"); ok(/submitted/.test(editNote("r1","m1")), "F2b locked note"); Me.save("admin"); eq(canEdit("r1","m1"), true, "F3 commissioner may amend");
+  O("r1","m1",3,"b"); eq(matchState("r1","m1").closed, true, "F4 amendment recalculates (still decided: 7-2 with 9 halved)"); Store.set(["signed","r1_m1"], null); Me.save("a1"); eq(canEdit("r1","m1"), true, "F5 un-submitting reopens for players");
   reset(); }
 
 
