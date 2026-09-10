@@ -981,7 +981,7 @@ function renderRoundBlock(r){
   const survMark = (m, side) => { const st = survStatus(r.id, m.id, side); if (!st) return ""; const lost = survLostHole(r.id, m.id, side);
     return st === "kept" ? `<span class="pill" style="background:rgba(63,174,114,.12);color:var(--gold);border:1px solid var(--ok);font-size:.58rem;padding:.1rem .35rem" title="kept the survivor ball"><b>+${String(SP()).replace(/^0/, "")}</b> kept ball</span>`
          : st === "lost" ? `<span class="pill" style="background:rgba(184,51,47,.12);color:var(--a-lt);border:1px solid rgba(224,86,80,.3);font-size:.58rem;padding:.1rem .35rem" title="lost the survivor ball"><b>✕</b> ${(() => { const L = survLoss(r.id, m.id, side); return (L && L.by && m[side].length > 1 ? esc(pfirst(L.by)) + " · " : "") + "lost on " + lost; })()}</span>` : ""; };
-  const body = matchesOf(r).map(m => { if (!isSet(m)) return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p">${names(m.a)}</div></div><div class="mt-c"><div class="mt-res pend">—</div><div class="mt-thru">pairings TBD</div></div><div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p">${names(m.b)}</div></div></div>`;
+  const body = matchesOf(r).map(m => { if (!isSet(m)) return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p">${names(m.a)}</div></div><div class="mt-c"><div class="mt-res pend">${esc(matchTee(r, m))}</div><div class="mt-thru">pairings TBD</div></div><div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p">${names(m.b)}</div></div></div>`;
     const s = matchState(r.id, m.id), aW = s.closed && s.lead === "a", bW = s.closed && s.lead === "b";
     const cls = !s.started ? "mt-res pend" : s.lead === "a" ? "mt-res a" : s.lead === "b" ? "mt-res b" : "mt-res h";
     const main = !s.started ? "—" : s.closed ? (s.lead === "h" ? "Halved" : TS(s.lead) + " wins") : (s.lead === "h" ? "All square" : TS(s.lead) + " " + s.short);
@@ -1066,7 +1066,7 @@ function renderLive(){
     : P[Me.role] && unset ? `<div class="note" style="margin-top:1rem">Pairings for this round haven't been set yet — captains pick after the previous round.</div>`
     : Me.canScore() ? "" : `<div class="note" style="margin-top:1rem">You're watching. Tap <b>Sign in</b> at the top to open your scorecard.</div>`;
   const sideHtml = (ids, cls) => `<div class="mu-side ${cls}"><div class="mu-nm">${ids.map(id => esc(pshort(id))).join("<br>")}</div></div>`;
-  const groups = ms.map(m => { if (!isSet(m)) return `<div class="mu" style="cursor:default"><div class="mu-side a"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div><div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div><div class="mu-st pend">pairings TBD</div></div><div class="mu-side b r"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div></div>`;
+  const groups = ms.map(m => { if (!isSet(m)) return `<div class="mu" style="cursor:default"><div class="mu-side a"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div><div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div><div class="mu-st pend">${esc(matchTee(r, m))}</div><div class="mu-sub">pairings TBD</div></div><div class="mu-side b r"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div></div>`;
     const s = matchState(r.id, m.id);
     const st = !s.started ? `<div class="mu-st pend">${esc(matchTee(r, m))}</div>` : `<div class="mu-st ${s.lead}">${s.lead === "h" ? "AS" : TS(s.lead) + " " + esc(s.short)}</div><div class="mu-sub">${s.closed ? "Final" : "thru " + s.thru}</div>`;
     return `<div class="mu" data-open="${m.id}">${sideHtml(m.a, "a")}<div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div>${st}</div>${sideHtml(m.b, "b r")}</div>`; }).join("");
@@ -1177,7 +1177,7 @@ function renderCard(){
 function renderField(r, excludeMid){
   const p = roundPoints(r.id), others = matchesOf(r).filter(m => m.id !== excludeMid);
   const cols = [...Array(r.holes)].map((_, i) => i + 1);
-  const cards = others.map(m => { if (!isSet(m)) return `<div class="grp"><div class="grp-n"><b>${esc(m.label)}</b><span class="muted">pairings TBD</span></div></div>`;
+  const cards = others.map(m => { if (!isSet(m)) return `<div class="grp"><div class="grp-n"><b>${esc(m.label)}</b><span class="muted">${esc(matchTee(r, m))} · pairings TBD</span></div></div>`;
     const s = matchState(r.id, m.id), col = s.lead === "h" ? "var(--tx2)" : `var(--${s.lead}-lt)`;
     const status = !s.started ? `<span class="muted">${esc(r.tee)}</span>` : `<span style="color:${col}">${s.lead === "h" ? s.short : TS(s.lead) + " " + s.short}</span><small>${s.closed ? "Final" : "thru " + s.thru}</small>`;
     const res = cols.map(i => { const x = s.per[i]; return `<td style="color:${!x ? "var(--tx3)" : x.res === "h" ? "var(--tx2)" : "var(--" + x.res + "-lt)"};font-weight:700">${!x ? "·" : x.res === "h" ? "½" : TS(x.res) + (x.worth > 1 ? x.worth : "")}</td>`; }).join("");
