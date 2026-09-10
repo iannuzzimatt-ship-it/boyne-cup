@@ -384,6 +384,9 @@ summary::-webkit-details-marker{display:none}
 .mu-st.a{color:var(--a-lt)} .mu-st.b{color:var(--b-lt)} .mu-st.h{color:var(--tx2)} .mu-st.pend{color:var(--tx3);font-size:.72rem;font-weight:600}
 .mu-sub{font-size:.58rem;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-top:.1rem}
 .mu-go{grid-column:1/-1;font-size:.62rem;color:var(--tx3);text-align:center;margin-top:-.2rem}
+.tg{margin:.5rem .5rem;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.tg-h{font-family:var(--hd);font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--beige);background:var(--bg2);padding:.3rem .7rem;border-bottom:1px solid var(--line)}
+.tg .mt:first-of-type,.tg .mu:first-of-type{border-top:none}
 .grp:first-child{border-top:none}
 .grp-n{flex:1;min-width:0;font-size:.8rem;line-height:1.35}
 .grp-n b{font-family:var(--hd);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);display:block}
@@ -751,6 +754,12 @@ function matchesOf(r){ return r.matches.map(m => { const o = Store.get(["pair", 
 const matchOf = (rid, mid) => matchesOf(ROUND[rid]).find(m => m.id === mid);
 const slotsPer = r => r.scoring === "singles" ? 1 : 2;
 const TEE_GAP = 10; // minutes between groups
+function teeGroups(r, ms, renderOne){ // singles: two head-to-head matches per tee time, lightly boxed
+  if (r.scoring !== "singles") return ms.map(renderOne).join("");
+  const out = []; for (let i = 0; i < ms.length; i += 2) { const pair = ms.slice(i, i + 2);
+    out.push(`<div class="tg"><div class="tg-h">Tee ${esc(matchTee(r, pair[0]))} · Group ${i / 2 + 1}</div>${pair.map(renderOne).join("")}</div>`); }
+  return out.join("");
+}
 function matchTee(r, m){ const idx = r.matches.findIndex(x => x.id === m.id), slot = r.scoring === "singles" ? Math.floor(idx / 2) : idx, mins = parseTee(r.tee) + slot * TEE_GAP;
   if (mins > 1e6) return r.tee; const h = Math.floor(mins / 60) % 24, mm = mins % 60, ap = h >= 12 ? "PM" : "AM", h12 = h % 12 || 12; return `${h12}:${String(mm).padStart(2, "0")} ${ap}`; }
 const teeBox = r => { const c = courseOf(r), t = Store.get(["teebox", r.id], null) || r.teeBox; return c.tees && c.tees[t] ? t : (c.tees ? Object.keys(c.tees)[0] : null); };
@@ -981,14 +990,14 @@ function renderRoundBlock(r){
   const survMark = (m, side) => { const st = survStatus(r.id, m.id, side); if (!st) return ""; const lost = survLostHole(r.id, m.id, side);
     return st === "kept" ? `<span class="pill" style="background:rgba(63,174,114,.12);color:var(--gold);border:1px solid var(--ok);font-size:.58rem;padding:.1rem .35rem" title="kept the survivor ball"><b>+${String(SP()).replace(/^0/, "")}</b> kept ball</span>`
          : st === "lost" ? `<span class="pill" style="background:rgba(184,51,47,.12);color:var(--a-lt);border:1px solid rgba(224,86,80,.3);font-size:.58rem;padding:.1rem .35rem" title="lost the survivor ball"><b>✕</b> ${(() => { const L = survLoss(r.id, m.id, side); return (L && L.by && m[side].length > 1 ? esc(pfirst(L.by)) + " · " : "") + "lost on " + lost; })()}</span>` : ""; };
-  const body = matchesOf(r).map(m => { if (!isSet(m)) return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p">${names(m.a)}</div></div><div class="mt-c"><div class="mt-res pend">${esc(matchTee(r, m))}</div><div class="mt-thru">pairings TBD</div></div><div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p">${names(m.b)}</div></div></div>`;
+  const body = teeGroups(r, matchesOf(r), m => { if (!isSet(m)) return `<div class="mt"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p">${names(m.a)}</div></div><div class="mt-c"><div class="mt-res pend">${esc(matchTee(r, m))}</div><div class="mt-thru">pairings TBD</div></div><div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p">${names(m.b)}</div></div></div>`;
     const s = matchState(r.id, m.id), aW = s.closed && s.lead === "a", bW = s.closed && s.lead === "b";
     const cls = !s.started ? "mt-res pend" : s.lead === "a" ? "mt-res a" : s.lead === "b" ? "mt-res b" : "mt-res h";
     const main = !s.started ? "—" : s.closed ? (s.lead === "h" ? "Halved" : TS(s.lead) + " wins") : (s.lead === "h" ? "All square" : TS(s.lead) + " " + s.short);
     const sub = !s.started ? "tee " + esc(matchTee(r, m)) : s.closed ? (s.lead === "h" ? "1 pt each" : esc(s.short) + " · " + m.pts + " pts") : "thru " + s.thru + (s.stack ? " · " + s.stack + " carried" : "");
     return `<div class="mt" data-go="${r.id}:${m.id}" style="cursor:pointer"><div class="mt-s r"><div class="mt-lbl">${esc(m.label)}</div><div class="mt-p ${s.closed ? (aW ? "win" : "lose") : ""}">${names(m.a)}</div><div style="margin-top:.15rem">${survMark(m, "a")}</div></div>
       <div class="mt-c"><div class="${cls}" style="font-size:.8rem">${main}</div><div class="mt-thru">${sub}</div></div>
-      <div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p ${s.closed ? (bW ? "win" : "lose") : ""}">${names(m.b)}</div><div style="margin-top:.15rem">${survMark(m, "b")}</div></div></div>`; }).join("");
+      <div class="mt-s"><div class="mt-lbl">&nbsp;</div><div class="mt-p ${s.closed ? (bW ? "win" : "lose") : ""}">${names(m.b)}</div><div style="margin-top:.15rem">${survMark(m, "b")}</div></div></div>`; });
   return `<div class="rnd ${st === "upcoming" ? "up" : ""}"><div class="rnd-h"><div class="rnd-h-l"><div class="rnd-fmt">${esc(r.format)}</div>
       <div class="rnd-meta">${dayShort(r.date)} &bull; tee times from ${esc(r.tee)} &bull; ${esc(c.name)} &bull; ${r.holes} holes</div><div style="margin-top:.3rem">${badge}</div></div>
       <div class="rnd-pts"><div class="rnd-pts-v"><span class="a">${fmtPts(p.a)}</span><span class="s">–</span><span class="b">${fmtPts(p.b)}</span></div><div class="rnd-pts-l">of ${fmtPts(p.avail)}${sp ? " + survivor" : ""}</div></div></div>
@@ -1066,10 +1075,10 @@ function renderLive(){
     : P[Me.role] && unset ? `<div class="note" style="margin-top:1rem">Pairings for this round haven't been set yet — captains pick after the previous round.</div>`
     : Me.canScore() ? "" : `<div class="note" style="margin-top:1rem">You're watching. Tap <b>Sign in</b> at the top to open your scorecard.</div>`;
   const sideHtml = (ids, cls) => `<div class="mu-side ${cls}"><div class="mu-nm">${ids.map(id => esc(pshort(id))).join("<br>")}</div></div>`;
-  const groups = ms.map(m => { if (!isSet(m)) return `<div class="mu" style="cursor:default"><div class="mu-side a"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div><div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div><div class="mu-st pend">${esc(matchTee(r, m))}</div><div class="mu-sub">pairings TBD</div></div><div class="mu-side b r"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div></div>`;
+  const groups = teeGroups(r, ms, m => { if (!isSet(m)) return `<div class="mu" style="cursor:default"><div class="mu-side a"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div><div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div><div class="mu-st pend">${esc(matchTee(r, m))}</div><div class="mu-sub">pairings TBD</div></div><div class="mu-side b r"><div class="mu-nm" style="color:var(--tx3)">TBD</div></div></div>`;
     const s = matchState(r.id, m.id);
     const st = !s.started ? `<div class="mu-st pend">${esc(matchTee(r, m))}</div>` : `<div class="mu-st ${s.lead}">${s.lead === "h" ? "AS" : TS(s.lead) + " " + esc(s.short)}</div><div class="mu-sub">${s.closed ? "Final" : "thru " + s.thru}</div>`;
-    return `<div class="mu" data-open="${m.id}">${sideHtml(m.a, "a")}<div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div>${st}</div>${sideHtml(m.b, "b r")}</div>`; }).join("");
+    return `<div class="mu" data-open="${m.id}">${sideHtml(m.a, "a")}<div class="mu-c"><div class="mu-lbl">${esc(m.label)}</div>${st}</div>${sideHtml(m.b, "b r")}</div>`; });
   $("#v-live").innerHTML = `
     <div class="lv-pick" style="margin-top:.6rem">${chips}</div>
     <div class="tiny muted" style="display:flex;gap:.6rem;justify-content:center;margin:.1rem 0 .3rem"><span style="color:var(--a-lt);font-weight:700">${esc(TA().short)} ${fmtPts(t.a)}</span><span>cup</span><span style="color:var(--b-lt);font-weight:700">${fmtPts(t.b)} ${esc(TB().short)}</span></div>
