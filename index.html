@@ -1099,7 +1099,8 @@ function renderPairEditor(r, ms){
   const col = (m, side) => `<div class="${side}">${[...Array(n)].map((_, i) => `<select data-pair="${m.id}" data-side="${side}" data-i="${i}">${opts(side, m[side][i])}</select>`).join("")}</div>`;
   const dup = Object.values(used).some(v => v > 1), missing = CONFIG.players.filter(p => !used[p.id]);
   const hasScores = m => Object.keys(Store.get(["gross", mkey(r.id, m.id)], {}) || {}).length > 0 || Object.keys(Store.get(["over", mkey(r.id, m.id)], {}) || {}).length > 0;
-  return ms.map(m => `<div class="pe"><div class="pe-h">${esc(m.label)}${hasScores(m) ? ` <span style="color:var(--a-lt);letter-spacing:0;text-transform:none">· has scores — swapping a player hides their entries (clear the round to start clean)</span>` : ""}</div><div class="pe-g">${col(m, "a")}${col(m, "b")}</div></div>`).join("") +
+  const one = m => `<div class="pe" style="${r.scoring === "singles" ? "margin:.35rem .35rem" : ""}"><div class="pe-h">${esc(m.label)}${r.scoring === "singles" ? "" : " · " + esc(matchTee(r, m))}${hasScores(m) ? ` <span style="color:var(--a-lt);letter-spacing:0;text-transform:none">· has scores — swapping a player hides their entries (clear the round to start clean)</span>` : ""}</div><div class="pe-g">${col(m, "a")}${col(m, "b")}</div></div>`;
+  return teeGroups(r, ms, one) +
     `<div class="tiny" style="color:${dup ? "var(--a-lt)" : "var(--tx3)"};text-align:center;margin-top:.3rem">${dup ? "Someone is in two matches." : missing.length ? "Not yet placed: " + missing.map(p => pshort(p.id)).join(", ") : "Everyone placed ✓"} · saves instantly to every phone</div>`;
 }
 
