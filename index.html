@@ -551,6 +551,7 @@ summary::-webkit-details-marker{display:none}
 /* ═══════════════════════════════════════════════════════════════════════
    ██  EDIT EVERYTHING IN THIS BLOCK. NOTHING BELOW IT NEEDS TOUCHING.  ██
    ═══════════════════════════════════════════════════════════════════════ */
+const BUILD = "0911-1048"; // stamped on every push (MMDD-HHMM) — check the footer on your phone to see which version you have
 const CONFIG = {
 
   /* ── 1. THE TRIP ─────────────────────────────────────────────── */
@@ -1335,7 +1336,7 @@ function renderTrip(){
     <div class="sect"><div class="sect-h">Roster &amp; Handicaps</div><div class="tiny muted" style="margin-bottom:.5rem">Strokes vs scratch. Inside a match, the lowest handicap plays off zero and everyone else gets the full difference.${admin ? " Tap a number to change it — it updates every phone." : ""}</div>${roster}</div>
     <div class="sect"><div class="sect-h">Courses</div>${cards}</div>${comm}
     <div class="sect"><div class="sect-h">Tips</div><div class="note">📱 <b>Add to Home Screen</b> (Share → Add to Home Screen on iPhone, ⋮ → Add to Home screen on Android) so this opens full-screen like an app.<br><br>🌞 / 🌚 at the top switches between the dark green scheme (default) and a bright daylight one.<br><br>📶 Spotty signal? Keep scoring — entries queue and sync when you're back in range.</div></div>
-    <div class="tiny muted" style="text-align:center;margin:1.5rem 0 0;line-height:1.6">Weather by Open-Meteo · Built with love by Metteo</div>`;
+    <div class="tiny muted" style="text-align:center;margin:1.5rem 0 0;line-height:1.6">Weather by Open-Meteo · Built with love by Metteo · <span title="build">v${BUILD}</span></div>`;
   if (!WX) loadWeather();
 }
 
