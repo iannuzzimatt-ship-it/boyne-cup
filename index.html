@@ -96,7 +96,7 @@ a{color:var(--gold)}
 .sv-team{display:flex;align-items:center;gap:.25rem;flex:1;flex-wrap:wrap;padding:.2rem .35rem;border-radius:8px;border:1px solid transparent}
 .sv-team.swept{border-color:var(--gold);background:rgba(216,169,74,.08)}
 .sv-dot{width:11px;height:11px;border-radius:50%;background:var(--bg3);border:1px solid var(--line2);flex:0 0 auto}
-.sv-dot.kept{background:var(--ok);border-color:var(--ok)} .sv-dot.lost{background:var(--a);border-color:var(--a-lt)}
+.sv-dot.kept{background:var(--ok);border-color:var(--ok)} .sv-dot.lost{background:#c0392b;border-color:#e05650}
 .sv-gap{width:5px}
 .sv-pts{font-family:var(--hd);font-size:.62rem;font-weight:700;color:var(--gold);margin-left:auto;white-space:nowrap}
 details[open] .hint{display:none}
@@ -419,7 +419,7 @@ summary::-webkit-details-marker{display:none}
 .sc-st small{display:block;font-size:.58rem;color:var(--tx3);letter-spacing:.1em;margin-top:.15rem;font-weight:600}
 .hnav{margin:.6rem 0 .8rem}
 .hnav-n{font-size:3rem}
-.srow{display:grid;grid-template-columns:1fr 50px 64px 50px;align-items:center;gap:.4rem;
+.srow{display:grid;grid-template-columns:1fr 54px 54px 54px;align-items:center;gap:.4rem;
   padding:.55rem .6rem;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:.45rem}
 .srow.a{border-left:3px solid var(--a)} .srow.b{border-left:3px solid var(--b)}
 .srow-n{min-width:0}
@@ -865,7 +865,7 @@ function renderSweep(){
     ${["a", "b"].map(side => { const x = p.sweep[side]; return `<div class="sv-team ${x.swept ? "swept" : ""}" title="${x.kept} of ${x.n} kept"><b style="font-family:var(--hd);font-size:.62rem;color:var(--${side}-lt)">${TS(side)}</b>${dots(r, side)}<span class="sv-pts" style="${x.swept ? "" : "color:var(--tx3)"}">${x.swept ? `sweep +${sw}` : x.lost ? `${x.lost} lost` : ""}</span></div>`; }).join("")}</div>`;
   return `<div class="sect"><div class="sect-h">Survivor Ball</div><details class="card">${SUM("By round", hint)}<div style="padding:.3rem .7rem .6rem">
     ${rs.map(row).join("")}
-    <div class="tiny muted" style="margin-top:.5rem;line-height:1.5">One dot per pairing — <span style="color:var(--ok)">●</span> kept (+${SP()}), <span style="color:var(--a-lt)">●</span> lost, ○ still out. Tap a dot for who and where.</div></div></details></div>`;
+    <div class="tiny muted" style="margin-top:.5rem;line-height:1.5">One dot per pairing — <span style="color:var(--ok)">●</span> kept (+${SP()}), <span style="color:#e05650">●</span> lost, ○ still out. Tap a dot for who and where.</div></div></details></div>`;
 }
 function roundPoints(rid){
   const r = ROUND[rid]; let a = 0, b = 0, avail = 0, final = true, any = false;
