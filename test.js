@@ -271,6 +271,81 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
     if (sA !== expA || sB !== expB || p.sa !== expSa || p.sb !== expSb) { bad++; if (bad < 3) console.log("lifecycle fuzz", { upto, signA, signB, lostA, lostB, sA, sB, sa:p.sa, sb:p.sb }); } }
   eq(bad, 0, "L17 400 random partial cards: survivor status and bonus always follow lost > submitted > in play"); reset(); }
 
+/* ── M. INDIVIDUAL TITLE + ACCOLADES vs AN INDEPENDENT ORACLE ── */
+// Random full weekends: every pairing set, every own-ball hole scored, random lost balls and submissions. An oracle written from the
+// rules (sharing no code with the app) recomputes every per-player stat and the Individual Title; the app must match exactly.
+{ let seed = 2027; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff, ri = n => Math.floor(rnd() * n);
+  const HC = Object.fromEntries(CONFIG.players.map(p => [p.id, p.hcp])), TEAMOF = Object.fromEntries(CONFIG.players.map(p => [p.id, p.team]));
+  const A = CONFIG.players.filter(p => p.team === "a").map(p => p.id), B = CONFIG.players.filter(p => p.team === "b").map(p => p.id);
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = ri(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const allocO = (n, si) => { const per = {}; for (let h = 1; h <= 18; h++) per[h] = (n >= si[h-1] ? 1 : 0) + (n >= si[h-1] + 18 ? 1 : 0); return per; };
+  let weekends = 0, mismatches = [], honoursBad = 0;
+  const FIELDS = ["w","l","h","played","pts","hw","hl","hh","birdies","eagles","pars","snow","blow","parStreak","bogStreak","hard","easy","sandbag","closer","comeback","flop","hot","lowGross","lowNet","svKept","svLost","svPts","reckless","earliest","heart"];
+  for (let W = 0; W < 120; W++) { reset(); weekends++;
+    // pairings
+    const sa = shuffle(A), sb = shuffle(B);
+    CONFIG.rounds.forEach(r => { if (r.scoring === "singles") r.matches.forEach((m, i) => Store.set(["pair", r.id, m.id], { a:[sa[i]], b:[sb[i]] })); else r.matches.forEach((m, i) => Store.set(["pair", r.id, m.id], { a:[sa[2*i], sa[2*i+1]], b:[sb[2*i], sb[2*i+1]] })); });
+    // scores, losses, signatures  (oracle data mirrors)
+    const O = {}; CONFIG.players.forEach(p => O[p.id] = Object.fromEntries(FIELDS.map(f => [f, ["sandbag","lowGross","lowNet","earliest"].includes(f) ? null : 0])));
+    const soloO = Object.fromEntries(CONFIG.players.map(p => [p.id, { net:0, grossTP:0, holes:0 }]));
+    CONFIG.rounds.forEach(r => { const c = courseOf(r), si = c.si, par = c.par, n = 18;
+      matchesOf(r).forEach(m => { const ids = [...m.a, ...m.b], scr = r.scoring === "scramble";
+        // gross entry
+        const G = {}; const keys = scr ? ["a","b"] : ids;
+        keys.forEach(k => { G[k] = {}; for (let h = 1; h <= n; h++) { const g = par[h-1] + (scr ? ri(4) - 1 : ri(7) - 2); G[k][h] = Math.max(1, g); Store.set(["gross", mkey(r.id, m.id), String(h), k], G[k][h]); } });
+        const loss = {}; ["a","b"].forEach(side => { if (rnd() < 0.3) { const by = m[side][ri(m[side].length)], hole = 1 + ri(18); loss[side] = { hole, by }; Store.set(["surv", r.id, m.id, side], { hole, by }); } });
+        const signed = {}; keys.forEach(k => { signed[k] = rnd() < 0.7; if (signed[k]) Store.set(["signed", mkey(r.id, m.id), k], "t"); });
+        // oracle match strokes (low man in match, full difference)
+        const low = Math.min(...ids.map(i => HC[i])), MS = {}; ids.forEach(i => MS[i] = allocO(Math.round(HC[i] - low), si));
+        // oracle hole results
+        const res = []; for (let h = 1; h <= n; h++) { let ra, rb;
+          if (scr) { const a = G.a[h], b = G.b[h]; res.push(a < b ? "a" : b < a ? "b" : "h"); continue; }
+          const netsA = m.a.map(i => G[i][h] - MS[i][h]).sort((x, y) => x - y), netsB = m.b.map(i => G[i][h] - MS[i][h]).sort((x, y) => x - y);
+          if (netsA[0] !== netsB[0]) res.push(netsA[0] < netsB[0] ? "a" : "b"); else if (r.scoring === "bestball2" && netsA[1] !== undefined && netsA[1] !== netsB[1]) res.push(netsA[1] < netsB[1] ? "a" : "b"); else res.push("h"); }
+        // oracle match state (no carry): up after each hole; closed when |up| > left
+        let up = 0, closedAt = null, worstDown = 0, bestUp = 0; const per = [];
+        for (let h = 1; h <= n; h++) { if (res[h-1] === "a") up++; else if (res[h-1] === "b") up--; per.push(up); worstDown = Math.min(worstDown, up); bestUp = Math.max(bestUp, up); if (closedAt === null && Math.abs(up) > n - h) closedAt = h; }
+        const lead = up > 0 ? "a" : up < 0 ? "b" : "h"; const pts = { a: lead === "a" ? 2 : lead === "h" ? 1 : 0, b: lead === "b" ? 2 : lead === "h" ? 1 : 0 };
+        const aH = res.filter(x => x === "a").length, bH = res.filter(x => x === "b").length, hH = res.filter(x => x === "h").length;
+        ["a","b"].forEach(side => { const sideIds = m[side], mine = side === "a" ? aH : bH, theirs = side === "a" ? bH : aH;
+          let run = 0, hot = 0; res.forEach(x => { if (x === side) { run++; hot = Math.max(hot, run); } else run = 0; });
+          const closer = [16,17,18].filter(h => res[h-1] === side).length;
+          // oracle running 'up' from this side's view for comeback/flop
+          const myUps = per.map(u => side === "a" ? u : -u), myWorst = Math.min(0, ...myUps), myBest = Math.max(0, ...myUps);
+          const won = lead === side, lost = lead !== "h" && !won;
+          sideIds.forEach(id => { const o = O[id]; o.hw += mine; o.hl += theirs; o.hh += hH; o.hot = Math.max(o.hot, hot); o.closer += closer; o.played++; won ? o.w++ : lost ? o.l++ : o.h++; o.pts += pts[side] / sideIds.length;
+            if (won && myWorst <= -2) o.comeback++; if (lost && myBest >= 2) o.flop++; });
+          // survivor
+          const allSigned = (scr ? [side] : sideIds).every(k => signed[k]); const L = loss[side];
+          sideIds.forEach(id => { const o = O[id]; if (L) { if (L.by === id) { o.svLost++; if (won) o.reckless++; if (o.earliest === null || L.hole < o.earliest) o.earliest = L.hole; if (L.hole >= 17) o.heart++; } }
+            else if (allSigned) { o.svKept++; o.svPts += 0.5; } }); });
+        // own-ball per-player stats + solo
+        if (!scr) ids.forEach(id => { const o = O[id], full = allocO(Math.round(HC[id]), si); let ps = 0, bs = 0, gsum = 0, nsum = 0, psum = 0;
+          for (let h = 1; h <= n; h++) { const g = G[id][h], p = par[h-1], d = g - p; gsum += g; nsum += g - full[h]; psum += p;
+            if (d <= -2) o.eagles++; else if (d === -1) o.birdies++; else if (d === 0) o.pars++; if (d >= 2) o.blow++; if (g >= 8) o.snow++;
+            if (d <= 0) { ps++; bs = 0; } else { bs++; ps = 0; } o.parStreak = Math.max(o.parStreak, ps); o.bogStreak = Math.max(o.bogStreak, bs);
+            if (si[h-1] <= 6) o.hard += g - MS[id][h] - p; if (si[h-1] > 12) o.easy += d; }
+          const netToPar = nsum - psum; if (o.sandbag === null || netToPar < o.sandbag) o.sandbag = netToPar; if (o.lowGross === null || gsum < o.lowGross) o.lowGross = gsum; if (o.lowNet === null || nsum < o.lowNet) o.lowNet = nsum;
+          if (CONFIG.solo.rounds.includes(r.id)) { soloO[id].net += netToPar; soloO[id].grossTP += gsum - psum; soloO[id].holes += 18; } }); }); });
+    // compare
+    const S = playerStats(); CONFIG.players.forEach(p => FIELDS.forEach(f => { const a = S[p.id][f], b = O[p.id][f]; const same = (a === null && b === null) || (typeof a === "number" && typeof b === "number" && Math.abs(a - b) < 1e-9) || a === b;
+      if (!same && mismatches.length < 6) mismatches.push({ W, id:p.id, f, app:a, oracle:b }); }));
+    const SO = Object.fromEntries(soloStandings().map(x => [x.id, x])); CONFIG.players.forEach(p => { const a = SO[p.id], b = soloO[p.id]; if (!a || a.net !== b.net || a.grossTP !== b.grossTP || a.holes !== b.holes) { if (mismatches.length < 6) mismatches.push({ W, id:p.id, f:"solo", app:a && [a.net, a.grossTP, a.holes], oracle:[b.net, b.grossTP, b.holes] }); } });
+    // honours: every award must name exactly the oracle's leader set (ties included), or be absent when nobody qualifies
+    const html = renderHonours(); const esc_ = s => s.replace(/[-\/^$*+?.()|[\]{}]/g, "\\$&");
+    const namesIn = label => { const m = html.match(new RegExp(esc_(label) + '[\\s\\S]*?class="money-n"[^>]*>([\\s\\S]*?)<\\/div><div class="money-v"')); if (!m) return null; return CONFIG.players.map(p => pshort(p.id)).filter(nm => m[1].includes(nm)).sort(); };
+    const leaders = (pool, key, { low = false, min = 1, need = null } = {}) => { const ok = pool.filter(p => O[p.id][key] !== null && (need ? need(p) : true) && (low || O[p.id][key] >= min)); if (!ok.length) return []; const vals = ok.map(p => O[p.id][key]), top = low ? Math.min(...vals) : Math.max(...vals); return ok.filter(p => O[p.id][key] === top).map(p => pshort(p.id)).sort(); };
+    const own = p => CONFIG.rounds.some(r => r.scoring !== "scramble") ; // everyone plays every own-ball round in these weekends
+    const AW = [["Birdie Machine","birdies",{}],["Eagle Club","eagles",{}],["Snowman Farmer","snow",{}],["Blow-up Artist","blow",{}],["Steady Eddie","parStreak",{min:3}],["Bogey Train","bogStreak",{min:3}],
+      ["Hard Man","hard",{low:true,need:own}],["Easy Street Casualty","easy",{need:own}],["Sandbagger Alert","sandbag",{low:true}],["The Closer","closer",{}],["Comeback Kid","comeback",{}],["Front-Runner Flop","flop",{}],["Hot Hand","hot",{min:3}],["Stalemate","hh",{min:2}],
+      ["Ironman","svKept",{}],["Splash Zone","svLost",{}],["Survivor Points","svPts",{min:0.01}],["Reckless Winner","reckless",{}],["Early Exit","earliest",{low:true}],["Heartbreaker","heart",{}]];
+    const check = (label, want) => { const got = namesIn(label); const g = got === null ? [] : got; if (JSON.stringify(want) !== JSON.stringify(g)) { honoursBad++; if (honoursBad < 4) console.log("honours mismatch", { W, label, want, got }); } };
+    AW.forEach(([label, key, o]) => check(label, leaders(CONFIG.players, key, o)));
+    ["a","b"].forEach(t => { const pool = CONFIG.players.filter(p => p.team === t); check("MVP · " + TEAM(t).short, leaders(pool, "pts", { min:0.01 }));
+      const ppm = Object.fromEntries(pool.map(p => [p.id, O[p.id].pts / O[p.id].played])), lo = Math.min(...Object.values(ppm)); check("Anchor · " + TEAM(t).short, pool.filter(p => ppm[p.id] === lo).map(p => pshort(p.id)).sort()); }); }
+  eq(mismatches, [], "M1 " + weekends + " random weekends: every per-player stat and the Individual Title match the oracle"); eq(honoursBad, 0, "M2 all 22 awards name exactly the oracle leaders (ties included) in every weekend");
+  reset(); }
+
 /* ── G. FUZZ ────────────────────────────────────────────────── */
 { let seed = 42; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
   let bad = 0, closedCount = 0, halvedCount = 0; const N = 1500;
