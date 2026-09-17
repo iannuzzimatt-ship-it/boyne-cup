@@ -551,7 +551,7 @@ summary::-webkit-details-marker{display:none}
 /* ═══════════════════════════════════════════════════════════════════════
    ██  EDIT EVERYTHING IN THIS BLOCK. NOTHING BELOW IT NEEDS TOUCHING.  ██
    ═══════════════════════════════════════════════════════════════════════ */
-const BUILD = "0915-0850"; // stamped on every push (MMDD-HHMM) — check the footer on your phone to see which version you have
+const BUILD = "0917-1817"; // stamped on every push (MMDD-HHMM) — check the footer on your phone to see which version you have
 const CONFIG = {
 
   /* ── 1. THE TRIP ─────────────────────────────────────────────── */
@@ -1154,9 +1154,10 @@ function renderCard(){
   const survBit = x => { if (!survApplies(r)) return ""; const st = survStatus(r.id, m.id, x.side), loss = survLoss(r.id, m.id, x.side), can = canSurv(x.side, r.id, m.id), sp = SP();
     const mini = (label, extra, style) => `<button ${extra} class="btn btn-sm" style="padding:.12rem .45rem;font-size:.6rem;letter-spacing:.06em;${style || ""}">${label}</button>`;
     if (st === "lost") { const mine = loss.by ? x.ids.includes(loss.by) : true; if (!mine) return ""; return `<div style="margin-top:.25rem;display:flex;gap:.35rem;align-items:center"><span class="tiny" style="color:var(--a-lt);font-weight:700">✕ lost ball · hole ${loss.hole}${loss.by && x.ids.length > 1 ? " · " + esc(pfirst(loss.by)) : ""}</span>${can ? mini("undo", `data-surv="${r.id}" data-mid="${m.id}" data-side="${x.side}" data-ans="undo"`) : ""}</div>`; }
-    if (st === "kept") return `<div class="tiny" style="margin-top:.25rem;color:var(--gold);font-weight:700">+${sp} survivor ball kept</div>`;
+    const lostBtns = x.ids.map(id => mini(x.ids.length > 1 ? esc(pfirst(id)) + " lost ball" : "lost ball", `data-surv="${r.id}" data-mid="${m.id}" data-side="${x.side}" data-ans="lost" data-hole="${h}" data-by="${id}"`, "border-color:rgba(224,86,80,.45);color:var(--a-lt)")).join("");
+    if (st === "kept") return `<div class="tiny" style="margin-top:.25rem;color:var(--gold);font-weight:700">+${sp} survivor ball kept</div>${Me.isAdmin() ? `<div style="margin-top:.3rem;display:flex;gap:.35rem;flex-wrap:wrap;align-items:center"><span class="tiny muted">commissioner fix (scores untouched):</span>${lostBtns}</div>` : ""}`;
     if (!can) return "";
-    return `<div style="margin-top:.3rem;display:flex;gap:.35rem;flex-wrap:wrap">${x.ids.map(id => mini(x.ids.length > 1 ? esc(pfirst(id)) + " lost ball" : "lost ball", `data-surv="${r.id}" data-mid="${m.id}" data-side="${x.side}" data-ans="lost" data-hole="${h}" data-by="${id}"`, "border-color:rgba(224,86,80,.45);color:var(--a-lt)")).join("")}</div>`; };
+    return `<div style="margin-top:.3rem;display:flex;gap:.35rem;flex-wrap:wrap">${lostBtns}</div>`; };
   const rows = sc.map(x => { const g = gross(r.id, m.id, h, x.key), st = x.holes[h] || 0, sg = rowSigned(r.id, m.id, x.key), rc = canEditRow(r.id, m.id, x.key);
     const finish = h === r.holes && rowComplete(r.id, m.id, x.key) ? (sg ? `<div class="tiny" style="margin-top:.3rem;color:var(--gold);font-weight:700">✓ card submitted · ${esc(sg)}</div>` : (rc ? `<button data-sign="${esc(x.key)}" class="btn btn-sm btn-gold" style="margin-top:.35rem;padding:.3rem .7rem;font-size:.66rem">Submit ${esc(x.ids.length > 1 ? "team" : (x.key === Me.role ? "my" : pfirst(x.key) + "'s"))} card</button>` : `<div class="tiny muted" style="margin-top:.3rem">18 in · not submitted yet</div>`)) : "";
     return `<div class="srow ${x.side}" style="${sg ? "opacity:.85" : ""}"><div class="srow-n"><div class="srow-nm">${esc(x.label)}${"<span class='sd'></span>".repeat(st)}${sg && h !== r.holes ? ` <span class="tiny" style="color:var(--gold)">✓</span>` : ""}</div>
@@ -1209,7 +1210,13 @@ function renderCard(){
     ${Me.isAdmin() ? `<div class="card" style="margin-top:.8rem;padding:.65rem .75rem"><div style="font-family:var(--hd);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;color:var(--gold);margin-bottom:.4rem">Commissioner · this match</div>
       <div class="tiny muted" style="margin-bottom:.45rem">${s.called ? `Called: <b>${s.called === "void" ? "void — no points" : s.called === "h" ? "halved" : TS(s.called) + " wins"}</b>. Un-call to go back to the scores.` : "Call the match if it can't be finished (rain, darkness). Points are awarded as if it ended now."}</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem">${[["a", TS("a") + " wins"], ["h", "Halve"], ["b", TS("b") + " wins"], ["void", "Void"]].map(([v, l]) => `<button data-call="${v}" class="btn btn-sm ${s.called === v ? "btn-gold" : ""}" style="padding:.4rem .2rem;font-size:.66rem">${l}</button>`).join("")}</div>
-      <div style="display:flex;gap:.35rem;margin-top:.45rem">${s.called ? `<button data-call="none" class="btn btn-sm" style="flex:1">Un-call</button>` : ""}<button id="clearMatch" class="btn btn-sm" style="flex:1;border-color:rgba(224,86,80,.5);color:var(--a-lt)">Clear this match's scores</button></div></div>` : ""}
+      <div style="display:flex;gap:.35rem;margin-top:.45rem">${s.called ? `<button data-call="none" class="btn btn-sm" style="flex:1">Un-call</button>` : ""}<button id="clearMatch" class="btn btn-sm" style="flex:1;border-color:rgba(224,86,80,.5);color:var(--a-lt)">Clear this match's scores</button></div>
+      ${survApplies(r) ? `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid var(--line)"><div class="tiny muted" style="margin-bottom:.35rem"><b style="color:var(--tx)">Survivor ball fix.</b> Works even after the cards are submitted. It changes only the survivor record — the scores on the card are never touched.</div>
+      ${["a", "b"].map(side => { const ids = m[side], st = survStatus(r.id, m.id, side), L = survLoss(r.id, m.id, side), selSt = "background:var(--bg3);border:1px solid var(--line2);border-radius:6px;color:var(--tx);padding:.3rem .4rem;font-size:.72rem";
+        const status = st === "lost" ? `✕ lost · hole ${L.hole}${L.by ? " · " + esc(pfirst(L.by)) : ""}` : st === "kept" ? `✓ kept · +${SP()}` : "in play";
+        return `<div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;margin-top:.35rem"><span class="tiny" style="min-width:7rem"><span class="tdot ${side}"></span>${esc(TS(side))} · ${status}</span>
+          ${st === "lost" ? `<button data-svfix="${side}" data-ans="undo" class="btn btn-sm" style="padding:.25rem .5rem;font-size:.62rem">Restore ball (kept)</button>`
+          : `<select id="svh-${side}" style="${selSt}">${Array.from({ length:r.holes }, (_, i) => `<option value="${i + 1}" ${i + 1 === h ? "selected" : ""}>hole ${i + 1}</option>`).join("")}</select>${ids.length > 1 ? `<select id="svb-${side}" style="${selSt}">${ids.map(id => `<option value="${id}">${esc(pfirst(id))}</option>`).join("")}</select>` : ""}<button data-svfix="${side}" data-ans="lost" class="btn btn-sm" style="padding:.25rem .5rem;font-size:.62rem;border-color:rgba(224,86,80,.45);color:var(--a-lt)">Mark lost</button>`}</div>`; }).join("")}</div>` : ""}</div>` : ""}
     ${renderField(r, m.id)}`;
 }
 function renderField(r, excludeMid){
@@ -1392,6 +1399,8 @@ document.addEventListener("click", e => {
   const op = e.target.closest("[data-open]"); if (op) return openCard(UI.rid, op.dataset.open);
   if (e.target.closest("#cardBack")) { UI.card = false; renderLive(); return window.scrollTo({ top:0 }); }
   const nav = e.target.closest("[data-nav]"); if (nav) { UI.hole += +nav.dataset.nav; renderLive(); return window.scrollTo({ top:0 }); }
+  const sf = e.target.closest("[data-svfix]"); if (sf) { if (!Me.isAdmin()) return; const side = sf.dataset.svfix, m = matchOf(UI.rid, UI.mid); if (sf.dataset.ans === "undo") return Store.set(["surv", UI.rid, UI.mid, side], null);
+    const hole = Number(document.getElementById("svh-" + side)?.value) || UI.hole, by = document.getElementById("svb-" + side)?.value || m[side][0] || null; return Store.set(["surv", UI.rid, UI.mid, side], { hole, by }); }
   const cb = e.target.closest("[data-call]"); if (cb && Me.isAdmin()) { const v = cb.dataset.call; const key = mkey(UI.rid, UI.mid); if (v === "none") return Store.set(["call", key], null);
     ask("Call this match?", `Ends <b>${esc(matchOf(UI.rid, UI.mid).label)}</b> now as <b>${v === "void" ? "void (no points)" : v === "h" ? "halved" : TS(v) + " wins"}</b>. You can un-call it later.`, { yes:"Call it" }).then(ok => ok && Store.set(["call", key], v)); return; }
   if (e.target.closest("#clearMatch") && Me.isAdmin()) { const key = mkey(UI.rid, UI.mid); ask("Clear this match?", `Every score, survivor mark and call for <b>${esc(matchOf(UI.rid, UI.mid).label)}</b> is removed. Pairings stay.`, { yes:"Clear it" })

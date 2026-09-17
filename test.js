@@ -11,7 +11,7 @@ src = src.slice(0, src.indexOf("/* ═══ BOOT + EVENTS")); // everything exc
 const el = () => new Proxy({ innerHTML:"", textContent:"", hidden:false, style:{}, dataset:{}, classList:{ add(){}, remove(){}, toggle(){}, contains(){ return false; } }, click(){}, focus(){} }, { get:(t, k) => k in t ? t[k] : (typeof k === "string" ? "" : undefined), set:(t, k, v) => (t[k] = v, true) });
 const ctx = { console, Math, Date, JSON, Object, Array, Number, String, Boolean, Set, Map, Promise, RegExp, Error, Infinity, NaN, isNaN, parseInt, parseFloat, setTimeout, clearTimeout, navigator:{}, fetch:() => new Promise(() => {}), 
   localStorage:{ _d:{}, getItem(k){ return this._d[k] ?? null; }, setItem(k, v){ this._d[k] = String(v); }, removeItem(k){ delete this._d[k]; } },
-  document:{ querySelector:() => el(), querySelectorAll:() => [], addEventListener(){}, documentElement:el() }, window:{ scrollTo(){} } };
+  document:{ _shared:null, querySelector(){ return this._shared || el(); }, querySelectorAll:() => [], addEventListener(){}, documentElement:el(), capture(){ this._shared = el(); return this._shared; }, release(){ this._shared = null; } }, window:{ scrollTo(){} } };
 ctx.globalThis = ctx; vm.createContext(ctx);
 const T = { pass:0, fail:0, fails:[] };
 function ok(cond, name, detail){ if (cond) T.pass++; else { T.fail++; T.fails.push(name + (detail !== undefined ? "  →  " + JSON.stringify(detail) : "")); } }
@@ -258,6 +258,22 @@ const winHoles = (rid, mid, side, from, to) => { for (let h = from; h <= to; h++
   // points never double count and never go negative
   const p = roundPoints("r1"); ok(p.ma + p.mb === 2 && p.sa >= 0 && p.sb >= 0, "L16 match points sum to the match value; bonuses non-negative");
   reset(); }
+// Commissioner fixes a survivor ball AFTER every card is submitted — scores and signatures must be untouched.
+{ reset(); Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); const c = courseOf(ROUND.r1);
+  for (let h = 1; h <= 18; h++) play("r1","m1",h, { a1:c.par[h-1] + (h % 3), a2:c.par[h-1] + 1, b1:c.par[h-1], b2:c.par[h-1] + (h % 2) });
+  ["a1","a2","b1","b2"].forEach(k => Store.set(["signed","r1_m1",k], k + " · 5:12 pm"));
+  const snap = () => JSON.stringify({ g:Store.get(["gross","r1_m1"], null), s:Store.get(["signed","r1_m1"], null), o:Store.get(["over","r1_m1"], null) }); const before = snap();
+  eq([survStatus("r1","m1","b"), roundPoints("r1").sb], ["kept", 0.5], "L18 both B cards submitted with no loss recorded → kept, +0.5 banked");
+  Me.save("admin"); UI.rid = "r1"; UI.mid = "m1"; UI.card = true; UI.hole = 18; const shared = document.capture(); renderCard(); let html = shared.innerHTML;
+  // the fix is offered to the commissioner on a submitted card (both on the row and in the commissioner panel)
+  ok(/commissioner fix/.test(html) && /Survivor ball fix/.test(html) && /data-svfix="b" data-ans="lost"/.test(html), "L19 commissioner sees lost-ball controls on a fully submitted card");
+  Me.save("b1"); shared.innerHTML = ""; renderCard(); html = shared.innerHTML; document.release(); ok(!/commissioner fix/.test(html) && !/data-svfix/.test(html), "L20 players do not see the override on a submitted card");
+  Me.save("admin"); Store.set(["surv","r1","m1","b"], { hole:14, by:"b2" });
+  eq([survStatus("r1","m1","b"), roundPoints("r1").sb, survLoss("r1","m1","b")], ["lost", 0, { hole:14, by:"b2" }], "L21 commissioner marks the loss after submission → lost on 14 by b2, bonus withdrawn");
+  eq(snap(), before, "L22 every gross score, override and signature is byte-for-byte unchanged by the survivor fix");
+  eq([allSigned("r1","m1"), rowSigned("r1","m1","b1"), rowSigned("r1","m1","b2")], [true, "b1 · 5:12 pm", "b2 · 5:12 pm"], "L23 cards stay submitted and locked");
+  Store.set(["surv","r1","m1","b"], null); eq([survStatus("r1","m1","b"), roundPoints("r1").sb, snap() === before], ["kept", 0.5, true], "L24 restoring the ball re-banks the bonus, scores still untouched");
+  Me.save(null); UI.card = false; reset(); }
 // Random partial cards: survivor is never 'kept' without signatures; bonus equals 0.5 × kept sides; a signed side with a loss never scores.
 { let seed = 99; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff; let bad = 0;
   for (let n = 0; n < 400; n++) { reset(); Store.set(["pair","r1","m1"], { a:["a1","a2"], b:["b1","b2"] }); const r = ROUND.r1, c = courseOf(r);
